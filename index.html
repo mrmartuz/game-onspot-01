@@ -132,6 +132,14 @@
             return n - Math.floor(n);
         }
 
+        // Get biome based on distance from starting point
+        function getBiome(x, y) {
+            let dist = Math.sqrt(x * x + y * y);
+            if (dist < 50) return 'temperate';
+            else if (dist < 100) return 'taiga';
+            else return 'desert';
+        }
+
         // Get tile data
         function getTile(x, y) {
             const key = `${x},${y}`;
@@ -159,25 +167,52 @@
                 inclination = Math.max(inclination, Math.abs(height - nh));
             });
             let terrain = height < 4 ? 'sand' : height < 8 ? 'dirt' : 'rock';
-            return {height, inclination, terrain, flora, location, entity};
+
+            // Determine flora type based on biome if flora is present
+            let flora_type = 'none';
+            if (flora > 6) {
+                let biome = getBiome(x, y);
+                let flora_options = [];
+                if (biome === 'temperate') {
+                    flora_options = ['oak', 'iris', 'tulip', 'sun-flower'];
+                } else if (biome === 'taiga') {
+                    flora_options = ['pine', 'mushroom'];
+                } else if (biome === 'desert') {
+                    flora_options = ['palm', 'cactus', 'dead-tree'];
+                }
+                if (flora_options.length > 0) {
+                    flora_type = flora_options[Math.floor(hash(x, y, 7) * flora_options.length)];
+                }
+            }
+
+            return {height, inclination, terrain, flora, location, entity, flora_type};
         }
 
         // Emojis for rendering
         function getEmojiForLocation(type) {
             const map = {
-                'waterfalls': '💦', 'canyon': '🕳️', 'geyser': '🌋', 'peaks': '🏔️',
-                'monster caves': '🦇', 'cave': '🕸️', 'ruin': '🏚️', 'camp': '⛺',
-                'farm': '🌾', 'outpost': '🏕️', 'hamlet': '🏘️', 'village': '🏡', 'city': '🏙️'
+                'waterfalls': '🏞️', 'canyon': '⛰️', 'geyser': '🌋', 'peaks': '🏔️',
+                'monster caves': '🕷️', 'cave': '🦇', 'ruin': '🏚️', 'camp': '⛺',
+                'farm': '🏡', 'outpost': '🏕️', 'hamlet': '🏠', 'village': '🏘️', 'city': '🏰'
             };
-            return map[type] || '❓';
+            return map[type] || '🪨';
         }
+
+        function getEmojiForFlora(type) {
+            const map = {
+                'oak': '🌳', 'pine': '🌲', 'palm': '🌴', 'cactus': '🌵',
+                'sun-flower': '🌻', 'iris': '🪻', 'tulip': '🌷', 'mushroom': '🍄', 'dead-tree': '🪾'
+            };
+            return map[type] || '🍀';
+        }
+
 
         function getEmojiForEntity(type) {
             const map = {
-                'monster': '👹', 'beast': '🦁', 'animal': '🐕', 'npc': '🧑',
-                'group': '👥', 'army': '⚔️', 'trader': '💼', 'caravan': '🐪'
+                'monster': '🧌', 'beast': '🦏', 'animal': '🐎', 'npc': '🧍🏻',
+                'group': '👫', 'army': '💂', 'trader': '🧑‍🎓', 'caravan': '🧑‍✈️'
             };
-            return map[type] || '❓';
+            return map[type] || '🥷🏻';
         }
 
         // Draw function
@@ -204,18 +239,18 @@
                         ctx.fillStyle = `rgba(0,255,0,${tile.flora / 20})`;
                         ctx.fillRect(drawX, drawY, tileSize, tileSize);
                     }
-                    if (tile.flora > 6) {
+                    if (tile.flora_type !== 'none') {
                         ctx.font = '20px serif';
-                        ctx.fillText('🌲', drawX + tileSize / 2, drawY + tileSize / 2);
+                        ctx.fillText(getEmojiForFlora(tile.flora_type), drawX + tileSize / 2, drawY + tileSize / 2);
                     }
-                    ctx.fillStyle = `rgba(0,0,0,${tile.height / 30})`;
-                    ctx.fillRect(drawX, drawY, tileSize, tileSize);
+                    // ctx.fillStyle = `rgba(0,0,0,${tile.height / 30})`;
+                    // ctx.fillRect(drawX, drawY, tileSize, tileSize);
                     if (tile.location !== 'none') {
                         ctx.font = '20px serif';
                         ctx.fillText(getEmojiForLocation(tile.location), drawX + tileSize / 2, drawY + tileSize / 2);
                     }
                     if (tile.entity !== 'none') {
-                        ctx.font = '20px serif';
+                        ctx.font = '24px serif';
                         ctx.fillText(getEmojiForEntity(tile.entity), drawX + tileSize / 2, drawY + tileSize / 2);
                     }
                 }
@@ -492,6 +527,9 @@
         setInterval(() => {
             document.getElementById('date-bar').innerText = new Date().toLocaleString();
         }, 1000);
+
+        // Initial reveal at start
+        revealAround();
 
         // Game loop
         function loop() {
