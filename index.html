@@ -105,11 +105,27 @@
         let discoverPoints = 0;
         let killPoints = 0;
         let moves = 0;
+        let events = [];
 
         const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
         let tileSize = 30;
         let offsetX = 0, offsetY = 0;
+
+        // Time system
+        const game_start_real = Date.now();
+        const game_start_date = new Date("1500-01-01T00:00:00");
+        const acceleration = 720; // 1 game day per 2 real minutes (86400 seconds / 120 seconds = 720)
+
+        function getCurrentGameDate() {
+            const elapsed_real_ms = Date.now() - game_start_real;
+            const elapsed_game_ms = elapsed_real_ms * acceleration;
+            return new Date(game_start_date.getTime() + elapsed_game_ms);
+        }
+
+        function logEvent(desc) {
+            events.push({date: getCurrentGameDate().toLocaleString(), desc});
+        }
 
         // Resize handler
         function resize() {
@@ -295,7 +311,9 @@
 
         // Handle combat
         function handleCombat(ex, ey, isOnTile = false) {
-            let input = prompt(`Hostile at (${ex},${ey})! 1: Attack, 2: Flee`);
+            let tile = getTile(ex, ey);
+            let entity = tile.entity;
+            let input = prompt(`Hostile ${entity} at (${ex},${ey})! 1: Attack, 2: Flee`);
             if (input === '2') {
                 if (isOnTile) {
                     px = prevx;
@@ -312,10 +330,12 @@
                 alert('Victory!');
                 killed.add(`${ex},${ey}`);
                 killPoints += 5;
+                logEvent(`Defeated ${entity} at (${ex},${ey})`);
                 return true;
             } else {
                 alert('Defeat! Took damage.');
                 health -= isOnTile ? 20 : 10;
+                logEvent(`Defeated by ${entity} at (${ex},${ey})`);
                 return false;
             }
         }
@@ -343,6 +363,7 @@
                 if (['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
                     discoverPoints += 10;
                     alert(`Discovered ${tile.location}!`);
+                    logEvent(`Discovered ${tile.location} at (${px},${py})`);
                 }
                 let options = ['1: Leave'];
                 if (['camp', 'outpost'].includes(tile.location)) options.push('2: Rest');
@@ -365,11 +386,16 @@
                 food -= group.length * 0.5;
                 water -= group.length * 0.5;
                 alert('Rested.');
+                logEvent('Rested');
             } else if (choice === '3') { // Trade
                 let t = prompt('1: Buy food (10g for 10), 2: Buy water (10g for 10), 3: Sell wood (5 for 10g)');
-                if (t === '1' && gold >= 10) { food += 10; gold -= 10; }
-                if (t === '2' && gold >= 10) { water += 10; gold -= 10; }
-                if (t === '3' && wood >= 5) { wood -= 5; gold += 10; }
+                let tradeDesc = '';
+                if (t === '1' && gold >= 10) { food += 10; gold -= 10; tradeDesc = 'Bought 10 food for 10g'; }
+                if (t === '2' && gold >= 10) { water += 10; gold -= 10; tradeDesc = 'Bought 10 water for 10g'; }
+                if (t === '3' && wood >= 5) { wood -= 5; gold += 10; tradeDesc = 'Sold 5 wood for 10g'; }
+                if (tradeDesc) {
+                    logEvent(tradeDesc);
+                }
             } else if (choice === '4') { // Hire
                 const roles = ['native-guide', 'cook', 'guard', 'geologist', 'biologist', 'translator', 'carrier', 'medic', 'navigator'];
                 let hires = [];
@@ -387,14 +413,17 @@
                         group.push({role, bonus: getBonusForRole(role)});
                         gold -= cost;
                         alert(`Hired ${role}.`);
+                        logEvent(`Hired ${role} for ${cost}g`);
                     } else alert('Not enough gold.');
                 }
             } else if (choice === '5') { // Sell discoveries
                 gold += discoverPoints;
+                logEvent(`Sold discoveries for ${discoverPoints}g`);
                 discoverPoints = 0;
                 alert('Sold discoveries.');
             } else if (choice === '6') { // Sell hunts
                 gold += killPoints;
+                logEvent(`Sold hunts for ${killPoints}g`);
                 killPoints = 0;
                 alert('Sold hunts.');
             }
@@ -497,6 +526,7 @@
                             building_mats -= costMats;
                             wood -= costWood;
                             alert(`Built ${type}.`);
+                            logEvent(`Built ${type} at (${bx},${by})`);
                         } else alert('Cannot build there.');
                     } else alert('Invalid direction.');
                 } else alert('Not enough materials.');
@@ -523,9 +553,16 @@
             showMenu();
         });
 
+        // Tap on date bar for events
+        document.getElementById('date-bar').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const list = events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
+            alert(list || 'No events yet.');
+        });
+
         // Update date bar
         setInterval(() => {
-            document.getElementById('date-bar').innerText = new Date().toLocaleString();
+            document.getElementById('date-bar').innerText = getCurrentGameDate().toLocaleString();
         }, 1000);
 
         // Initial reveal at start
