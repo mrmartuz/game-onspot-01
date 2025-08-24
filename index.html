@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2D Exploration Game</title>
+    <title>EXPOGA</title>
     <style>
         html, body {
             margin: 0;
@@ -183,6 +183,8 @@
         // Draw function
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
             for (let vx = 0; vx < viewWidth; vx++) {
                 for (let vy = 0; vy < viewHeight; vy++) {
                     let tx = px - Math.floor(viewWidth / 2) + vx;
@@ -203,25 +205,17 @@
                         ctx.fillRect(drawX, drawY, tileSize, tileSize);
                     }
                     if (tile.flora > 6) {
-                        ctx.font = `${tileSize / 2}px serif`;
-                        ctx.fillText('🌲', drawX + tileSize / 4, drawY + tileSize / 2);
+                        ctx.font = '20px serif';
+                        ctx.fillText('🌲', drawX + tileSize / 2, drawY + tileSize / 2);
                     }
                     ctx.fillStyle = `rgba(0,0,0,${tile.height / 30})`;
                     ctx.fillRect(drawX, drawY, tileSize, tileSize);
-                    if (tile.inclination > 0) {
-                        ctx.strokeStyle = 'black';
-                        ctx.lineWidth = tile.inclination / 5;
-                        ctx.beginPath();
-                        ctx.moveTo(drawX, drawY + tileSize);
-                        ctx.lineTo(drawX + tileSize, drawY);
-                        ctx.stroke();
-                    }
                     if (tile.location !== 'none') {
-                        ctx.font = `${tileSize / 2}px serif`;
-                        ctx.fillText(getEmojiForLocation(tile.location), drawX + tileSize / 4, drawY + tileSize / 2);
+                        ctx.font = '20px serif';
+                        ctx.fillText(getEmojiForLocation(tile.location), drawX + tileSize / 2, drawY + tileSize / 2);
                     }
                     if (tile.entity !== 'none') {
-                        ctx.font = `${tileSize / 2}px serif`;
+                        ctx.font = '20px serif';
                         ctx.fillText(getEmojiForEntity(tile.entity), drawX + tileSize / 2, drawY + tileSize / 2);
                     }
                 }
