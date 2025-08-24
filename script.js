@@ -170,20 +170,20 @@ function draw() {
             ctx.fillStyle = tile.terrain === 'sand' ? 'yellow' : tile.terrain === 'dirt' ? 'brown' : 'gray';
             ctx.fillRect(drawX, drawY, tileSize, tileSize);
 
-
-// render grass
-if (tile.terrain === 'dirt' && tile.flora > 0) {
-    ctx.fillStyle = 'darkgreen';
-    const tuftCount = tile.flora * 3; // Reduced to *3 for up to 30 tufts at flora=10; adjust as needed
-    for (let i = 0; i < tuftCount; i++) {
-        const rx = Math.floor(hash(tx, ty, 100 + i) * tileSize);
-        const baseY = drawY + Math.floor(hash(tx, ty, 200 + i) * (tileSize * 0.3)) + (tileSize * 0.7); // Bias base to bottom 30% of tile
-        const tuftWidth = 2 + Math.floor(hash(tx, ty, 300 + i) * 3); // Vary 2-4px wide
-        const tuftHeight = 4 + Math.floor(hash(tx, ty, 400 + i) * 5); // Vary 4-8px tall
-        ctx.fillRect(drawX + rx, baseY - tuftHeight, tuftWidth, tuftHeight); // Draw upward from base
-    }
-}
-
+            // Render grass tufts spread across the full tile
+            if (tile.terrain === 'dirt' && tile.flora > 0) {
+                const tuftCount = tile.flora * 3; // Up to 30 tufts at flora=10; adjust for density
+                for (let i = 0; i < tuftCount; i++) {
+                    // Vary green shade for depth (darker to lighter green)
+                    const greenShade = Math.floor(100 + hash(tx, ty, 500 + i) * 100); // 100-200 for rgb(0, greenShade, 0)
+                    ctx.fillStyle = `rgb(0, ${greenShade}, 0)`;
+                    const rx = Math.floor(hash(tx, ty, 100 + i) * tileSize);
+                    const baseY = drawY + Math.floor(hash(tx, ty, 200 + i) * tileSize); // Random across full height
+                    const tuftWidth = 2 + Math.floor(hash(tx, ty, 300 + i) * 3); // 2-4px wide
+                    const tuftHeight = 4 + Math.floor(hash(tx, ty, 400 + i) * 5); // 4-8px tall
+                    ctx.fillRect(drawX + rx, baseY - tuftHeight, tuftWidth, tuftHeight); // Draw upward from base
+                }
+            }
 
             if (tile.flora_type !== 'none') {
                 ctx.font = '20px serif';
