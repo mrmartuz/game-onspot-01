@@ -98,13 +98,13 @@
         let tents = 2;
         let building_mats = 10;
         let wood = 10;
+        let carts = 0;
         let group = [
             {role: 'explorer', bonus: {discovery: 0.2}},
             {role: 'carrier', bonus: {carry: 0.2}}
         ];
         let discoverPoints = 0;
         let killPoints = 0;
-        let moves = 0;
         let events = [];
 
         const canvas = document.getElementById('game-canvas');
@@ -116,6 +116,7 @@
         const game_start_real = Date.now();
         const game_start_date = new Date("1500-01-01T00:00:00");
         const acceleration = 720; // 1 game day per 2 real minutes (86400 seconds / 120 seconds = 720)
+        let last_consume_time = Date.now();
 
         function getCurrentGameDate() {
             const elapsed_real_ms = Date.now() - game_start_real;
@@ -251,10 +252,6 @@
                     }
                     ctx.fillStyle = tile.terrain === 'sand' ? 'yellow' : tile.terrain === 'dirt' ? 'brown' : 'gray';
                     ctx.fillRect(drawX, drawY, tileSize, tileSize);
-                    if (tile.flora > 0) {
-                        ctx.fillStyle = `rgba(0,255,0,${tile.flora / 20})`;
-                        ctx.fillRect(drawX, drawY, tileSize, tileSize);
-                    }
                     if (tile.flora_type !== 'none') {
                         ctx.font = '20px serif';
                         ctx.fillText(getEmojiForFlora(tile.flora_type), drawX + tileSize / 2, drawY + tileSize / 2);
@@ -282,7 +279,7 @@
 
         // Update status bar
         function updateStatus() {
-            document.getElementById('status-bar').innerText = `Gold: ${Math.floor(gold)} Food: ${Math.floor(food)} Water: ${Math.floor(water)} Health: ${Math.floor(health)} Group: ${group.length}`;
+            document.getElementById('status-bar').innerText = `🪙: ${Math.floor(gold)} 🍞: ${Math.floor(food)} 💧: ${Math.floor(water)} ❤️‍🩹: ${Math.floor(health)} 👥: ${group.length}`;
         }
 
         // Get group bonus
@@ -290,52 +287,66 @@
             return group.reduce((total, g) => total + (g.bonus[type] || 0), 0);
         }
 
-        // Day consumption
-        function dayConsumption() {
-            food -= group.length * (1 - getGroupBonus('food'));
-            water -= group.length;
-            gold -= group.length * 0.5;
-            if (Math.random() < 0.05) tents = Math.max(0, tents - 1);
+        // Get number of carriers
+        function getNumCarriers() {
+            return group.filter(g => g.role === 'carrier').length;
         }
 
-        // Update resources on move
+        // Get max storage for food and water
+        function getMaxStorage() {
+            return 50 * group.length + 50 * getNumCarriers() + 200 * carts;
+        }
+
+        // Time-based consumption
+        function timeConsumption() {
+            let now = Date.now();
+            let delta_real = now - last_consume_time;
+            let delta_game = delta_real * acceleration;
+            let days_fraction = delta_game / (86400 * 1000);
+            food -= days_fraction * group.length * (1 - getGroupBonus('food'));
+            water -= days_fraction * group.length;
+            gold -= days_fraction * group.length * 0.5;
+            if (Math.random() < 0.05 * days_fraction) {
+                tents = Math.max(0, tents - 1);
+            }
+            last_consume_time = now;
+        }
+
+        // Update resources on move (gathering only)
         function updateResources(tile) {
-            let foodConsume = 0.1 * group.length * (1 - getGroupBonus('food'));
-            food -= foodConsume;
-            water -= 0.1 * group.length;
             food += tile.flora * 0.1 * (1 + getGroupBonus('plant'));
+            food = Math.min(food, getMaxStorage());
             if (Math.random() < 0.05 * (1 + getGroupBonus('resource'))) wood += 1;
-            moves++;
-            if (moves % 10 === 0) dayConsumption();
+            water = Math.min(water, getMaxStorage());
         }
 
         // Handle combat
         function handleCombat(ex, ey, isOnTile = false) {
             let tile = getTile(ex, ey);
             let entity = tile.entity;
-            let input = prompt(`Hostile ${entity} at (${ex},${ey})! 1: Attack, 2: Flee`);
+            let input = prompt(`Hostile ${entity} at (${ex},${ey})! 1:⚔️ Attack, 2:🌬️ Flee`);
             if (input === '2') {
                 if (isOnTile) {
                     px = prevx;
                     py = prevy;
-                    alert('Fled back.');
+                    alert('Fled back. 😵‍💫');
                 } else {
-                    alert('Fled, staying put.');
+                    alert('Fled, staying put. 😅');
                 }
                 return false;
             }
             let combatBonus = getGroupBonus('combat');
             let success = Math.random() < 0.5 + combatBonus;
             if (success) {
-                alert('Victory!');
+                alert('Victory! 🏆');
                 killed.add(`${ex},${ey}`);
                 killPoints += 5;
-                logEvent(`Defeated ${entity} at (${ex},${ey})`);
+                logEvent(`🏆 Defeated ${entity} at (${ex},${ey})`);
                 return true;
             } else {
-                alert('Defeat! Took damage.');
+                alert('Defeat! Took damage.🤕');
                 health -= isOnTile ? 20 : 10;
-                logEvent(`Defeated by ${entity} at (${ex},${ey})`);
+                logEvent(`🤕 Defeated by ${entity} at (${ex},${ey})`);
                 return false;
             }
         }
@@ -362,17 +373,17 @@
             if (tile.location !== 'none' || tile.entity !== 'none') {
                 if (['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
                     discoverPoints += 10;
-                    alert(`Discovered ${tile.location}!`);
-                    logEvent(`Discovered ${tile.location} at (${px},${py})`);
+                    alert(`Discovered ${tile.location}! 🌟`);
+                    logEvent(`🌟 Discovered ${tile.location} at (${px},${py})`);
                 }
-                let options = ['1: Leave'];
-                if (['camp', 'outpost'].includes(tile.location)) options.push('2: Rest');
+                let options = ['1: 🚶 Leave'];
+                if (['camp', 'outpost'].includes(tile.location)) options.push('2: 😴 Rest');
                 if (['outpost', 'hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan'].includes(tile.entity)) {
-                    options.push('3: Trade');
-                    options.push('4: Hire');
+                    options.push('3: 🪙 Trade');
+                    options.push('4: 🧍🏻 Hire');
                 }
-                if (tile.location === 'city') options.push('5: Sell discoveries');
-                if (tile.location === 'village') options.push('6: Sell hunts');
+                if (tile.location === 'city') options.push('5: 🪙 Sell discoveries');
+                if (tile.location === 'village') options.push('6: 🏹 Sell hunts');
                 let msg = `At ${tile.location} ${tile.entity}\n${options.join('\n')}`;
                 let choice = prompt(msg);
                 handleChoice(choice, tile);
@@ -385,19 +396,45 @@
                 health = Math.min(100, health + 10 * (1 + getGroupBonus('health')));
                 food -= group.length * 0.5;
                 water -= group.length * 0.5;
-                alert('Rested.');
-                logEvent('Rested');
+                alert('Rested. 😴');
+                logEvent('😴 Rested');
             } else if (choice === '3') { // Trade
-                let t = prompt('1: Buy food (10g for 10), 2: Buy water (10g for 10), 3: Sell wood (5 for 10g)');
+                let t = prompt('1: 📥 Buy food 🍞 (10 for 10g), 2: 📥 Buy water 💧 (10 for 10g), 3: 📤 Sell wood 🪵 (5 for 10g), 4: 📥 Buy cart 🛒 (100g for 1)');
                 let tradeDesc = '';
-                if (t === '1' && gold >= 10) { food += 10; gold -= 10; tradeDesc = 'Bought 10 food for 10g'; }
-                if (t === '2' && gold >= 10) { water += 10; gold -= 10; tradeDesc = 'Bought 10 water for 10g'; }
-                if (t === '3' && wood >= 5) { wood -= 5; gold += 10; tradeDesc = 'Sold 5 wood for 10g'; }
+                let max_storage = getMaxStorage();
+                if (t === '1' && gold >= 10 && food + 10 <= max_storage) { 
+                    food += 10; 
+                    gold -= 10; 
+                    tradeDesc = '📥 Bought 10 food 🍞 for 10g'; 
+                } else if (t === '1') {
+                    alert('Not enough gold or storage! ⚠️');
+                }
+                if (t === '2' && gold >= 10 && water + 10 <= max_storage) { 
+                    water += 10; 
+                    gold -= 10; 
+                    tradeDesc = '📥 Bought 10 water 💧 for 10g'; 
+                } else if (t === '2') {
+                    alert('Not enough gold or storage! ⚠️');
+                }
+                if (t === '3' && wood >= 5) { 
+                    wood -= 5; 
+                    gold += 10; 
+                    tradeDesc = '📤 Sold 5 wood 🪵 for 10g'; 
+                } else if (t === '3') {
+                    alert('Not enough wood! ⚠️');
+                }
+                if (t === '4' && gold >= 100) { 
+                    carts += 1; 
+                    gold -= 100; 
+                    tradeDesc = '📥 Bought cart 🛒 for 100g'; 
+                } else if (t === '4') {
+                    alert('Not enough gold! ⚠️');
+                }
                 if (tradeDesc) {
                     logEvent(tradeDesc);
                 }
             } else if (choice === '4') { // Hire
-                const roles = ['native-guide', 'cook', 'guard', 'geologist', 'biologist', 'translator', 'carrier', 'medic', 'navigator'];
+                const roles = ['native-guide👲🏻', 'cook🧑🏻‍🍳', 'guard💂🏻', 'geologist🧑🏻‍🔬', 'biologist🧑🏻‍🔬', 'translator👳🏻', 'carrier🧑🏻‍🔧', 'medic🧑🏻‍⚕️', 'navigator🧑🏻‍✈️'];
                 let hires = [];
                 for (let i = 0; i < 3; i++) {
                     let r = roles[Math.floor(Math.random() * roles.length)];
@@ -412,20 +449,20 @@
                     if (gold >= cost) {
                         group.push({role, bonus: getBonusForRole(role)});
                         gold -= cost;
-                        alert(`Hired ${role}.`);
-                        logEvent(`Hired ${role} for ${cost}g`);
-                    } else alert('Not enough gold.');
+                        alert(`Hired ${role}! 👏`);
+                        logEvent(`🧍🏻 Hired ${role} for ${cost}g`);
+                    } else alert('Not enough gold! ⚠️');
                 }
             } else if (choice === '5') { // Sell discoveries
                 gold += discoverPoints;
-                logEvent(`Sold discoveries for ${discoverPoints}g`);
+                logEvent(`🪙 Sold discoveries for ${discoverPoints}g`);
                 discoverPoints = 0;
-                alert('Sold discoveries.');
+                alert('Sold discoveries! 🪙');
             } else if (choice === '6') { // Sell hunts
                 gold += killPoints;
-                logEvent(`Sold hunts for ${killPoints}g`);
+                logEvent(`🪙 Sold hunts for ${killPoints}g`);
                 killPoints = 0;
-                alert('Sold hunts.');
+                alert('Sold hunts! 🪙');
             }
         }
 
@@ -443,7 +480,7 @@
                 'navigator': {view: 1}
             };
             return bonuses[role] || {};
-        }
+ }    
 
         // Reveal tiles within view distance
         function revealAround() {
@@ -464,7 +501,7 @@
             let ty = py + dy;
             let tile = getTile(tx, ty);
             let navBonus = getGroupBonus('navigation');
-            let cooldownMs = (500 + tile.inclination * 100 + tile.flora * 50) * (1 - navBonus);
+            let cooldownMs = (400 + tile.inclination * 80 + tile.flora * 40) * (1 - navBonus);
             cooldown = true;
             setTimeout(() => {
                 prevx = px;
@@ -477,7 +514,7 @@
                 checkAdjacentMonsters();
                 checkTileInteraction(tile);
                 if (health <= 0 || gold < -50) {
-                    alert('Game Over!');
+                    alert('Game Over! ☠️');
                     // Reset game (simple)
                     location.reload();
                 }
@@ -502,9 +539,9 @@
 
         // Show menu function
         function showMenu() {
-            let inv = `Health: ${health} Gold: ${gold} Food: ${food.toFixed(1)} Water: ${water.toFixed(1)} Tents: ${tents} Mats: ${building_mats} Wood: ${wood}`;
+            let inv = `❤️‍🩹 Health: ${health} 🪙 Gold: ${gold} 🍞 Food: ${food.toFixed(1)} 💧 Water: ${water.toFixed(1)} ⛺ Tents: ${tents} 🧱 Mats: ${building_mats} 🪵 Wood: ${wood}`;
             let grp = group.map(g => g.role).join(', ');
-            let msg = `${inv}\nGroup: ${grp}\n1: Close, 2: Build camp (5 mats, 5 wood), 3: Build outpost (10 mats, 10 wood)`;
+            let msg = `${inv}\n👥 Group: ${grp}\n1: ❌ Close, 2: 🏗️ Build camp ⛺ (5 🧱 mats, 5 🪵 wood), 3: 🏗️ Build outpost 🏕️ (10 🧱 mats, 10 🪵 wood)`;
             let choice = prompt(msg);
             if (choice === '2' || choice === '3') {
                 let costMats = choice === '2' ? 5 : 10;
@@ -525,11 +562,11 @@
                             changed.push({x: bx, y: by, type});
                             building_mats -= costMats;
                             wood -= costWood;
-                            alert(`Built ${type}.`);
-                            logEvent(`Built ${type} at (${bx},${by})`);
-                        } else alert('Cannot build there.');
-                    } else alert('Invalid direction.');
-                } else alert('Not enough materials.');
+                            alert(`Built ${type}! 🏗️`);
+                            logEvent(`🏗️ Built ${type} at (${bx},${by})`);
+                        } else alert('Cannot build there. 🚫');
+                    } else alert('Invalid direction. ❓');
+                } else alert('Not enough materials! ⚠️');
             }
         }
 
@@ -557,13 +594,16 @@
         document.getElementById('date-bar').addEventListener('touchstart', (e) => {
             e.preventDefault();
             const list = events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
-            alert(list || 'No events yet.');
+            alert(list || 'No events yet. 📜');
         });
 
         // Update date bar
         setInterval(() => {
             document.getElementById('date-bar').innerText = getCurrentGameDate().toLocaleString();
         }, 1000);
+
+        // Time consumption interval
+        setInterval(timeConsumption, 1000);
 
         // Initial reveal at start
         revealAround();
