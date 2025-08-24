@@ -6,7 +6,7 @@ let changed = []; // {x, y, type}
 let killed = new Set();
 let seed = Math.floor(Math.random() * 1000000000); // Randomized seed for procedural generation
 let viewWidth = 21, viewHeight = 21;
-let viewDist = 5;
+let viewDist = 3;
 let cooldown = false;
 let health = 100;
 let gold = 100;
@@ -23,6 +23,11 @@ let group = [
 let discoverPoints = 0;
 let killPoints = 0;
 let events = [];
+let moving = false;
+let moveStartTime = 0;
+let moveDuration = 0;
+let moveDx = 0;
+let moveDy = 0;
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -150,7 +155,7 @@ function getEmojiForEntity(type) {
 }
 
 // Draw function
-function draw() {
+function draw(offsetDeltaX, offsetDeltaY) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -159,15 +164,15 @@ function draw() {
             let tx = px - Math.floor(viewWidth / 2) + vx;
             let ty = py - Math.floor(viewHeight / 2) + vy;
             let tile = getTile(tx, ty);
-            let drawX = offsetX + vx * tileSize;
-            let drawY = offsetY + vy * tileSize;
+            let drawX = offsetX + offsetDeltaX + vx * tileSize;
+            let drawY = offsetY + offsetDeltaY + vy * tileSize;
             let key = `${tx},${ty}`;
             if (!visited.has(key)) {
                 ctx.fillStyle = 'black';
                 ctx.fillRect(drawX, drawY, tileSize, tileSize);
                 continue;
             }
-            ctx.fillStyle = tile.terrain === 'sand' ? 'yellow' : tile.terrain === 'dirt' ? 'brown' : 'gray';
+            ctx.fillStyle = tile.terrain === 'sand' ? 'yellow' : tile.terrain === 'dirt' ? 'green' : 'gray';
             ctx.fillRect(drawX, drawY, tileSize, tileSize);
 
             // Render grass tufts spread across the full tile
@@ -430,29 +435,27 @@ function revealAround() {
 // Movement function
 function move(dx, dy) {
     if (cooldown) return;
+    cooldown = true;
+    moving = true;
+    moveStartTime = performance.now();
     let tx = px + dx;
     let ty = py + dy;
     let tile = getTile(tx, ty);
-    let navBonus = getGroupBonus('navigation');
-    let cooldownMs = (400 + tile.inclination * 80 + tile.flora * 40) * (1 - navBonus);
-    cooldown = true;
-    setTimeout(() => {
-        prevx = px;
-        prevy = py;
-        px = tx;
-        py = ty;
-        visited.add(`${px},${py}`);
-        revealAround();
-        updateResources(tile);
-        checkAdjacentMonsters();
-        checkTileInteraction(tile);
-        if (health <= 0 || gold < -50) {
-            alert('Game Over! ☠️');
-            // Reset game (simple)
-            location.reload();
+    let navigationBonus = getGroupBonus('navigation');
+    group.forEach(g => {
+        if (g.role === 'navigator' && tile.terrain === 'dirt' && tile.flora < 6) {
+            navigationBonus += 0.2;
+        } else if (g.role === 'native-guide' && tile.flora >= 6) {
+            navigationBonus += 0.2;
+        } else if (g.role === 'explorer' && tile.location !== 'none' && tile.flora < 3) {
+            navigationBonus += 0.2;
         }
-        cooldown = false;
-    }, cooldownMs);
+    });
+    let baseDuration = (400 + tile.inclination * 80 + tile.flora * 40) * (1 - navigationBonus);
+    let loadFactor = (food + water) / getMaxStorage();
+    moveDuration = baseDuration * (1 + loadFactor * 0.5);
+    moveDx = dx;
+    moveDy = dy;
 }
 
 // Button listeners (use click for tap)
@@ -543,7 +546,35 @@ revealAround();
 
 // Game loop
 function loop() {
-    draw();
+    let offsetDeltaX = 0;
+    let offsetDeltaY = 0;
+    if (moving) {
+        let now = performance.now();
+        let fraction = (now - moveStartTime) / moveDuration;
+        if (fraction >= 1) {
+            fraction = 1;
+            moving = false;
+            prevx = px;
+            prevy = py;
+            px += moveDx;
+            py += moveDy;
+            visited.add(`${px},${py}`);
+            revealAround();
+            let tile = getTile(px, py);
+            updateResources(tile);
+            checkAdjacentMonsters();
+            checkTileInteraction(tile);
+            if (health <= 0 || gold < -50) {
+                alert('Game Over! ☠️');
+                // Reset game (simple)
+                location.reload();
+            }
+            cooldown = false;
+        }
+        offsetDeltaX = -fraction * moveDx * tileSize;
+        offsetDeltaY = -fraction * moveDy * tileSize;
+    }
+    draw(offsetDeltaX, offsetDeltaY);
     updateStatus();
     requestAnimationFrame(loop);
 }
