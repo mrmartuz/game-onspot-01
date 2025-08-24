@@ -1,0 +1,61 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100vh;
+    touch-action: none;
+}
+#status-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    background-color: gray;
+    color: white;
+    text-align: center;
+    line-height: 50px;
+    z-index: 10;
+    font-size: 16px;
+}
+#date-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background-color: gray;
+    color: white;
+    text-align: center;
+    line-height: 30px;
+    z-index: 10;
+    font-size: 16px;
+}
+#game-canvas {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 80px);
+    background-color: black;
+}
+button {
+    position: absolute;
+    z-index: 10;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    border: 1px solid white;
+    background-color: rgba(0,0,0,0.5);
+    color: white;
+    border-radius: 50%;
+    touch-action: manipulation;
+}
+#btn-n { top: 60px; left: calc(50% - 25px); }
+#btn-ne { top: 60px; right: 10px; }
+#btn-e { top: calc(50% + 10px); right: 10px; } /* Adjusted for bars */
+#btn-se { bottom: 40px; right: 10px; }
+#btn-s { bottom: 40px; left: calc(50% - 25px); }
+#btn-sw { bottom: 40px; left: 10px; }
+#btn-w { top: calc(50% + 10px); left: 10px; }
+#btn-nw { top: 60px; left: 10px; }
