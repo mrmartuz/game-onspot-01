@@ -169,6 +169,20 @@ function draw() {
             }
             ctx.fillStyle = tile.terrain === 'sand' ? 'yellow' : tile.terrain === 'dirt' ? 'brown' : 'gray';
             ctx.fillRect(drawX, drawY, tileSize, tileSize);
+
+
+// render grass
+if (tile.terrain === 'dirt' && tile.flora > 0) {
+    ctx.fillStyle = 'green';
+    const tuftCount = tile.flora * 5; // Adjust multiplier for density (5 = up to 50 tufts at flora=10)
+    for (let i = 0; i < tuftCount; i++) {
+        const rx = Math.floor(hash(tx, ty, 100 + i) * tileSize); // Seeded random x (0 to tileSize-1)
+        const ry = Math.floor(hash(tx, ty, 200 + i) * (tileSize * 0.6)) + (tileSize * 0.4); // Bias y toward bottom for "ground" feel
+        ctx.fillRect(drawX + rx, drawY + ry, 2, 4); // Small vertical tuft (adjust size for look)
+    }
+}
+
+
             if (tile.flora_type !== 'none') {
                 ctx.font = '20px serif';
                 ctx.fillText(getEmojiForFlora(tile.flora_type), drawX + tileSize / 2, drawY + tileSize / 2);
