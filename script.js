@@ -79,7 +79,7 @@ function getBiome(x, y) {
     else return 'desert';
 }
 
-// Get tile data
+// Get tile data with smoothing
 function getTile(x, y) {
     const key = `${x},${y}`;
     let change = changed.find(t => t.x === x && t.y === y);
@@ -98,13 +98,38 @@ function getTile(x, y) {
         entity = entities[Math.floor(hash(x, y, 4) * entities.length)];
     }
     if (killed.has(key)) entity = 'none';
-    let height = Math.floor(hash(x, y, 5) * 11);
-    let flora = Math.floor(hash(x, y, 6) * 11);
+
+    // Compute raw height and flora
+    let rawHeight = hash(x, y, 5) * 11;
+    let rawFlora = hash(x, y, 6) * 11;
+
+    // Smooth height and flora by averaging with neighbors
+    let heightSum = rawHeight;
+    let floraSum = rawFlora;
+    let neighborCount = 1; // Include the tile itself
+    const neighbors = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+    neighbors.forEach(d => {
+        let nx = x + d[0];
+        let ny = y + d[1];
+        heightSum += hash(nx, ny, 5) * 11;
+        floraSum += hash(nx, ny, 6) * 11;
+        neighborCount++;
+    });
+    let smoothedHeight = heightSum / neighborCount;
+    let smoothedFlora = floraSum / neighborCount;
+
+    // Round to integers for consistency
+    let height = Math.floor(smoothedHeight);
+    let flora = Math.floor(smoothedFlora);
+
+    // Calculate inclination based on smoothed height
     let inclination = 0;
-    [[0,-1],[0,1],[-1,0],[1,0]].forEach(d => {
-        let nh = Math.floor(hash(x + d[0], y + d[1], 5) * 11);
+    neighbors.forEach(d => {
+        let nh = Math.floor((hash(x + d[0], y + d[1], 5) * 11 + heightSum - rawHeight) / (neighborCount - 1));
         inclination = Math.max(inclination, Math.abs(height - nh));
     });
+
+    // Determine terrain based on smoothed height
     let terrain = height < 4 ? 'sand' : height < 8 ? 'dirt' : 'rock';
 
     // Determine flora type based on biome if flora is present
@@ -124,7 +149,7 @@ function getTile(x, y) {
         }
     }
 
-    return {height, inclination, terrain, flora, location, entity, flora_type};
+    return { height, inclination, terrain, flora, location, entity, flora_type };
 }
 
 // Emojis for rendering
