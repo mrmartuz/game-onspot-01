@@ -25,12 +25,25 @@
             z-index: 10;
             font-size: 16px;
         }
+        #date-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30px;
+            background-color: gray;
+            color: white;
+            text-align: center;
+            line-height: 30px;
+            z-index: 10;
+            font-size: 16px;
+        }
         #game-canvas {
             position: absolute;
             top: 50px;
             left: 0;
             width: 100%;
-            height: calc(100vh - 50px);
+            height: calc(100vh - 80px);
             background-color: black;
         }
         button {
@@ -47,17 +60,18 @@
         }
         #btn-n { top: 60px; left: calc(50% - 25px); }
         #btn-ne { top: 60px; right: 10px; }
-        #btn-e { top: calc(50% + 25px); right: 10px; } /* Adjusted for status bar */
-        #btn-se { bottom: 10px; right: 10px; }
-        #btn-s { bottom: 10px; left: calc(50% - 25px); }
-        #btn-sw { bottom: 10px; left: 10px; }
-        #btn-w { top: calc(50% + 25px); left: 10px; }
+        #btn-e { top: calc(50% + 10px); right: 10px; } /* Adjusted for bars */
+        #btn-se { bottom: 40px; right: 10px; }
+        #btn-s { bottom: 40px; left: calc(50% - 25px); }
+        #btn-sw { bottom: 40px; left: 10px; }
+        #btn-w { top: calc(50% + 10px); left: 10px; }
         #btn-nw { top: 60px; left: 10px; }
     </style>
 </head>
 <body>
     <div id="status-bar">Loading...</div>
     <canvas id="game-canvas"></canvas>
+    <div id="date-bar">Loading...</div>
     <button id="btn-n">N</button>
     <button id="btn-ne">NE</button>
     <button id="btn-e">E</button>
@@ -75,6 +89,7 @@
         let killed = new Set();
         let seed = 42;
         let viewWidth = 21, viewHeight = 21;
+        let viewDist = 5;
         let cooldown = false;
         let health = 100;
         let gold = 100;
@@ -93,14 +108,17 @@
 
         const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
-        let tileSize = 20;
+        let tileSize = 30;
         let offsetX = 0, offsetY = 0;
 
         // Resize handler
         function resize() {
             canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight - 50;
-            tileSize = Math.min(canvas.width / viewWidth, canvas.height / viewHeight);
+            canvas.height = window.innerHeight - 80;
+            viewWidth = Math.floor(canvas.width / tileSize);
+            if (viewWidth % 2 === 0) viewWidth--;
+            viewHeight = Math.floor(canvas.height / tileSize);
+            if (viewHeight % 2 === 0) viewHeight--;
             offsetX = (canvas.width - viewWidth * tileSize) / 2;
             offsetY = (canvas.height - viewHeight * tileSize) / 2;
         }
@@ -324,7 +342,7 @@
                 if (t === '2' && gold >= 10) { water += 10; gold -= 10; }
                 if (t === '3' && wood >= 5) { wood -= 5; gold += 10; }
             } else if (choice === '4') { // Hire
-                const roles = ['native-guide', 'cook', 'guard', 'geologist', 'biologist', 'translator', 'carrier', 'medic'];
+                const roles = ['native-guide', 'cook', 'guard', 'geologist', 'biologist', 'translator', 'carrier', 'medic', 'navigator'];
                 let hires = [];
                 for (let i = 0; i < 3; i++) {
                     let r = roles[Math.floor(Math.random() * roles.length)];
@@ -363,9 +381,22 @@
                 'biologist': {plant: 0.2},
                 'translator': {interact: 0.2},
                 'carrier': {carry: 0.2},
-                'medic': {health: 0.2}
+                'medic': {health: 0.2},
+                'navigator': {view: 1}
             };
             return bonuses[role] || {};
+        }
+
+        // Reveal tiles within view distance
+        function revealAround() {
+            let currentViewDist = viewDist + Math.floor(getGroupBonus('view'));
+            for (let ddx = -currentViewDist; ddx <= currentViewDist; ddx++) {
+                for (let ddy = -currentViewDist; ddy <= currentViewDist; ddy++) {
+                    if (Math.sqrt(ddx * ddx + ddy * ddy) <= currentViewDist) {
+                        visited.add(`${px + ddx},${py + ddy}`);
+                    }
+                }
+            }
         }
 
         // Movement function
@@ -383,6 +414,7 @@
                 px = tx;
                 py = ty;
                 visited.add(`${px},${py}`);
+                revealAround();
                 updateResources(tile);
                 checkAdjacentMonsters();
                 checkTileInteraction(tile);
@@ -410,6 +442,38 @@
             document.getElementById(dir.id).addEventListener('click', () => move(dir.dx, dir.dy));
         });
 
+        // Show menu function
+        function showMenu() {
+            let inv = `Health: ${health} Gold: ${gold} Food: ${food.toFixed(1)} Water: ${water.toFixed(1)} Tents: ${tents} Mats: ${building_mats} Wood: ${wood}`;
+            let grp = group.map(g => g.role).join(', ');
+            let msg = `${inv}\nGroup: ${grp}\n1: Close, 2: Build camp (5 mats, 5 wood), 3: Build outpost (10 mats, 10 wood)`;
+            let choice = prompt(msg);
+            if (choice === '2' || choice === '3') {
+                let costMats = choice === '2' ? 5 : 10;
+                let costWood = choice === '2' ? 5 : 10;
+                let type = choice === '2' ? 'camp' : 'outpost';
+                if (building_mats >= costMats && wood >= costWood) {
+                    let dirStr = prompt('Direction: N NE E SE S SW W NW');
+                    const dmap = {
+                        'N': {dx:0,dy:-1}, 'NE':{dx:1,dy:-1}, 'E':{dx:1,dy:0}, 'SE':{dx:1,dy:1},
+                        'S':{dx:0,dy:1}, 'SW':{dx:-1,dy:1}, 'W':{dx:-1,dy:0}, 'NW':{dx:-1,dy:-1}
+                    };
+                    let d = dmap[dirStr ? dirStr.toUpperCase() : ''];
+                    if (d) {
+                        let bx = px + d.dx;
+                        let by = py + d.dy;
+                        let btile = getTile(bx, by);
+                        if (btile.location === 'none' && btile.entity === 'none') {
+                            changed.push({x: bx, y: by, type});
+                            building_mats -= costMats;
+                            wood -= costWood;
+                            alert(`Built ${type}.`);
+                        } else alert('Cannot build there.');
+                    } else alert('Invalid direction.');
+                } else alert('Not enough materials.');
+            }
+        }
+
         // Tap on player for menu
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
@@ -420,36 +484,20 @@
             let vy = Math.floor((touchY - offsetY) / tileSize);
             let centerV = Math.floor(viewWidth / 2);
             if (vx === centerV && vy === centerV) {
-                let inv = `Health: ${health} Gold: ${gold} Food: ${food.toFixed(1)} Water: ${water.toFixed(1)} Tents: ${tents} Mats: ${building_mats} Wood: ${wood}`;
-                let grp = group.map(g => g.role).join(', ');
-                let msg = `${inv}\nGroup: ${grp}\n1: Close, 2: Build camp (5 mats, 5 wood), 3: Build outpost (10 mats, 10 wood)`;
-                let choice = prompt(msg);
-                if (choice === '2' || choice === '3') {
-                    let costMats = choice === '2' ? 5 : 10;
-                    let costWood = choice === '2' ? 5 : 10;
-                    let type = choice === '2' ? 'camp' : 'outpost';
-                    if (building_mats >= costMats && wood >= costWood) {
-                        let dirStr = prompt('Direction: N NE E SE S SW W NW');
-                        const dmap = {
-                            'N': {dx:0,dy:-1}, 'NE':{dx:1,dy:-1}, 'E':{dx:1,dy:0}, 'SE':{dx:1,dy:1},
-                            'S':{dx:0,dy:1}, 'SW':{dx:-1,dy:1}, 'W':{dx:-1,dy:0}, 'NW':{dx:-1,dy:-1}
-                        };
-                        let d = dmap[dirStr ? dirStr.toUpperCase() : ''];
-                        if (d) {
-                            let bx = px + d.dx;
-                            let by = py + d.dy;
-                            let btile = getTile(bx, by);
-                            if (btile.location === 'none' && btile.entity === 'none') {
-                                changed.push({x: bx, y: by, type});
-                                building_mats -= costMats;
-                                wood -= costWood;
-                                alert(`Built ${type}.`);
-                            } else alert('Cannot build there.');
-                        } else alert('Invalid direction.');
-                    } else alert('Not enough materials.');
-                }
+                showMenu();
             }
         });
+
+        // Tap on status bar for menu
+        document.getElementById('status-bar').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            showMenu();
+        });
+
+        // Update date bar
+        setInterval(() => {
+            document.getElementById('date-bar').innerText = new Date().toLocaleString();
+        }, 1000);
 
         // Game loop
         function loop() {
