@@ -4,7 +4,7 @@ let prevx = 0, prevy = 0;
 let visited = new Set(['0,0']);
 let changed = []; // {x, y, type}
 let killed = new Set();
-let seed = 42;
+let seed = Math.floor(Math.random() * 1000000000); // Randomized seed for procedural generation
 let viewWidth = 21, viewHeight = 21;
 let viewDist = 5;
 let cooldown = false;
