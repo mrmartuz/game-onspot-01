@@ -173,12 +173,14 @@ function draw() {
 
 // render grass
 if (tile.terrain === 'dirt' && tile.flora > 0) {
-    ctx.fillStyle = 'green';
-    const tuftCount = tile.flora * 5; // Adjust multiplier for density (5 = up to 50 tufts at flora=10)
+    ctx.fillStyle = 'darkgreen';
+    const tuftCount = tile.flora * 3; // Reduced to *3 for up to 30 tufts at flora=10; adjust as needed
     for (let i = 0; i < tuftCount; i++) {
-        const rx = Math.floor(hash(tx, ty, 100 + i) * tileSize); // Seeded random x (0 to tileSize-1)
-        const ry = Math.floor(hash(tx, ty, 200 + i) * (tileSize * 0.6)) + (tileSize * 0.4); // Bias y toward bottom for "ground" feel
-        ctx.fillRect(drawX + rx, drawY + ry, 2, 4); // Small vertical tuft (adjust size for look)
+        const rx = Math.floor(hash(tx, ty, 100 + i) * tileSize);
+        const baseY = drawY + Math.floor(hash(tx, ty, 200 + i) * (tileSize * 0.3)) + (tileSize * 0.7); // Bias base to bottom 30% of tile
+        const tuftWidth = 2 + Math.floor(hash(tx, ty, 300 + i) * 3); // Vary 2-4px wide
+        const tuftHeight = 4 + Math.floor(hash(tx, ty, 400 + i) * 5); // Vary 4-8px tall
+        ctx.fillRect(drawX + rx, baseY - tuftHeight, tuftWidth, tuftHeight); // Draw upward from base
     }
 }
 
