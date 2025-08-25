@@ -1,8 +1,8 @@
 import { resize, draw, updateStatus, canvas, ctx } from './rendering.js';
 import { revealAround, updateResources } from './movement.js';
-import { moving, moveStartTime, moveDuration, moveDx, moveDy, px, py, prevx, prevy, visited, cooldown, health, gold } from './game_variables.js';
-import { getTile, getMaxStorage } from './utils.js'; // For game over check
-import { checkAdjacentMonsters, checkTileInteraction } from './interactions.js';
+import { gameState } from './game_variables.js';
+import { getTile } from './utils.js';
+import { checkAdjacentMonsters, checkTileInteraction, showAlert } from './interactions.js';
 import { getCurrentGameDate, timeConsumption } from './time_system.js';
 import { setupInputs } from './input_handlers.js';
 
@@ -18,35 +18,40 @@ setInterval(() => {
 }, 1000);
 setInterval(timeConsumption, 1000);
 
+// Async post-move logic
+async function postMove() {
+    let tile = getTile(gameState.px, gameState.py);
+    updateResources(tile);
+    await checkAdjacentMonsters();
+    await checkTileInteraction(tile);
+    if (gameState.health <= 0 || gameState.gold < -50) {
+        await showAlert('Game Over! ☠️');
+        location.reload();
+    }
+}
+
 // Game loop
 function loop() {
     let offsetDeltaX = 0;
     let offsetDeltaY = 0;
-    if (moving) {
+    if (gameState.moving) {
         let now = performance.now();
-        let fraction = (now - moveStartTime) / moveDuration;
+        let fraction = (now - gameState.moveStartTime) / gameState.moveDuration;
         if (fraction >= 1) {
             fraction = 1;
-            moving = false;
-            prevx = px;
-            prevy = py;
-            px += moveDx;
-            py += moveDy;
-            visited.add(`${px},${py}`);
+            gameState.moving = false;
+            gameState.prevx = gameState.px;
+            gameState.prevy = gameState.py;
+            gameState.px += gameState.moveDx;
+            gameState.py += gameState.moveDy;
+            gameState.visited.add(`${gameState.px},${gameState.py}`);
             revealAround();
-            let tile = getTile(px, py);
-            updateResources(tile);
-            checkAdjacentMonsters();
-            checkTileInteraction(tile);
-            if (health <= 0 || gold < -50) {
-                alert('Game Over! ☠️');
-                // Reset game (simple)
-                location.reload();
-            }
-            cooldown = false;
+            postMove().then(() => {
+                gameState.cooldown = false;
+            });
         }
-        offsetDeltaX = -fraction * moveDx * tileSize;
-        offsetDeltaY = -fraction * moveDy * tileSize;
+        offsetDeltaX = -fraction * gameState.moveDx * gameState.tileSize;
+        offsetDeltaY = -fraction * gameState.moveDy * gameState.tileSize;
     }
     draw(offsetDeltaX, offsetDeltaY);
     updateStatus();

@@ -1,7 +1,6 @@
 import { move } from './movement.js';
 import { showMenu } from './interactions.js';
-import { events } from './game_variables.js';
-import { offsetX, offsetY, tileSize, viewWidth, viewHeight } from './game_variables.js';
+import { gameState } from './game_variables.js';
 import { canvas } from './rendering.js';
 
 const directions = [
@@ -26,9 +25,9 @@ export function setupInputs() {
         let rect = canvas.getBoundingClientRect();
         let touchX = e.touches[0].clientX - rect.left;
         let touchY = e.touches[0].clientY - rect.top;
-        let vx = Math.floor((touchX - offsetX) / tileSize);
-        let vy = Math.floor((touchY - offsetY) / tileSize);
-        let centerV = Math.floor(viewWidth / 2);
+        let vx = Math.floor((touchX - gameState.offsetX) / gameState.tileSize);
+        let vy = Math.floor((touchY - gameState.offsetY) / gameState.tileSize);
+        let centerV = Math.floor(gameState.viewWidth / 2);
         if (vx === centerV && vy === centerV) {
             showMenu();
         }
@@ -43,7 +42,7 @@ export function setupInputs() {
     // Tap on date bar for events
     document.getElementById('date-bar').addEventListener('touchstart', (e) => {
         e.preventDefault();
-        const list = events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
-        alert(list || 'No events yet. 📜');
+        const list = gameState.events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
+        showAlert(list || 'No events yet. 📜');
     });
 }

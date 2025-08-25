@@ -1,12 +1,10 @@
-import { seed, group } from './game_variables.js';
-import { changed, killed } from './game_variables.js';
+import { gameState } from './game_variables.js';
 
 export function hash(x, y, s) {
-    let n = x * 12345 + y * 6789 + s * 98765 + seed;
+    let n = x * 12345 + y * 6789 + s * 98765 + gameState.seed;
     n = Math.sin(n) * 43758.5453;
     return n - Math.floor(n);
 }
-
 export function getBiome(x, y) {
     let dist = Math.sqrt(x * x + y * y);
     if (dist < 50) return 'temperate';
@@ -112,16 +110,17 @@ export function getEmojiForEntity(type) {
 }
 
 export function getGroupBonus(type) {
-    return group.reduce((total, g) => total + (g.bonus[type] || 0), 0);
+    return gameState.group.reduce((total, g) => total + (g.bonus[type] || 0), 0);
 }
 
 export function getNumCarriers() {
-    return group.filter(g => g.role === 'carrier').length;
+    return gameState.group.filter(g => g.role === 'carrier').length;
 }
 
 export function getMaxStorage() {
-    return 50 * group.length + 50 * getNumCarriers() + 200 * carts;
+    return 50 * gameState.group.length + 50 * getNumCarriers() + 200 * gameState.carts;
 }
+
 
 export function getBonusForRole(role) {
     const bonuses = {
