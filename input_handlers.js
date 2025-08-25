@@ -1,7 +1,8 @@
 import { move } from './movement.js';
 import { showMenu } from './interactions.js';
 import { events } from './game_variables.js';
-import { offsetX, offsetY, tileSize, viewWidth, viewHeight, canvas } from './rendering.js';
+import { offsetX, offsetY, tileSize, viewWidth, viewHeight } from './game_variables.js';
+import { canvas } from './rendering.js';
 
 const directions = [
     {id: 'btn-n', dx: 0, dy: -1},
