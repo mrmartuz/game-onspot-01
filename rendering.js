@@ -74,5 +74,5 @@ export function draw(offsetDeltaX, offsetDeltaY) {
 }
 
 export function updateStatus() {
-    document.getElementById('status-bar').innerText = `🪙: ${Math.floor(gameState.gold)} 🍞: ${Math.floor(gameState.food)} 💧: ${Math.floor(gameState.water)} ❤️‍🩹: ${Math.floor(gameState.health)} 👥: ${gameState.group.length}`;
+    document.getElementById('status-bar').innerText = `🪙: ${Math.floor(gameState.gold)} 🍞: ${Math.floor(gameState.food)} 💧: ${Math.floor(gameState.water)} 🛒:${gameState.carts} 🌟: ${Math.floor(gameState.discoverPoints)} ❤️‍🩹: ${Math.floor(gameState.health)} 👥: ${gameState.group.length}`;
 }

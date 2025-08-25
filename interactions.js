@@ -113,26 +113,26 @@ export async function checkTileInteraction(tile) {
         if (['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
             gameState.discoverPoints += 10;
             await showChoiceDialog(`Discovered ${tile.location}! 🌟`, [
-                {label: 'OK', value: 'ok'},
-                {label: '❌ Close', value: 'close'}
+                {label: 'OK', value: 'ok'}
             ]);
             logEvent(`🌟 Discovered ${tile.location} at (${gameState.px},${gameState.py})`);
         }
         let options = [
-            {label: '🚶 Leave', value: '1'},
-            {label: '❌ Close', value: 'close'}
+            {label: '🚶 Leave', value: '1'}
         ];
-        if (['camp', 'outpost'].includes(tile.location)) {
+        if (['camp', 'outpost', 'farm','hamlet', 'village', 'city'].includes(tile.location)) {
             options.push({label: '😴 Rest', value: '2'});
         }
-        if (['outpost', 'hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan'].includes(tile.entity)) {
+        if (['hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan'].includes(tile.entity)) {
             options.push({label: '🪙 Trade', value: '3'});
+        }
+        if (['outpost', 'farm', 'hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan', 'army', 'group'].includes(tile.entity)) {
             options.push({label: '🧍🏻 Hire', value: '4'});
         }
         if (tile.location === 'city') {
-            options.push({label: '🪙 Sell discoveries', value: '5'});
+            options.push({label: '🌟 Sell discoveries', value: '5'});
         }
-        if (tile.location === 'village') {
+        if (['village', 'city'].includes(tile.location) || ['caravan'].includes(tile.entity)) {
             options.push({label: '🏹 Sell hunts', value: '6'});
         }
         let msg = `At ${tile.location} ${tile.entity}`;
@@ -150,16 +150,17 @@ export async function handleChoice(choice, tile) {
         gameState.food -= gameState.group.length * 0.5;
         gameState.water -= gameState.group.length * 0.5;
         await showChoiceDialog('Rested. 😴', [
-            {label: 'OK', value: 'ok'},
-            {label: '❌ Close', value: 'close'}
+            {label: 'OK', value: 'ok'}
         ]);
         logEvent('😴 Rested');
     } else if (choice === '3') { // Trade
         let t = await showChoiceDialog('Trade options:', [
             {label: '📥 Buy food 🍞 (10 for 10g)', value: '1'},
-            {label: '📥 Buy water 💧 (10 for 10g)', value: '2'},
-            {label: '📤 Sell wood 🪵 (5 for 10g)', value: '3'},
-            {label: '📥 Buy cart 🛒 (100g for 1)', value: '4'},
+            {label: '📥 Sell food 🍞 (10 for 3g)', value: '2'},
+            {label: '📥 Buy water 💧 (10 for 10g)', value: '3'},
+            {label: '📥 Sell water 💧 (10 for 3g)', value: '4'},
+            {label: '📤 Sell wood 🪵 (5 for 10g)', value: '5'},
+            {label: '📥 Buy cart 🛒 (100g for 1)', value: '6'},
             {label: '❌ Close', value: 'close'}
         ]);
         if (t === 'close') return;
@@ -172,41 +173,57 @@ export async function handleChoice(choice, tile) {
                 tradeDesc = '📥 Bought 10 food 🍞 for 10g';
             } else {
                 await showChoiceDialog('Not enough gold or storage! ⚠️', [
-                    {label: 'OK', value: 'ok'},
-                    {label: '❌ Close', value: 'close'}
+                    {label: 'OK', value: 'ok'}
                 ]);
             }
         } else if (t === '2') {
+            if (gameState.food >= 10) {
+                gameState.food -= 10;
+                gameState.gold += 3;
+                tradeDesc = '📥 Sold 10 food 🍞 for 3g';
+            } else {
+                await showChoiceDialog('Not enough food! ⚠️', [
+                    {label: 'OK', value: 'ok'}
+                ]);
+            }
+        } else if (t === '3') {
             if (gameState.gold >= 10 && gameState.water + 10 <= max_storage) {
                 gameState.water += 10;
                 gameState.gold -= 10;
                 tradeDesc = '📥 Bought 10 water 💧 for 10g';
             } else {
                 await showChoiceDialog('Not enough gold or storage! ⚠️', [
-                    {label: 'OK', value: 'ok'},
-                    {label: '❌ Close', value: 'close'}
+                    {label: 'OK', value: 'ok'}
                 ]);
             }
-        } else if (t === '3') {
+        } else if (t === '4') {
+            if (gameState.water >= 10) {
+                gameState.water -= 10;
+                gameState.gold += 3;
+                tradeDesc = '📥 Sold 10 water 💧 for 3g';
+            } else {
+                await showChoiceDialog('Not enough water! ⚠️', [
+                    {label: 'OK', value: 'ok'}
+                ]);
+            }
+        } else if (t === '5') {
             if (gameState.wood >= 5) {
                 gameState.wood -= 5;
                 gameState.gold += 10;
                 tradeDesc = '📤 Sold 5 wood 🪵 for 10g';
             } else {
                 await showChoiceDialog('Not enough wood! ⚠️', [
-                    {label: 'OK', value: 'ok'},
-                    {label: '❌ Close', value: 'close'}
+                    {label: 'OK', value: 'ok'}
                 ]);
             }
-        } else if (t === '4') {
+        } else if (t === '6') {
             if (gameState.gold >= 100) {
                 gameState.carts += 1;
                 gameState.gold -= 100;
                 tradeDesc = '📥 Bought cart 🛒 for 100g';
             } else {
                 await showChoiceDialog('Not enough gold! ⚠️', [
-                    {label: 'OK', value: 'ok'},
-                    {label: '❌ Close', value: 'close'}
+                    {label: 'OK', value: 'ok'}
                 ]);
             }
         }
@@ -233,14 +250,12 @@ export async function handleChoice(choice, tile) {
                 gameState.group.push({role, bonus: getBonusForRole(role)});
                 gameState.gold -= cost;
                 await showChoiceDialog(`Hired ${role}! 👏`, [
-                    {label: 'OK', value: 'ok'},
-                    {label: '❌ Close', value: 'close'}
+                    {label: 'OK', value: 'ok'}
                 ]);
                 logEvent(`🧍🏻 Hired ${role} for ${cost}g`);
             } else {
                 await showChoiceDialog('Not enough gold! ⚠️', [
-                    {label: 'OK', value: 'ok'},
-                    {label: '❌ Close', value: 'close'}
+                    {label: 'OK', value: 'ok'}
                 ]);
             }
         }
@@ -249,22 +264,21 @@ export async function handleChoice(choice, tile) {
         logEvent(`🪙 Sold discoveries for ${gameState.discoverPoints}g`);
         gameState.discoverPoints = 0;
         await showChoiceDialog('Sold discoveries! 🪙', [
-            {label: 'OK', value: 'ok'},
-            {label: '❌ Close', value: 'close'}
+            {label: 'OK', value: 'ok'}
         ]);
     } else if (choice === '6') { // Sell hunts
         gameState.gold += gameState.killPoints;
         logEvent(`🪙 Sold hunts for ${gameState.killPoints}g`);
         gameState.killPoints = 0;
         await showChoiceDialog('Sold hunts! 🪙', [
-            {label: 'OK', value: 'ok'},
-            {label: '❌ Close', value: 'close'}
+            {label: 'OK', value: 'ok'}
         ]);
     }
 }
 
 export async function showMenu() {
-    let inv = `❤️‍🩹 Health: ${gameState.health} 🪙 Gold: ${gameState.gold} 🍞 Food: ${gameState.food.toFixed(1)} 💧 Water: ${gameState.water.toFixed(1)} ⛺ Tents: ${gameState.tents} 🧱 Mats: ${gameState.building_mats} 🪵 Wood: ${gameState.wood}`;
+    let max_storage = getMaxStorage();
+    let inv = `❤️‍🩹 Health: ${gameState.health} 🌟 Discoveries: ${gameState.discoverPoints} 🪙 Gold: ${gameState.gold} 🍞 Food: ${gameState.food.toFixed(1)}/${max_storage} 💧 Water: ${gameState.water.toFixed(1)}/${max_storage} ⛺ Tents: ${gameState.tents} 🧱 Mats: ${gameState.building_mats} 🪵 Wood: ${gameState.wood}`;
     let grp = gameState.group.map(g => g.role).join(', ');
     let msg = `${inv}\n👥 Group: ${grp}`;
     console.log('Menu message:', msg); // Debug
@@ -305,25 +319,21 @@ export async function showMenu() {
                     gameState.building_mats -= costMats;
                     gameState.wood -= costWood;
                     await showChoiceDialog(`Built ${type}! 🏗️`, [
-                        {label: 'OK', value: 'ok'},
-                        {label: '❌ Close', value: 'close'}
+                        {label: 'OK', value: 'ok'}
                     ]);
                     logEvent(`🏗️ Built ${type} at (${bx},${by})`);
                 } else {
                     await showChoiceDialog('Cannot build there. 🚫', [
-                        {label: 'OK', value: 'ok'},
                         {label: '❌ Close', value: 'close'}
                     ]);
                 }
             } else {
                 await showChoiceDialog('Invalid direction. ❓', [
-                    {label: 'OK', value: 'ok'},
                     {label: '❌ Close', value: 'close'}
                 ]);
             }
         } else {
             await showChoiceDialog('Not enough materials! ⚠️', [
-                {label: 'OK', value: 'ok'},
                 {label: '❌ Close', value: 'close'}
             ]);
         }
