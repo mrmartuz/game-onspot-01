@@ -110,7 +110,11 @@ export function getEmojiForEntity(type) {
 }
 
 export function getGroupBonus(type) {
-    return gameState.group.reduce((total, g) => total + (g.bonus[type] || 0), 0);
+    // Get individual role bonuses
+    const roleBonus = gameState.group.reduce((total, g) => total + (g.bonus[type] || 0), 0);
+    // Add the groupBonus modifier
+    const groupModifier = gameState.groupBonus[type] || 0;
+    return roleBonus + groupModifier;
 }
 
 export function getNumCarriers() {
@@ -118,7 +122,14 @@ export function getNumCarriers() {
 }
 
 export function getMaxStorage() {
-    return 50 * gameState.group.length + 50 * getNumCarriers() + 200 * gameState.carts;
+    // Base storage: 50 per person + 50 per carrier + 200 per cart
+    let baseStorage = 50 * gameState.group.length + 50 * getNumCarriers() + 200 * gameState.carts;
+    
+    // Apply carry bonus for additional storage capacity
+    let carryBonus = gameState.groupBonus.carry || 0;
+    let bonusStorage = Math.floor(baseStorage * carryBonus);
+    
+    return baseStorage + bonusStorage;
 }
 
 
@@ -136,4 +147,42 @@ export function getBonusForRole(role) {
         'navigator': {view: 1}
     };
     return bonuses[role] || {};
+}
+
+export function updateGroupBonus() {
+    // Reset all bonuses
+    Object.keys(gameState.groupBonus).forEach(key => {
+        gameState.groupBonus[key] = 0;
+    });
+    
+    // Calculate group bonuses based on role composition
+    let roleCounts = {};
+    gameState.group.forEach(member => {
+        roleCounts[member.role] = (roleCounts[member.role] || 0) + 1;
+    });
+    
+    // Apply bonuses based on role combinations (adjusted thresholds)
+    if (roleCounts['native-guide'] >= 2) gameState.groupBonus.navigation += 0.3;
+    if (roleCounts['explorer'] >= 2) gameState.groupBonus.discovery += 0.4; // Changed from 3 to 2
+    if (roleCounts['cook'] >= 2) gameState.groupBonus.food += 0.3;
+    if (roleCounts['guard'] >= 2) gameState.groupBonus.combat += 0.4;
+    if (roleCounts['geologist'] >= 2) gameState.groupBonus.resource += 0.3;
+    if (roleCounts['biologist'] >= 2) gameState.groupBonus.plant += 0.3;
+    if (roleCounts['translator'] >= 2) gameState.groupBonus.interact += 0.3;
+    if (roleCounts['carrier'] >= 2) gameState.groupBonus.carry += 0.4; // Changed from 3 to 2
+    if (roleCounts['medic'] >= 2) gameState.groupBonus.health += 0.4;
+    if (roleCounts['navigator'] >= 2) gameState.groupBonus.view += 1;
+    
+    // Special combination bonuses
+    if (roleCounts['native-guide'] && roleCounts['navigator']) {
+        gameState.groupBonus.navigation += 0.2;
+    }
+    if (roleCounts['geologist'] && roleCounts['biologist']) {
+        gameState.groupBonus.resource += 0.2;
+        gameState.groupBonus.plant += 0.2;
+    }
+    if (roleCounts['medic'] && roleCounts['guard']) {
+        gameState.groupBonus.health += 0.2;
+        gameState.groupBonus.combat += 0.2;
+    }
 }

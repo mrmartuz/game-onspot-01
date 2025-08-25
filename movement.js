@@ -10,6 +10,8 @@ export function move(dx, dy) {
     let ty = gameState.py + dy;
     let tile = getTile(tx, ty);
     let navigationBonus = getGroupBonus('navigation');
+    
+    // Apply terrain-specific navigation bonuses
     gameState.group.forEach(g => {
         if (g.role === 'navigator' && tile.terrain === 'dirt' && tile.flora < 6) {
             navigationBonus += 0.2;
@@ -19,15 +21,23 @@ export function move(dx, dy) {
             navigationBonus += 0.2;
         }
     });
-    let baseDuration = (400 + tile.inclination * 80 + tile.flora * 40) * (1 - navigationBonus);
+    
+    // Apply navigation bonus to movement speed (navigation bonus makes movement faster)
+    let baseDuration = (400 + tile.inclination * 80 + tile.flora * 40);
+    let navigationSpeedMultiplier = Math.max(0.3, 1 - navigationBonus); // Minimum 30% of original speed
+    let adjustedDuration = baseDuration * navigationSpeedMultiplier;
+    
     let loadFactor = (gameState.food + gameState.water) / getMaxStorage();
-    gameState.moveDuration = baseDuration * (1 + loadFactor * 0.5);
+    gameState.moveDuration = adjustedDuration * (1 + loadFactor * 0.5);
     gameState.moveDx = dx;
     gameState.moveDy = dy;
 }
 
 export function revealAround() {
-    let currentViewDist = gameState.viewDist + Math.floor(getGroupBonus('view'));
+    // Apply view bonus for increased view distance
+    let viewBonus = getGroupBonus('view');
+    let currentViewDist = gameState.viewDist + Math.floor(viewBonus);
+    
     for (let ddx = -currentViewDist; ddx <= currentViewDist; ddx++) {
         for (let ddy = -currentViewDist; ddy <= currentViewDist; ddy++) {
             if (Math.sqrt(ddx * ddx + ddy * ddy) <= currentViewDist) {
@@ -38,8 +48,33 @@ export function revealAround() {
 }
 
 export function updateResources(tile) {
-    gameState.food += tile.flora * 0.1 * (1 + getGroupBonus('plant'));
+    // Apply plant bonus for food gain on flower tiles
+    let plantBonus = getGroupBonus('plant');
+    let foodGain = tile.flora * 0.1;
+    
+    // Bonus food on flower tiles (flora > 6)
+    if (tile.flora > 6 && tile.flora_type !== 'none') {
+        foodGain += 1 * (1 + plantBonus); // Base 1 food + plant bonus
+    }
+    
+    gameState.food += foodGain;
     gameState.food = Math.min(gameState.food, getMaxStorage());
-    if (Math.random() < 0.05 * (1 + getGroupBonus('resource'))) gameState.wood += 1;
+    
+    // Apply resource bonus for wood gain on high flora tiles
+    let resourceBonus = getGroupBonus('resource');
+    if (tile.flora > 6) {
+        // Higher chance and amount of wood on high flora tiles
+        let woodChance = 0.15 * (1 + resourceBonus);
+        if (Math.random() < woodChance) {
+            let woodAmount = 1 + Math.floor(resourceBonus * 2); // 1-3 wood based on bonus
+            gameState.wood += woodAmount;
+        }
+    } else {
+        // Regular wood chance on other tiles
+        if (Math.random() < 0.05 * (1 + resourceBonus)) {
+            gameState.wood += 1;
+        }
+    }
+    
     gameState.water = Math.min(gameState.water, getMaxStorage());
 }

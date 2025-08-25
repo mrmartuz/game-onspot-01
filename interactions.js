@@ -1,5 +1,5 @@
 import { gameState } from './game_variables.js';
-import { getGroupBonus, getTile, getMaxStorage, getBonusForRole } from './utils.js';
+import { getGroupBonus, getTile, getMaxStorage, getBonusForRole, updateGroupBonus } from './utils.js';
 import { logEvent, getCurrentGameDate } from './time_system.js';
 import { updateStatus } from './rendering.js';
 
@@ -72,8 +72,12 @@ export async function handleCombat(ex, ey, isOnTile = false) {
         }
         return false;
     }
+    
+    // Apply combat bonus for better success chance
     let combatBonus = getGroupBonus('combat');
-    let success = Math.random() < 0.5 + combatBonus;
+    let baseSuccessChance = 0.5;
+    let success = Math.random() < baseSuccessChance + combatBonus;
+    
     if (success) {
         await showChoiceDialog('Victory! 🏆', [
             {label: 'OK', value: 'ok'}
@@ -84,10 +88,16 @@ export async function handleCombat(ex, ey, isOnTile = false) {
         logEvent(`🏆 Defeated ${entity} at (${ex},${ey})`);
         return true;
     } else {
+        // Apply health bonus to reduce damage taken
+        let healthBonus = getGroupBonus('health');
+        let damageReduction = healthBonus * 0.5; // Health bonus reduces damage by up to 50%
+        let baseDamage = isOnTile ? 20 : 10;
+        let finalDamage = Math.max(1, baseDamage * (1 - damageReduction));
+        
         await showChoiceDialog('Defeat! Took damage.🤕', [
             {label: 'OK', value: 'ok'}
         ]);
-        gameState.health -= isOnTile ? 20 : 10;
+        gameState.health -= finalDamage;
         updateStatus();
         logEvent(`🤕 Defeated by ${entity} at (${ex},${ey})`);
         return false;
@@ -114,12 +124,20 @@ export async function checkTileInteraction(tile) {
 1
     if (tile.location !== 'none' || tile.entity !== 'none') {
         if (['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
-            gameState.discoverPoints += 10;
+            // Apply discovery bonus to discovery points
+            let discoveryBonus = getGroupBonus('discovery');
+            let basePoints = 10;
+            let bonusPoints = Math.floor(basePoints * discoveryBonus * Math.random()); // Random bonus based on discovery skill
+            let totalPoints = basePoints + bonusPoints;
+            
+            gameState.discoverPoints += totalPoints;
             updateStatus();
-            await showChoiceDialog(`Discovered ${tile.location}! 🌟`, [
+            
+            let bonusText = bonusPoints > 0 ? ` (+${bonusPoints} bonus)` : '';
+            await showChoiceDialog(`Discovered ${tile.location}! 🌟${bonusText}`, [
                 {label: 'OK', value: 'ok'}
             ]);
-            logEvent(`🌟 Discovered ${tile.location} at (${gameState.px},${gameState.py})`);
+            logEvent(`🌟 Discovered ${tile.location} at (${gameState.px},${gameState.py}) +${totalPoints} points`);
         }
         let options = [
             {label: '🚶 Leave', value: '1'}
@@ -150,21 +168,34 @@ export async function handleChoice(choice, tile) {
         return; // Close dialog without further action
     }
     if (choice === '2') { // Rest
-        gameState.health = Math.min(100, gameState.health + 10 * (1 + getGroupBonus('health')));
+        // Apply health bonus for better healing
+        let healthBonus = getGroupBonus('health');
+        let baseHealing = 10;
+        let bonusHealing = Math.floor(baseHealing * healthBonus * 0.5); // Health bonus adds up to 50% more healing
+        let totalHealing = baseHealing + bonusHealing;
+        
+        gameState.health = Math.min(100, gameState.health + totalHealing);
         gameState.food -= gameState.group.length * 0.5;
         gameState.water -= gameState.group.length * 0.5;
         updateStatus();
-        await showChoiceDialog('Rested. 😴', [
+        
+        let bonusText = bonusHealing > 0 ? ` (+${bonusHealing} bonus)` : '';
+        await showChoiceDialog(`Rested. 😴 Healed ${totalHealing} health${bonusText}`, [
             {label: 'OK', value: 'ok'}
         ]);
-        logEvent('😴 Rested');
+        logEvent(`😴 Rested and healed ${totalHealing} health${bonusText}`);
     } else if (choice === '3') { // Trade
+        // Apply interact bonus for better trade prices
+        let interactBonus = getGroupBonus('interact');
+        let buyDiscount = Math.min(0.3, interactBonus * 0.5); // Up to 30% discount on buying
+        let sellBonus = Math.min(0.5, interactBonus * 0.8); // Up to 50% bonus on selling
+        
         let t = await showChoiceDialog('Trade options:', [
-            {label: '📥 Buy food 🍞 (10 for 10g)', value: '1'},
-            {label: '📥 Sell food 🍞 (10 for 3g)', value: '2'},
-            {label: '📥 Buy water 💧 (10 for 10g)', value: '3'},
-            {label: '📥 Sell water 💧 (10 for 3g)', value: '4'},
-            {label: '📤 Sell wood 🪵 (5 for 10g)', value: '5'},
+            {label: `📥 Buy food 🍞 (${Math.floor(10 * (1 - buyDiscount))} for 10g)`, value: '1'},
+            {label: `📥 Sell food 🍞 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`, value: '2'},
+            {label: `📥 Buy water 💧 (${Math.floor(10 * (1 - buyDiscount))} for 10g)`, value: '3'},
+            {label: `📥 Sell water 💧 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`, value: '4'},
+            {label: `📤 Sell wood 🪵 (5 for ${Math.floor(10 * (1 + sellBonus))}g)`, value: '5'},
             {label: '📥 Buy cart 🛒 (100g for 1)', value: '6'},
             {label: '❌ Close', value: 'close'}
         ]);
@@ -173,10 +204,11 @@ export async function handleChoice(choice, tile) {
         let max_storage = getMaxStorage();
         if (t === '1') {
             if (gameState.gold >= 10 && gameState.food + 10 <= max_storage) {
-                gameState.food += 10;
+                let actualFood = Math.floor(10 * (1 - buyDiscount));
+                gameState.food += actualFood;
                 gameState.gold -= 10;
                 updateStatus();
-                tradeDesc = '📥 Bought 10 food 🍞 for 10g';
+                tradeDesc = `📥 Bought ${actualFood} food 🍞 for 10g`;
             } else {
                 await showChoiceDialog('Not enough gold or storage! ⚠️', [
                     {label: 'OK', value: 'ok'}
@@ -185,8 +217,10 @@ export async function handleChoice(choice, tile) {
         } else if (t === '2') {
             if (gameState.food >= 10) {
                 gameState.food -= 10;
-                gameState.gold += 3;
-                tradeDesc = '📥 Sold 10 food 🍞 for 3g';
+                let actualGold = Math.floor(3 * (1 + sellBonus));
+                gameState.gold += actualGold;
+                updateStatus();
+                tradeDesc = `📥 Sold 10 food 🍞 for ${actualGold}g`;
             } else {
                 await showChoiceDialog('Not enough food! ⚠️', [
                     {label: 'OK', value: 'ok'}
@@ -194,9 +228,11 @@ export async function handleChoice(choice, tile) {
             }
         } else if (t === '3') {
             if (gameState.gold >= 10 && gameState.water + 10 <= max_storage) {
-                gameState.water += 10;
+                let actualWater = Math.floor(10 * (1 - buyDiscount));
+                gameState.water += actualWater;
                 gameState.gold -= 10;
-                tradeDesc = '📥 Bought 10 water 💧 for 10g';
+                updateStatus();
+                tradeDesc = `📥 Bought ${actualWater} water 💧 for 10g`;
             } else {
                 await showChoiceDialog('Not enough gold or storage! ⚠️', [
                     {label: 'OK', value: 'ok'}
@@ -205,8 +241,10 @@ export async function handleChoice(choice, tile) {
         } else if (t === '4') {
             if (gameState.water >= 10) {
                 gameState.water -= 10;
-                gameState.gold += 3;
-                tradeDesc = '📥 Sold 10 water 💧 for 3g';
+                let actualGold = Math.floor(3 * (1 + sellBonus));
+                gameState.gold += actualGold;
+                updateStatus();
+                tradeDesc = `📥 Sold 10 water 💧 for ${actualGold}g`;
             } else {
                 await showChoiceDialog('Not enough water! ⚠️', [
                     {label: 'OK', value: 'ok'}
@@ -215,8 +253,10 @@ export async function handleChoice(choice, tile) {
         } else if (t === '5') {
             if (gameState.wood >= 5) {
                 gameState.wood -= 5;
-                gameState.gold += 10;
-                tradeDesc = '📤 Sold 5 wood 🪵 for 10g';
+                let actualGold = Math.floor(10 * (1 + sellBonus));
+                gameState.gold += actualGold;
+                updateStatus();
+                tradeDesc = `📤 Sold 5 wood 🪵 for ${actualGold}g`;
             } else {
                 await showChoiceDialog('Not enough wood! ⚠️', [
                     {label: 'OK', value: 'ok'}
@@ -237,12 +277,17 @@ export async function handleChoice(choice, tile) {
             logEvent(tradeDesc);
         }
     } else if (choice === '4') { // Hire
+        // Apply interact bonus for hiring discounts
+        let interactBonus = getGroupBonus('interact');
+        let hireDiscount = Math.min(0.4, interactBonus * 0.6); // Up to 40% discount on hiring
+        
         const roles = ['native-guide👲🏻', 'cook🧑🏻‍🍳', 'guard💂🏻', 'geologist🧑🏻‍🔬', 'biologist🧑🏻‍🔬', 'translator👳🏻', 'carrier🧑🏻‍🔧', 'medic🧑🏻‍⚕️', 'navigator🧑🏻‍✈️'];
         let hires = [];
         for (let i = 0; i < 3; i++) {
             let r = roles[Math.floor(Math.random() * roles.length)];
-            let cost = 50 + Math.floor(Math.random() * 50);
-            hires.push({label: `${i+1}: ${r} for ${cost}g`, value: (i+1).toString()});
+            let baseCost = 50 + Math.floor(Math.random() * 50);
+            let actualCost = Math.floor(baseCost * (1 - hireDiscount));
+            hires.push({label: `${i+1}: ${r} for ${actualCost}g`, value: (i+1).toString(), baseCost, actualCost});
         }
         hires.push({label: '❌ Close', value: 'close'});
         let c = await showChoiceDialog('Hire options:', hires);
@@ -251,14 +296,16 @@ export async function handleChoice(choice, tile) {
             let idx = parseInt(c) - 1;
             let hireStr = hires[idx].label;
             let role = hireStr.split(': ')[1].split(' for ')[0];
-            let cost = parseInt(hireStr.split(' for ')[1]);
+            let cost = hires[idx].actualCost;
             if (gameState.gold >= cost) {
                 gameState.group.push({role, bonus: getBonusForRole(role)});
                 gameState.gold -= cost;
-                await showChoiceDialog(`Hired ${role}! 👏`, [
+                updateGroupBonus(); // Recalculate group bonuses after hiring
+                let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
+                await showChoiceDialog(`Hired ${role}! 👏${discountText}`, [
                     {label: 'OK', value: 'ok'}
                 ]);
-                logEvent(`🧍🏻 Hired ${role} for ${cost}g`);
+                logEvent(`🧍🏻 Hired ${role} for ${cost}g${discountText}`);
             } else {
                 await showChoiceDialog('Not enough gold! ⚠️', [
                     {label: 'OK', value: 'ok'}
@@ -499,6 +546,8 @@ export async function showDiscoveriesDialog() {
 }
 
 export async function showHealthGroupDialog() {
+    let message = '';
+    
     // Player character (first character) details
     const player = gameState.group[0] || {role: 'Explorer', bonus: {}};
     const playerBonus = player.bonus || {};
@@ -514,7 +563,37 @@ export async function showHealthGroupDialog() {
             playerStats += `  ${bonus}: +${(value * 100).toFixed(0)}%\n`;
         });
     }
+
+    message += playerStats;
     
+    message += `\nGroup Bonus:\n`;
+
+Object.entries(gameState.groupBonus).forEach(([bonus, value]) => {
+        if (value > 0) {
+            let emoji = '';
+            let description = '';
+            
+            switch(bonus) {
+                case 'navigation': emoji = '🧭'; description = 'Faster movement'; break;
+                case 'discovery': emoji = '🔍'; description = 'More discovery points'; break;
+                case 'food': emoji = '🍞'; description = 'Slower food consumption'; break;
+                case 'combat': emoji = '⚔️'; description = 'Better combat success'; break;
+                case 'resource': emoji = '🪵'; description = 'More wood from flora'; break;
+                case 'plant': emoji = '🌱'; description = 'Bonus food from flowers'; break;
+                case 'interact': emoji = '🤝'; description = 'Better trade prices'; break;
+                case 'carry': emoji = '📦'; description = 'Increased storage'; break;
+                case 'health': emoji = '❤️'; description = 'Better healing'; break;
+                case 'view': emoji = '👁️'; description = 'Increased view distance'; break;
+            }
+            
+            message += `${emoji} **${bonus.charAt(0).toUpperCase() + bonus.slice(1)}**: +${(value * 100).toFixed(0)}% - ${description}\n`;
+        }
+    });
+    
+    if (Object.values(gameState.groupBonus).every(v => v === 0)) {
+        message += `No active group bonuses. Hire more specialized roles to unlock bonuses!\n`;
+    }
+
     // Other party members
     let otherMembers = '';
     if (gameState.group.length > 1) {
@@ -534,7 +613,8 @@ export async function showHealthGroupDialog() {
         otherMembers = `\n👥 **No other party members**`;
     }
     
-    const message = playerStats + otherMembers;
+    message += otherMembers;
+    
     
     return showChoiceDialog(message, [
         {label: '❌ Close', value: 'close'}

@@ -34,9 +34,12 @@ export function timeConsumption() {
     foodTimes.forEach(foodHour => {
         if ((lastHour < foodHour && currentHour >= foodHour) || 
             (lastHour === foodHour && lastMinute < 0 && currentMinute >= 0)) {
-            const foodPerMeal = gameState.group.length * (1 - getGroupBonus('food')) / 3;
+            // Apply food bonus to reduce consumption (food bonus makes food last longer)
+            let foodBonus = getGroupBonus('food');
+            let consumptionReduction = Math.min(0.5, foodBonus * 0.8); // Up to 50% reduction
+            const foodPerMeal = gameState.group.length * (1 - consumptionReduction) / 3;
             gameState.food = Math.max(0, gameState.food - foodPerMeal);
-            logEvent(`🍞 Consumed ${foodPerMeal.toFixed(1)} food for meal`);
+            logEvent(`🍞 Consumed ${foodPerMeal.toFixed(1)} food for meal (${Math.floor(consumptionReduction * 100)}% reduction applied)`);
         }
     });
     
