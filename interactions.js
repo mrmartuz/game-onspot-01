@@ -10,47 +10,45 @@ async function showChoiceDialog(message, buttons) {
         // Wrap the message in a div
         const pDiv = document.createElement('div');
         const p = document.createElement('p');
-        p.textContent = message;
+        p.textContent = message || 'No message provided'; // Fallback for empty message
         pDiv.appendChild(p);
         gameDialog.appendChild(pDiv);
         // Wrap each button in its own div
-        buttons.forEach(({label, value}) => {
+        if (buttons && buttons.length > 0) {
+            buttons.forEach(({label, value}) => {
+                const btnDiv = document.createElement('div');
+                const btn = document.createElement('button');
+                btn.textContent = label || 'Unnamed Button';
+                btn.addEventListener('click', () => {
+                    gameDialog.close(value);
+                });
+                btnDiv.appendChild(btn);
+                gameDialog.appendChild(btnDiv);
+            });
+        } else {
+            console.warn('showChoiceDialog: No buttons provided, adding fallback Close button');
             const btnDiv = document.createElement('div');
             const btn = document.createElement('button');
-            btn.textContent = label;
+            btn.textContent = '❌ Close';
             btn.addEventListener('click', () => {
-                gameDialog.close(value);
+                gameDialog.close('close');
             });
             btnDiv.appendChild(btn);
             gameDialog.appendChild(btnDiv);
-        });
-        gameDialog.addEventListener('close', () => resolve(gameDialog.returnValue), {once: true});
+        }
+        // Log dialog content for debugging
+        console.log('Dialog HTML:', gameDialog.innerHTML);
+        // Ensure dialog is not already open
+        if (gameDialog.open) {
+            gameDialog.close();
+        }
         gameDialog.showModal();
+        gameDialog.addEventListener('close', () => resolve(gameDialog.returnValue), {once: true});
     });
 }
 
-export async function showAlert(message) {
-    return new Promise((resolve) => {
-        gameDialog.innerHTML = '';
-        // Wrap the message in a div
-        const pDiv = document.createElement('div');
-        const p = document.createElement('p');
-        p.textContent = message;
-        pDiv.appendChild(p);
-        gameDialog.appendChild(pDiv);
-        // Wrap the OK button in a div
-        const btnDiv = document.createElement('div');
-        const btn = document.createElement('button');
-        btn.textContent = 'OK';
-        btn.addEventListener('click', () => {
-            gameDialog.close();
-        });
-        btnDiv.appendChild(btn);
-        gameDialog.appendChild(btnDiv);
-        gameDialog.addEventListener('close', () => resolve(), {once: true});
-        gameDialog.showModal();
-    });
-}
+// Remove showAlert since it will be replaced by showChoiceDialog
+// export async function showAlert(message) { ... } // Removed
 
 export async function handleCombat(ex, ey, isOnTile = false) {
     let tile = getTile(ex, ey);
@@ -63,22 +61,30 @@ export async function handleCombat(ex, ey, isOnTile = false) {
         if (isOnTile) {
             gameState.px = gameState.prevx;
             gameState.py = gameState.prevy;
-            await showAlert('Fled back. 😵‍💫');
+            await showChoiceDialog('Fled back. 😵‍💫', [
+                {label: 'OK', value: 'ok'}
+            ]);
         } else {
-            await showAlert('Fled, staying put. 😅');
+            await showChoiceDialog('Fled, staying put. 😅', [
+                {label: 'OK', value: 'ok'}
+            ]);
         }
         return false;
     }
     let combatBonus = getGroupBonus('combat');
     let success = Math.random() < 0.5 + combatBonus;
     if (success) {
-        await showAlert('Victory! 🏆');
+        await showChoiceDialog('Victory! 🏆', [
+            {label: 'OK', value: 'ok'}
+        ]);
         gameState.killed.add(`${ex},${ey}`);
         gameState.killPoints += 5;
         logEvent(`🏆 Defeated ${entity} at (${ex},${ey})`);
         return true;
     } else {
-        await showAlert('Defeat! Took damage.🤕');
+        await showChoiceDialog('Defeat! Took damage.🤕', [
+            {label: 'OK', value: 'ok'}
+        ]);
         gameState.health -= isOnTile ? 20 : 10;
         logEvent(`🤕 Defeated by ${entity} at (${ex},${ey})`);
         return false;
@@ -102,43 +108,61 @@ export async function checkTileInteraction(tile) {
         await handleCombat(gameState.px, gameState.py, true);
         return;
     }
+1
     if (tile.location !== 'none' || tile.entity !== 'none') {
         if (['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
             gameState.discoverPoints += 10;
-            await showAlert(`Discovered ${tile.location}! 🌟`);
+            await showChoiceDialog(`Discovered ${tile.location}! 🌟`, [
+                {label: 'OK', value: 'ok'},
+                {label: '❌ Close', value: 'close'}
+            ]);
             logEvent(`🌟 Discovered ${tile.location} at (${gameState.px},${gameState.py})`);
         }
-        let options = ['1: 🚶 Leave'];
-        if (['camp', 'outpost'].includes(tile.location)) options.push('2: 😴 Rest');
-        if (['outpost', 'hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan'].includes(tile.entity)) {
-            options.push('3: 🪙 Trade');
-            options.push('4: 🧍🏻 Hire');
+        let options = [
+            {label: '🚶 Leave', value: '1'},
+            {label: '❌ Close', value: 'close'}
+        ];
+        if (['camp', 'outpost'].includes(tile.location)) {
+            options.push({label: '😴 Rest', value: '2'});
         }
-        if (tile.location === 'city') options.push('5: 🪙 Sell discoveries');
-        if (tile.location === 'village') options.push('6: 🏹 Sell hunts');
+        if (['outpost', 'hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan'].includes(tile.entity)) {
+            options.push({label: '🪙 Trade', value: '3'});
+            options.push({label: '🧍🏻 Hire', value: '4'});
+        }
+        if (tile.location === 'city') {
+            options.push({label: '🪙 Sell discoveries', value: '5'});
+        }
+        if (tile.location === 'village') {
+            options.push({label: '🏹 Sell hunts', value: '6'});
+        }
         let msg = `At ${tile.location} ${tile.entity}`;
-        let choice = await showChoiceDialog(msg, options.map(opt => {
-            let [val, label] = opt.split(': ');
-            return {label, value: val};
-        }));
+        let choice = await showChoiceDialog(msg, options);
         await handleChoice(choice, tile);
     }
 }
 
 export async function handleChoice(choice, tile) {
+    if (choice === 'close') {
+        return; // Close dialog without further action
+    }
     if (choice === '2') { // Rest
         gameState.health = Math.min(100, gameState.health + 10 * (1 + getGroupBonus('health')));
-        gameState.food -= gameState.group.length * 0.5;
+        gameState.food -= gameState.group.length * 0.5;
         gameState.water -= gameState.group.length * 0.5;
-        await showAlert('Rested. 😴');
+        await showChoiceDialog('Rested. 😴', [
+            {label: 'OK', value: 'ok'},
+            {label: '❌ Close', value: 'close'}
+        ]);
         logEvent('😴 Rested');
     } else if (choice === '3') { // Trade
         let t = await showChoiceDialog('Trade options:', [
             {label: '📥 Buy food 🍞 (10 for 10g)', value: '1'},
             {label: '📥 Buy water 💧 (10 for 10g)', value: '2'},
             {label: '📤 Sell wood 🪵 (5 for 10g)', value: '3'},
-            {label: '📥 Buy cart 🛒 (100g for 1)', value: '4'}
+            {label: '📥 Buy cart 🛒 (100g for 1)', value: '4'},
+            {label: '❌ Close', value: 'close'}
         ]);
+        if (t === 'close') return;
         let tradeDesc = '';
         let max_storage = getMaxStorage();
         if (t === '1') {
@@ -147,7 +171,10 @@ export async function handleChoice(choice, tile) {
                 gameState.gold -= 10;
                 tradeDesc = '📥 Bought 10 food 🍞 for 10g';
             } else {
-                await showAlert('Not enough gold or storage! ⚠️');
+                await showChoiceDialog('Not enough gold or storage! ⚠️', [
+                    {label: 'OK', value: 'ok'},
+                    {label: '❌ Close', value: 'close'}
+                ]);
             }
         } else if (t === '2') {
             if (gameState.gold >= 10 && gameState.water + 10 <= max_storage) {
@@ -155,7 +182,10 @@ export async function handleChoice(choice, tile) {
                 gameState.gold -= 10;
                 tradeDesc = '📥 Bought 10 water 💧 for 10g';
             } else {
-                await showAlert('Not enough gold or storage! ⚠️');
+                await showChoiceDialog('Not enough gold or storage! ⚠️', [
+                    {label: 'OK', value: 'ok'},
+                    {label: '❌ Close', value: 'close'}
+                ]);
             }
         } else if (t === '3') {
             if (gameState.wood >= 5) {
@@ -163,7 +193,10 @@ export async function handleChoice(choice, tile) {
                 gameState.gold += 10;
                 tradeDesc = '📤 Sold 5 wood 🪵 for 10g';
             } else {
-                await showAlert('Not enough wood! ⚠️');
+                await showChoiceDialog('Not enough wood! ⚠️', [
+                    {label: 'OK', value: 'ok'},
+                    {label: '❌ Close', value: 'close'}
+                ]);
             }
         } else if (t === '4') {
             if (gameState.gold >= 100) {
@@ -171,7 +204,10 @@ export async function handleChoice(choice, tile) {
                 gameState.gold -= 100;
                 tradeDesc = '📥 Bought cart 🛒 for 100g';
             } else {
-                await showAlert('Not enough gold! ⚠️');
+                await showChoiceDialog('Not enough gold! ⚠️', [
+                    {label: 'OK', value: 'ok'},
+                    {label: '❌ Close', value: 'close'}
+                ]);
             }
         }
         if (tradeDesc) {
@@ -183,33 +219,47 @@ export async function handleChoice(choice, tile) {
         for (let i = 0; i < 3; i++) {
             let r = roles[Math.floor(Math.random() * roles.length)];
             let cost = 50 + Math.floor(Math.random() * 50);
-            hires.push(`${i+1}: ${r} for ${cost}g`);
+            hires.push({label: `${i+1}: ${r} for ${cost}g`, value: (i+1).toString()});
         }
-        let c = await showChoiceDialog('Hire options:', hires.map((h, i) => ({label: h, value: (i+1).toString()})));
+        hires.push({label: '❌ Close', value: 'close'});
+        let c = await showChoiceDialog('Hire options:', hires);
+        if (c === 'close') return;
         if (c && ['1','2','3'].includes(c)) {
             let idx = parseInt(c) - 1;
-            let hireStr = hires[idx];
+            let hireStr = hires[idx].label;
             let role = hireStr.split(': ')[1].split(' for ')[0];
             let cost = parseInt(hireStr.split(' for ')[1]);
             if (gameState.gold >= cost) {
                 gameState.group.push({role, bonus: getBonusForRole(role)});
                 gameState.gold -= cost;
-                await showAlert(`Hired ${role}! 👏`);
+                await showChoiceDialog(`Hired ${role}! 👏`, [
+                    {label: 'OK', value: 'ok'},
+                    {label: '❌ Close', value: 'close'}
+                ]);
                 logEvent(`🧍🏻 Hired ${role} for ${cost}g`);
             } else {
-                await showAlert('Not enough gold! ⚠️');
+                await showChoiceDialog('Not enough gold! ⚠️', [
+                    {label: 'OK', value: 'ok'},
+                    {label: '❌ Close', value: 'close'}
+                ]);
             }
         }
     } else if (choice === '5') { // Sell discoveries
         gameState.gold += gameState.discoverPoints;
         logEvent(`🪙 Sold discoveries for ${gameState.discoverPoints}g`);
         gameState.discoverPoints = 0;
-        await showAlert('Sold discoveries! 🪙');
+        await showChoiceDialog('Sold discoveries! 🪙', [
+            {label: 'OK', value: 'ok'},
+            {label: '❌ Close', value: 'close'}
+        ]);
     } else if (choice === '6') { // Sell hunts
         gameState.gold += gameState.killPoints;
         logEvent(`🪙 Sold hunts for ${gameState.killPoints}g`);
         gameState.killPoints = 0;
-        await showAlert('Sold hunts! 🪙');
+        await showChoiceDialog('Sold hunts! 🪙', [
+            {label: 'OK', value: 'ok'},
+            {label: '❌ Close', value: 'close'}
+        ]);
     }
 }
 
@@ -217,11 +267,13 @@ export async function showMenu() {
     let inv = `❤️‍🩹 Health: ${gameState.health} 🪙 Gold: ${gameState.gold} 🍞 Food: ${gameState.food.toFixed(1)} 💧 Water: ${gameState.water.toFixed(1)} ⛺ Tents: ${gameState.tents} 🧱 Mats: ${gameState.building_mats} 🪵 Wood: ${gameState.wood}`;
     let grp = gameState.group.map(g => g.role).join(', ');
     let msg = `${inv}\n👥 Group: ${grp}`;
+    console.log('Menu message:', msg); // Debug
     let choice = await showChoiceDialog(msg, [
-        {label: '❌ Close', value: '1'},
-        {label: '🏗️ Build camp ⛺ (5 🧱 mats, 5 🪵 wood)', value: '2'},
-        {label: '🏗️ Build outpost 🏕️ (10 🧱 mats, 10 🪵 wood)', value: '3'}
+        {label: '❌ Close', value: 'close'},
+        {label: '🏗️ Build camp ⛺ (5 🧱, 5 🪵)', value: '2'},
+        {label: '🏗️ Build outpost 🏕️ (10 🧱, 10 🪵)', value: '3'}
     ]);
+    if (choice === 'close') return;
     if (choice === '2' || choice === '3') {
         let costMats = choice === '2' ? 5 : 10;
         let costWood = choice === '2' ? 5 : 10;
@@ -235,8 +287,10 @@ export async function showMenu() {
                 {label: 'S', value: 'S'},
                 {label: 'SW', value: 'SW'},
                 {label: 'W', value: 'W'},
-                {label: 'NW', value: 'NW'}
+                {label: 'NW', value: 'NW'},
+                {label: '❌ Close', value: 'close'}
             ]);
+            if (dirStr === 'close') return;
             const dmap = {
                 'N': {dx:0,dy:-1}, 'NE':{dx:1,dy:-1}, 'E':{dx:1,dy:0}, 'SE':{dx:1,dy:1},
                 'S':{dx:0,dy:1}, 'SW':{dx:-1,dy:1}, 'W':{dx:-1,dy:0}, 'NW':{dx:-1,dy:-1}
@@ -250,16 +304,28 @@ export async function showMenu() {
                     gameState.changed.push({x: bx, y: by, type});
                     gameState.building_mats -= costMats;
                     gameState.wood -= costWood;
-                    await showAlert(`Built ${type}! 🏗️`);
+                    await showChoiceDialog(`Built ${type}! 🏗️`, [
+                        {label: 'OK', value: 'ok'},
+                        {label: '❌ Close', value: 'close'}
+                    ]);
                     logEvent(`🏗️ Built ${type} at (${bx},${by})`);
                 } else {
-                    await showAlert('Cannot build there. 🚫');
+                    await showChoiceDialog('Cannot build there. 🚫', [
+                        {label: 'OK', value: 'ok'},
+                        {label: '❌ Close', value: 'close'}
+                    ]);
                 }
             } else {
-                await showAlert('Invalid direction. ❓');
+                await showChoiceDialog('Invalid direction. ❓', [
+                    {label: 'OK', value: 'ok'},
+                    {label: '❌ Close', value: 'close'}
+                ]);
             }
         } else {
-            await showAlert('Not enough materials! ⚠️');
+            await showChoiceDialog('Not enough materials! ⚠️', [
+                {label: 'OK', value: 'ok'},
+                {label: '❌ Close', value: 'close'}
+            ]);
         }
     }
 }
