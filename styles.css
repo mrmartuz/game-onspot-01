@@ -1,10 +1,12 @@
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
     overflow: hidden;
     height: 100vh;
     touch-action: none;
 }
+
 #status-bar {
     position: absolute;
     top: 0;
@@ -18,6 +20,7 @@ html, body {
     z-index: 10;
     font-size: 16px;
 }
+
 #date-bar {
     position: absolute;
     bottom: 0;
@@ -31,6 +34,7 @@ html, body {
     z-index: 10;
     font-size: 16px;
 }
+
 #game-canvas {
     position: absolute;
     top: 50px;
@@ -39,6 +43,7 @@ html, body {
     height: calc(100vh - 80px);
     background-color: black;
 }
+
 button {
     position: absolute;
     z-index: 10;
@@ -46,16 +51,116 @@ button {
     height: 50px;
     font-size: 20px;
     border: 1px solid white;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0, 0, 0, 0.5);
     color: white;
     border-radius: 50%;
     touch-action: manipulation;
 }
-#btn-n { top: 60px; left: calc(50% - 25px); }
-#btn-ne { top: 60px; right: 10px; }
-#btn-e { top: calc(50% + 10px); right: 10px; } /* Adjusted for bars */
-#btn-se { bottom: 40px; right: 10px; }
-#btn-s { bottom: 40px; left: calc(50% - 25px); }
-#btn-sw { bottom: 40px; left: 10px; }
-#btn-w { top: calc(50% + 10px); left: 10px; }
-#btn-nw { top: 60px; left: 10px; }
+
+#btn-n {
+    top: 60px;
+    left: calc(50% - 25px);
+}
+
+#btn-ne {
+    top: 60px;
+    right: 10px;
+}
+
+#btn-e {
+    top: calc(50% + 10px);
+    right: 10px;
+}
+
+/* Adjusted for bars */
+#btn-se {
+    bottom: 40px;
+    right: 10px;
+}
+
+#btn-s {
+    bottom: 40px;
+    left: calc(50% - 25px);
+}
+
+#btn-sw {
+    bottom: 40px;
+    left: 10px;
+}
+
+#btn-w {
+    top: calc(50% + 10px);
+    left: 10px;
+}
+
+#btn-nw {
+    top: 60px;
+    left: 10px;
+}
+
+/* New styles for dialog */
+#game-dialog {
+    width: 50%;
+    height: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: gray;
+    color: white;
+    border: 2px solid white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    z-index: 20;
+    max-width: 80%;
+    text-align: center;
+    font-family: sans-serif;
+}
+
+#game-dialog .dialog-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 60px;
+}
+
+#game-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+#game-dialog div {
+    width: 100%;
+    margin-bottom: 60px;
+    /* Ensure divs take full width */
+    display: flex;
+    justify-content: center;
+    /* Center contents horizontally */
+}
+
+#game-dialog p {
+    font-size: 18px;
+    margin: 0;
+    /* Remove default margin for consistency */
+    padding: 10px 0;
+    /* Add vertical padding */
+}
+
+#game-dialog button {
+    margin: 0;
+    /* Remove default margin */
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: 1px solid white;
+    border-radius: 5px;
+    width: 80%;
+    /* Adjust button width */
+    max-width: 200px;
+    /* Limit button width */
+}
+
+#game-dialog button:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+}
