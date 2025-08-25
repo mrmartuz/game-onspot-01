@@ -1,17 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>EXPOGA🧭</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <div id="status-bar">Loading...</div>
     <canvas id="game-canvas"></canvas>
-    <div id="date-bar">Loading...</div>
+    <div id="bottom-bar">
+      <div id="date-bar">Loading...</div>
+      <div id="discovery-button">🌟 0</div>
+    </div>
     <dialog id="game-dialog">
-        <div id="game-dialog-content"></div>
+      <div id="game-dialog-content"></div>
     </dialog>
     <button id="btn-n">⬆️</button>
     <button id="btn-ne">↗️</button>
@@ -22,5 +28,5 @@
     <button id="btn-w">⬅️</button>
     <button id="btn-nw">↖️</button>
     <script type="module" src="main.js"></script>
-</body>
+  </body>
 </html>

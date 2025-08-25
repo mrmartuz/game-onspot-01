@@ -2,7 +2,7 @@ import { resize, draw, updateStatus, canvas, ctx } from './rendering.js';
 import { revealAround, updateResources } from './movement.js';
 import { gameState } from './game_variables.js';
 import { getTile } from './utils.js';
-import { checkAdjacentMonsters, checkTileInteraction, showChoiceDialog } from './interactions.js';
+import { checkAdjacentMonsters, checkTileInteraction, showChoiceDialog, showDiscoveriesDialog } from './interactions.js';
 import { getCurrentGameDate, timeConsumption } from './time_system.js';
 import { setupInputs } from './input_handlers.js';
 
@@ -14,9 +14,27 @@ setupInputs();
 
 // Intervals
 setInterval(() => {
-    document.getElementById('date-bar').innerText = getCurrentGameDate().toLocaleString();
+    const dateBar = document.getElementById('date-bar');
+    const discoveryButton = document.getElementById('discovery-button');
+    const currentDate = getCurrentGameDate().toLocaleString();
+    const discoveriesIcon = `🌟 ${Math.floor(gameState.discoverPoints)}`;
+    dateBar.innerText = currentDate;
+    discoveryButton.innerText = discoveriesIcon;
 }, 1000);
 setInterval(timeConsumption, 1000);
+
+// Setup click handlers for bottom bar elements
+const dateBar = document.getElementById('date-bar');
+const discoveryButton = document.getElementById('discovery-button');
+
+dateBar.addEventListener('click', () => {
+    // You can add date-specific functionality here if needed
+    console.log('Date bar clicked');
+});
+
+discoveryButton.addEventListener('click', () => {
+    showDiscoveriesDialog();
+});
 
 // Async post-move logic
 async function postMove() {

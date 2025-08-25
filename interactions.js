@@ -1,6 +1,7 @@
 import { gameState } from './game_variables.js';
 import { getGroupBonus, getTile, getMaxStorage, getBonusForRole } from './utils.js';
-import { logEvent } from './time_system.js';
+import { logEvent, getCurrentGameDate } from './time_system.js';
+import { updateStatus } from './rendering.js';
 
 const gameDialog = document.getElementById('game-dialog');
 
@@ -79,6 +80,7 @@ export async function handleCombat(ex, ey, isOnTile = false) {
         ]);
         gameState.killed.add(`${ex},${ey}`);
         gameState.killPoints += 5;
+        updateStatus();
         logEvent(`🏆 Defeated ${entity} at (${ex},${ey})`);
         return true;
     } else {
@@ -86,6 +88,7 @@ export async function handleCombat(ex, ey, isOnTile = false) {
             {label: 'OK', value: 'ok'}
         ]);
         gameState.health -= isOnTile ? 20 : 10;
+        updateStatus();
         logEvent(`🤕 Defeated by ${entity} at (${ex},${ey})`);
         return false;
     }
@@ -112,6 +115,7 @@ export async function checkTileInteraction(tile) {
     if (tile.location !== 'none' || tile.entity !== 'none') {
         if (['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
             gameState.discoverPoints += 10;
+            updateStatus();
             await showChoiceDialog(`Discovered ${tile.location}! 🌟`, [
                 {label: 'OK', value: 'ok'}
             ]);
@@ -149,6 +153,7 @@ export async function handleChoice(choice, tile) {
         gameState.health = Math.min(100, gameState.health + 10 * (1 + getGroupBonus('health')));
         gameState.food -= gameState.group.length * 0.5;
         gameState.water -= gameState.group.length * 0.5;
+        updateStatus();
         await showChoiceDialog('Rested. 😴', [
             {label: 'OK', value: 'ok'}
         ]);
@@ -170,6 +175,7 @@ export async function handleChoice(choice, tile) {
             if (gameState.gold >= 10 && gameState.food + 10 <= max_storage) {
                 gameState.food += 10;
                 gameState.gold -= 10;
+                updateStatus();
                 tradeDesc = '📥 Bought 10 food 🍞 for 10g';
             } else {
                 await showChoiceDialog('Not enough gold or storage! ⚠️', [
@@ -263,6 +269,7 @@ export async function handleChoice(choice, tile) {
         gameState.gold += gameState.discoverPoints;
         logEvent(`🪙 Sold discoveries for ${gameState.discoverPoints}g`);
         gameState.discoverPoints = 0;
+        updateStatus();
         await showChoiceDialog('Sold discoveries! 🪙', [
             {label: 'OK', value: 'ok'}
         ]);
@@ -270,6 +277,7 @@ export async function handleChoice(choice, tile) {
         gameState.gold += gameState.killPoints;
         logEvent(`🪙 Sold hunts for ${gameState.killPoints}g`);
         gameState.killPoints = 0;
+        updateStatus();
         await showChoiceDialog('Sold hunts! 🪙', [
             {label: 'OK', value: 'ok'}
         ]);
@@ -338,4 +346,197 @@ export async function showMenu() {
             ]);
         }
     }
+}
+
+// Helper function to check supply status
+function getSupplyStatus() {
+    const dailyFoodConsumption = gameState.group.length * (1 - getGroupBonus('food'));
+    const dailyWaterConsumption = gameState.group.length;
+    
+    const daysOfFood = dailyFoodConsumption > 0 ? gameState.food / dailyFoodConsumption : Infinity;
+    const daysOfWater = dailyWaterConsumption > 0 ? gameState.water / dailyWaterConsumption : Infinity;
+    
+    let warnings = [];
+    
+    if (daysOfFood <= 1) warnings.push('🍞 CRITICAL: Food will run out in less than 1 day!');
+    else if (daysOfFood <= 3) warnings.push('🍞 WARNING: Food will run out in less than 3 days');
+    else if (daysOfFood <= 7) warnings.push('🍞 Notice: Food will run out in less than 7 days');
+    
+    if (daysOfWater <= 1) warnings.push('💧 CRITICAL: Water will run out in less than 1 day!');
+    else if (daysOfWater <= 3) warnings.push('💧 WARNING: Water will run out in less than 3 days');
+    else if (daysOfWater <= 7) warnings.push('💧 Notice: Water will run out in less than 7 days');
+    
+    return { warnings, daysOfFood, daysOfWater };
+}
+
+// Function to get next consumption times
+function getNextConsumptionTimes() {
+    const currentGameDate = getCurrentGameDate();
+    const currentHour = currentGameDate.getHours();
+    const currentMinute = currentGameDate.getMinutes();
+    
+    let nextFood = null;
+    let nextWater = null;
+    let nextGold = null;
+    
+    // Find next food consumption time
+    const foodTimes = [6, 12, 18];
+    for (let hour of foodTimes) {
+        if (hour > currentHour || (hour === currentHour && currentMinute < 60)) {
+            nextFood = hour;
+            break;
+        }
+    }
+    if (!nextFood) nextFood = foodTimes[0] + 24; // Next day
+    
+    // Find next water consumption time
+    const waterTimes = [7, 14, 20];
+    for (let hour of waterTimes) {
+        if (hour > currentHour || (hour === currentHour && currentMinute < 60)) {
+            nextWater = hour;
+            break;
+        }
+    }
+    if (!nextWater) nextWater = waterTimes[0] + 24; // Next day
+    
+    // Find next gold consumption time
+    if (currentHour < 12) {
+        nextGold = 12;
+    } else {
+        nextGold = 36; // Next day at noon
+    }
+    
+    return { nextFood, nextWater, nextGold, currentHour, currentMinute };
+}
+
+// Specialized dialog functions for status bar stats
+export async function showGoldDialog() {
+    // Calculate daily expenses based on the actual time system
+    const dailyGoldExpense = gameState.group.length * 0.5;
+    
+    // Calculate role-based additional costs
+    const roleExpenses = gameState.group.reduce((total, member) => {
+        let roleCost = 0;
+        if (member.role.includes('guide')) roleCost = 1.0;      // Guides cost more
+        else if (member.role.includes('cook')) roleCost = 0.8;   // Cooks cost more
+        else if (member.role.includes('guard')) roleCost = 1.2;  // Guards cost more
+        else if (member.role.includes('medic')) roleCost = 1.5;  // Medics cost more
+        else if (member.role.includes('navigator')) roleCost = 0.9; // Navigators cost more
+        else roleCost = 0.3; // Base additional cost for other roles
+        
+        return total + roleCost;
+    }, 0);
+    
+    const totalDailyExpense = dailyGoldExpense + roleExpenses;
+    
+    const message = `💰 **Gold Status**\n\n` +
+                   `Current Gold: ${Math.floor(gameState.gold)} 🪙\n\n` +
+                   `**Daily Party Expenses:**\n` +
+                   `Base Cost: ${dailyGoldExpense.toFixed(1)} 🪙\n` +
+                   `Role Bonuses: +${roleExpenses.toFixed(1)} 🪙\n` +
+                   `Total Daily: ${totalDailyExpense.toFixed(1)} 🪙\n` +
+                   `**Consumption Time:** Noon (12:00-13:00)\n\n` +
+                   `**Party Members:** ${gameState.group.length}\n` +
+                   `**Days Until Bankrupt:** ${Math.floor(gameState.gold / totalDailyExpense)} days`;
+    
+    return showChoiceDialog(message, [
+        {label: '❌ Close', value: 'close'}
+    ]);
+}
+
+export async function showInventoryDialog() {
+    const maxStorage = getMaxStorage();
+    
+    // Calculate daily consumption rates (now consumed in specific meals/drinks)
+    const dailyFoodConsumption = gameState.group.length * (1 - getGroupBonus('food'));
+    const dailyWaterConsumption = gameState.group.length;
+    const dailyGoldExpense = gameState.group.length * 0.5;
+    
+    // Calculate per-meal and per-drink amounts
+    const foodPerMeal = dailyFoodConsumption / 3;
+    const waterPerDrink = dailyWaterConsumption / 3;
+    
+    // Calculate how long supplies will last
+    const daysOfFood = dailyFoodConsumption > 0 ? (gameState.food / dailyFoodConsumption).toFixed(1) : '∞';
+    const daysOfWater = dailyWaterConsumption > 0 ? (gameState.water / dailyWaterConsumption).toFixed(1) : '∞';
+    
+    // Get next consumption times
+    const { nextFood, nextWater, nextGold, currentHour, currentMinute } = getNextConsumptionTimes();
+    
+    const message = `📦 **Party Inventory**\n\n` +
+                   `🍞 Food: ${gameState.food.toFixed(1)}/${maxStorage}\n` +
+                   `🍞 Daily Total: -${dailyFoodConsumption.toFixed(1)}/day\n` +
+                   `💧 Water: ${gameState.water.toFixed(1)}/${maxStorage}\n` +
+                   `💧 Daily Total: -${dailyWaterConsumption.toFixed(1)}/day\n` +
+                   `🪵 Wood: ${gameState.wood}\n` +
+                   `⛺ Tents: ${gameState.tents}\n` +
+                   `🧱 Building Materials: ${gameState.building_mats}\n` +
+                   `🛒 Carts: ${gameState.carts}\n\n` +
+                   `**Daily Expenses:**\n` +
+                   `💰 Gold: -${dailyGoldExpense.toFixed(1)}/day (consumed at noon)\n` +
+                   `💰 Next Gold Expense: ${nextGold > 23 ? (nextGold - 24) : nextGold}:00\n\n` +
+                   `**Current Game Time:** ${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}\n` +
+                   `**Storage Capacity:** ${maxStorage}`;
+    
+    return showChoiceDialog(message, [
+        {label: '❌ Close', value: 'close'}
+    ]);
+}
+
+export async function showDiscoveriesDialog() {
+    const message = `🌟 **Discoveries & Kills**\n\n` +
+                   `🔍 Discovery Points: ${Math.floor(gameState.discoverPoints)}\n` +
+                   `⚔️ Kill Points: ${Math.floor(gameState.killPoints)}\n\n` +
+                   `**Total Value:**\n` +
+                   `Discoveries: ${Math.floor(gameState.discoverPoints)} 🪙\n` +
+                   `Kills: ${Math.floor(gameState.killPoints)} 🪙\n` +
+                   `Combined: ${Math.floor(gameState.discoverPoints + gameState.killPoints)} 🪙\n\n` +
+                   `*Sell at cities to convert to gold*`;
+    
+    return showChoiceDialog(message, [
+        {label: '❌ Close', value: 'close'}
+    ]);
+}
+
+export async function showHealthGroupDialog() {
+    // Player character (first character) details
+    const player = gameState.group[0] || {role: 'Explorer', bonus: {}};
+    const playerBonus = player.bonus || {};
+    
+    let playerStats = `👤 **Player Character**\n` +
+                      `Role: ${player.role}\n` +
+                      `Health: ${Math.floor(gameState.health)}/100 ❤️‍🩹\n`;
+    
+    // Add bonus details
+    if (Object.keys(playerBonus).length > 0) {
+        playerStats += `Bonuses:\n`;
+        Object.entries(playerBonus).forEach(([bonus, value]) => {
+            playerStats += `  ${bonus}: +${(value * 100).toFixed(0)}%\n`;
+        });
+    }
+    
+    // Other party members
+    let otherMembers = '';
+    if (gameState.group.length > 1) {
+        otherMembers = `\n👥 **Other Party Members:**\n`;
+        for (let i = 1; i < gameState.group.length; i++) {
+            const member = gameState.group[i];
+            const memberBonus = member.bonus || {};
+            otherMembers += `\n${i}. ${member.role}`;
+            if (Object.keys(memberBonus).length > 0) {
+                otherMembers += `\n   Bonuses:`;
+                Object.entries(memberBonus).forEach(([bonus, value]) => {
+                    otherMembers += ` ${bonus}+${(value * 100).toFixed(0)}%`;
+                });
+            }
+        }
+    } else {
+        otherMembers = `\n👥 **No other party members**`;
+    }
+    
+    const message = playerStats + otherMembers;
+    
+    return showChoiceDialog(message, [
+        {label: '❌ Close', value: 'close'}
+    ]);
 }

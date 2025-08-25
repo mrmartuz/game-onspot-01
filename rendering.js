@@ -1,5 +1,5 @@
 import { gameState } from './game_variables.js';
-import { getTile, getEmojiForFlora, getEmojiForLocation, getEmojiForEntity, hash } from './utils.js';
+import { getTile, getEmojiForFlora, getEmojiForLocation, getEmojiForEntity, getMaxStorage, hash } from './utils.js';
 
 export const canvas = document.getElementById('game-canvas');
 export const ctx = canvas.getContext('2d');
@@ -74,5 +74,27 @@ export function draw(offsetDeltaX, offsetDeltaY) {
 }
 
 export function updateStatus() {
-    document.getElementById('status-bar').innerText = `🪙: ${Math.floor(gameState.gold)} 🍞: ${Math.floor(gameState.food)} 💧: ${Math.floor(gameState.water)} 🛒:${gameState.carts} 🌟: ${Math.floor(gameState.discoverPoints)} ❤️‍🩹: ${Math.floor(gameState.health)} 👥: ${gameState.group.length}`;
+    const statusBar = document.getElementById('status-bar');
+    
+    // Clear existing content
+    statusBar.innerHTML = '';
+    
+    // Create clickable stat blocks
+    const stats = [
+        { icon: '🪙', value: Math.floor(gameState.gold), type: 'gold', label: 'Gold' },
+        { icon: '🍞', value: Math.floor(gameState.food), type: 'food', label: 'Food' },
+        { icon: '💧', value: Math.floor(gameState.water), type: 'water', label: 'Water' },
+        { icon: '🛒', value: Math.floor(getMaxStorage()), type: 'cart', label: 'Cart' },
+        { icon: '❤️‍🩹', value: Math.floor(gameState.health), type: 'health', label: 'Health' },
+        { icon: '👥', value: gameState.group.length, type: 'group', label: 'Group' }
+    ];
+    
+    stats.forEach(stat => {
+        const statBlock = document.createElement('div');
+        statBlock.className = 'stat-block';
+        statBlock.dataset.type = stat.type;
+        statBlock.innerHTML = `${stat.icon}: ${stat.value}`;
+        statBlock.title = `Click to view ${stat.label} details`;
+        statusBar.appendChild(statBlock);
+    });
 }

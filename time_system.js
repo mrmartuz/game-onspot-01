@@ -17,11 +17,53 @@ export function timeConsumption() {
     let delta_real = now - gameState.last_consume_time;
     let delta_game = delta_real * acceleration;
     let days_fraction = delta_game / (86400 * 1000);
-    gameState.food -= days_fraction * gameState.group.length * (1 - getGroupBonus('food'));
-    gameState.water -= days_fraction * gameState.group.length;
-    gameState.gold -= days_fraction * gameState.group.length * 0.5;
+    
+    // Get current game time
+    const currentGameDate = getCurrentGameDate();
+    const currentHour = currentGameDate.getHours();
+    const currentMinute = currentGameDate.getMinutes();
+    
+    // Check if we've passed consumption times since last check
+    const lastGameDate = new Date(game_start_date.getTime() + (gameState.last_consume_time - game_start_real) * acceleration);
+    const lastHour = lastGameDate.getHours();
+    const lastMinute = lastGameDate.getMinutes();
+    
+    // 🍞 FOOD: Consume 3 times per day (breakfast, lunch, dinner)
+    // Breakfast: 6:00-7:00, Lunch: 12:00-13:00, Dinner: 18:00-19:00
+    const foodTimes = [6, 12, 18];
+    foodTimes.forEach(foodHour => {
+        if ((lastHour < foodHour && currentHour >= foodHour) || 
+            (lastHour === foodHour && lastMinute < 0 && currentMinute >= 0)) {
+            const foodPerMeal = gameState.group.length * (1 - getGroupBonus('food')) / 3;
+            gameState.food = Math.max(0, gameState.food - foodPerMeal);
+            logEvent(`🍞 Consumed ${foodPerMeal.toFixed(1)} food for meal`);
+        }
+    });
+    
+    // 💧 WATER: Consume 3 times per day (morning, afternoon, evening)
+    // Morning: 7:00-8:00, Afternoon: 14:00-15:00, Evening: 20:00-21:00
+    const waterTimes = [7, 14, 20];
+    waterTimes.forEach(waterHour => {
+        if ((lastHour < waterHour && currentHour >= waterHour) || 
+            (lastHour === waterHour && lastMinute < 0 && currentMinute >= 0)) {
+            const waterPerDrink = gameState.group.length / 3;
+            gameState.water = Math.max(0, gameState.water - waterPerDrink);
+            logEvent(`💧 Consumed ${waterPerDrink.toFixed(1)} water`);
+        }
+    });
+    
+    // 💰 GOLD: Consume once per day at noon (12:00-13:00)
+    if ((lastHour < 12 && currentHour >= 12) || 
+        (lastHour === 12 && lastMinute < 0 && currentMinute >= 0)) {
+        const dailyGoldExpense = gameState.group.length * 0.5;
+        gameState.gold = Math.max(-100, gameState.gold - dailyGoldExpense); // Allow going negative but not too much
+        logEvent(`💰 Daily expenses: -${dailyGoldExpense.toFixed(1)} gold`);
+    }
+    
+    // Tent degradation (random chance per day)
     if (Math.random() < 0.05 * days_fraction) {
         gameState.tents = Math.max(0, gameState.tents - 1);
     }
+    
     gameState.last_consume_time = now;
 }
