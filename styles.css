@@ -100,12 +100,14 @@ button {
 
 /* New styles for dialog */
 #game-dialog {
-    position: fixed;
+    width: 50%;
+    height: 50%;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid #333;
+    background: gray;
+    color: white;
+    border: 2px solid white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
@@ -115,26 +117,50 @@ button {
     font-family: sans-serif;
 }
 
+#game-dialog .dialog-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 60px;
+}
+
 #game-dialog::backdrop {
     background: rgba(0, 0, 0, 0.5);
 }
 
+#game-dialog div {
+    width: 100%;
+    margin-bottom: 60px;
+    /* Ensure divs take full width */
+    display: flex;
+    justify-content: center;
+    /* Center contents horizontally */
+}
+
 #game-dialog p {
     font-size: 18px;
-    margin-bottom: 20px;
+    margin: 0;
+    /* Remove default margin for consistency */
+    padding: 10px 0;
+    /* Add vertical padding */
 }
 
 #game-dialog button {
-    margin: 10px;
+    margin: 0;
+    /* Remove default margin */
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
-    background-color: #4CAF50;
+    background-color: rgba(0, 0, 0, 0.5);
     color: white;
-    border: none;
+    border: 1px solid white;
     border-radius: 5px;
+    width: 80%;
+    /* Adjust button width */
+    max-width: 200px;
+    /* Limit button width */
 }
 
 #game-dialog button:hover {
-    background-color: #45a049;
+    background-color: rgba(0, 0, 0, 0.7);
 }

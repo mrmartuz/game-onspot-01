@@ -7,18 +7,23 @@ const gameDialog = document.getElementById('game-dialog');
 async function showChoiceDialog(message, buttons) {
     return new Promise((resolve) => {
         gameDialog.innerHTML = '';
-        const form = document.createElement('form');
-        form.method = 'dialog';
+        // Wrap the message in a div
+        const pDiv = document.createElement('div');
         const p = document.createElement('p');
         p.textContent = message;
-        form.appendChild(p);
+        pDiv.appendChild(p);
+        gameDialog.appendChild(pDiv);
+        // Wrap each button in its own div
         buttons.forEach(({label, value}) => {
+            const btnDiv = document.createElement('div');
             const btn = document.createElement('button');
-            btn.value = value;
             btn.textContent = label;
-            form.appendChild(btn);
+            btn.addEventListener('click', () => {
+                gameDialog.close(value);
+            });
+            btnDiv.appendChild(btn);
+            gameDialog.appendChild(btnDiv);
         });
-        gameDialog.appendChild(form);
         gameDialog.addEventListener('close', () => resolve(gameDialog.returnValue), {once: true});
         gameDialog.showModal();
     });
@@ -27,12 +32,21 @@ async function showChoiceDialog(message, buttons) {
 export async function showAlert(message) {
     return new Promise((resolve) => {
         gameDialog.innerHTML = '';
+        // Wrap the message in a div
+        const pDiv = document.createElement('div');
         const p = document.createElement('p');
         p.textContent = message;
-        gameDialog.appendChild(p);
+        pDiv.appendChild(p);
+        gameDialog.appendChild(pDiv);
+        // Wrap the OK button in a div
+        const btnDiv = document.createElement('div');
         const btn = document.createElement('button');
         btn.textContent = 'OK';
-        gameDialog.appendChild(btn);
+        btn.addEventListener('click', () => {
+            gameDialog.close();
+        });
+        btnDiv.appendChild(btn);
+        gameDialog.appendChild(btnDiv);
         gameDialog.addEventListener('close', () => resolve(), {once: true});
         gameDialog.showModal();
     });

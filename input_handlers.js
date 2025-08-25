@@ -1,5 +1,5 @@
 import { move } from './movement.js';
-import { showMenu } from './interactions.js';
+import { showMenu, showAlert } from './interactions.js';
 import { gameState } from './game_variables.js';
 import { canvas } from './rendering.js';
 
