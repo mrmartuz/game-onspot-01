@@ -14,7 +14,7 @@ export function getBiome(x, y) {
 
 export function getTile(x, y) {
     const key = `${x},${y}`;
-    let change = changed.find(t => t.x === x && t.y === y);
+    let change = gameState.changed.find(t => t.x === x && t.y === y);
     let location = change ? change.type : 'none';
     if (location === 'none') {
         let h1 = hash(x, y, 1);
@@ -29,7 +29,7 @@ export function getTile(x, y) {
         const entities = ['monster', 'beast', 'animal', 'npc', 'group', 'army', 'trader', 'caravan'];
         entity = entities[Math.floor(hash(x, y, 4) * entities.length)];
     }
-    if (killed.has(key)) entity = 'none';
+    if (gameState.killed.has(key)) entity = 'none';
 
     // Compute raw height and flora
     let rawHeight = hash(x, y, 5) * 11;

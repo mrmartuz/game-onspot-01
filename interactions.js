@@ -24,7 +24,7 @@ async function showChoiceDialog(message, buttons) {
     });
 }
 
-async function showAlert(message) {
+export async function showAlert(message) {
     return new Promise((resolve) => {
         gameDialog.innerHTML = '';
         const p = document.createElement('p');
