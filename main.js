@@ -2,7 +2,7 @@ import { resize, draw, updateStatus, canvas, ctx } from './rendering.js';
 import { revealAround, updateResources } from './movement.js';
 import { gameState } from './game_variables.js';
 import { getTile } from './utils.js';
-import { checkAdjacentMonsters, checkTileInteraction, showAlert } from './interactions.js';
+import { checkAdjacentMonsters, checkTileInteraction, showChoiceDialog } from './interactions.js';
 import { getCurrentGameDate, timeConsumption } from './time_system.js';
 import { setupInputs } from './input_handlers.js';
 
@@ -25,7 +25,9 @@ async function postMove() {
     await checkAdjacentMonsters();
     await checkTileInteraction(tile);
     if (gameState.health <= 0 || gameState.gold < -50) {
-        await showAlert('Game Over! ☠️');
+        await showChoiceDialog('Game Over! ☠️', [
+            { label: '🔄 Restart Game', value: 'restart' }
+        ]);
         location.reload();
     }
 }

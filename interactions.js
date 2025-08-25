@@ -4,7 +4,7 @@ import { logEvent } from './time_system.js';
 
 const gameDialog = document.getElementById('game-dialog');
 
-async function showChoiceDialog(message, buttons) {
+export async function showChoiceDialog(message, buttons) {
     return new Promise((resolve) => {
         gameDialog.innerHTML = '';
         // Wrap the message in a div
@@ -47,8 +47,8 @@ async function showChoiceDialog(message, buttons) {
     });
 }
 
-// Remove showAlert since it will be replaced by showChoiceDialog
-// export async function showAlert(message) { ... } // Removed
+
+
 
 export async function handleCombat(ex, ey, isOnTile = false) {
     let tile = getTile(ex, ey);
@@ -147,7 +147,7 @@ export async function handleChoice(choice, tile) {
     }
     if (choice === '2') { // Rest
         gameState.health = Math.min(100, gameState.health + 10 * (1 + getGroupBonus('health')));
-        gameState.food -= gameState.group.length * 0.5;
+        gameState.food -= gameState.group.length * 0.5;
         gameState.water -= gameState.group.length * 0.5;
         await showChoiceDialog('Rested. 😴', [
             {label: 'OK', value: 'ok'},

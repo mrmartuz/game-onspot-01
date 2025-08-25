@@ -1,5 +1,5 @@
 import { move } from './movement.js';
-import { showMenu, showAlert } from './interactions.js';
+import { showMenu, showChoiceDialog } from './interactions.js';
 import { gameState } from './game_variables.js';
 import { canvas } from './rendering.js';
 
@@ -43,6 +43,8 @@ export function setupInputs() {
     document.getElementById('date-bar').addEventListener('touchstart', (e) => {
         e.preventDefault();
         const list = gameState.events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
-        showAlert(list || 'No events yet. 📜');
+        showChoiceDialog(list || 'No events yet. 📜', [
+            {label: 'OK', value: 'ok'}
+        ]);
     });
 }
