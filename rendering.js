@@ -51,15 +51,15 @@ export function draw(offsetDeltaX, offsetDeltaY) {
             }
 
             if (tile.flora_type !== 'none') {
-                ctx.font = '20px serif';
+                ctx.font = `${gameState.spriteSizeFlora}px serif`;
                 ctx.fillText(getEmojiForFlora(tile.flora_type), drawX + gameState.tileSize / 2, drawY + gameState.tileSize / 2);
             }
             if (tile.location !== 'none') {
-                ctx.font = '20px serif';
+                ctx.font = `${gameState.spriteSizeLocation}px serif`;
                 ctx.fillText(getEmojiForLocation(tile.location), drawX + gameState.tileSize / 2, drawY + gameState.tileSize / 2);
             }
             if (tile.entity !== 'none') {
-                ctx.font = '24px serif';
+                ctx.font = `${gameState.spriteSizeEntity}px serif`;
                 ctx.fillText(getEmojiForEntity(tile.entity), drawX + gameState.tileSize / 2, drawY + gameState.tileSize / 2);
             }
         }
