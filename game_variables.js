@@ -38,6 +38,7 @@ export const gameState = {
     discoverPoints: 0,
     killPoints: 0,
     events: [],
+    discoveredLocations: [], // Track discovered locations separately from event logs
     moving: false,
     moveStartTime: 0,
     moveDuration: 0,

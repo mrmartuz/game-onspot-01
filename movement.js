@@ -46,35 +46,3 @@ export function revealAround() {
         }
     }
 }
-
-export function updateResources(tile) {
-    // Apply plant bonus for food gain on flower tiles
-    let plantBonus = getGroupBonus('plant');
-    let foodGain = tile.flora * 0.1;
-    
-    // Bonus food on flower tiles (flora > 6)
-    if (tile.flora > 6 && tile.flora_type !== 'none') {
-        foodGain += 1 * (1 + plantBonus); // Base 1 food + plant bonus
-    }
-    
-    gameState.food += foodGain;
-    gameState.food = Math.min(gameState.food, getMaxStorage());
-    
-    // Apply resource bonus for wood gain on high flora tiles
-    let resourceBonus = getGroupBonus('resource');
-    if (tile.flora > 6) {
-        // Higher chance and amount of wood on high flora tiles
-        let woodChance = 0.15 * (1 + resourceBonus);
-        if (Math.random() < woodChance) {
-            let woodAmount = 1 + Math.floor(resourceBonus * 2); // 1-3 wood based on bonus
-            gameState.wood += woodAmount;
-        }
-    } else {
-        // Regular wood chance on other tiles
-        if (Math.random() < 0.05 * (1 + resourceBonus)) {
-            gameState.wood += 1;
-        }
-    }
-    
-    gameState.water = Math.min(gameState.water, getMaxStorage());
-}

@@ -1,5 +1,5 @@
 import { resize, draw, updateStatus, canvas, ctx } from './rendering.js';
-import { revealAround, updateResources } from './movement.js';
+import { revealAround } from './movement.js';
 import { gameState } from './game_variables.js';
 import { getTile, updateGroupBonus } from './utils.js';
 import { checkAdjacentMonsters, checkTileInteraction, showChoiceDialog, showDiscoveriesDialog } from './interactions.js';
@@ -20,7 +20,6 @@ setInterval(timeConsumption, 1000);
 // Async post-move logic
 async function postMove() {
     let tile = getTile(gameState.px, gameState.py);
-    updateResources(tile);
     await checkAdjacentMonsters();
     await checkTileInteraction(tile);
     if (gameState.health <= 0 || gameState.gold < -50) {

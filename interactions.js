@@ -122,29 +122,34 @@ export async function checkTileInteraction(tile) {
         return;
     }
     
-    if (tile.location !== 'none' || tile.entity !== 'none' || ['sun-flower', 'iris', 'tulip'].includes(tile.flora_type)) {
+    if (tile.location !== 'none' || tile.entity !== 'none') {
         if (['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
             // Apply discovery bonus to discovery points
+            if(gameState.discoveredLocations.includes(tile.location)){
+                await showChoiceDialog(`You've already discovered ${tile.location}! 🌟`, [
+                    {label: 'OK', value: 'ok'}
+                ]);
+                return;
+            }
             let discoveryBonus = getGroupBonus('discovery');
             let basePoints = 10;
             let bonusPoints = Math.floor(basePoints * discoveryBonus * Math.random()); // Random bonus based on discovery skill
             let totalPoints = basePoints + bonusPoints;
             
             gameState.discoverPoints += totalPoints;
+            gameState.discoveredLocations.push(tile.location); // Add location to discovered locations
             updateStatus();
             
             let bonusText = bonusPoints > 0 ? ` (+${bonusPoints} bonus)` : '';
             await showChoiceDialog(`Discovered ${tile.location}! 🌟${bonusText}`, [
                 {label: 'OK', value: 'ok'}
             ]);
-            logEvent(`🌟 Discovered ${tile.location} at (${gameState.px},${gameState.py}) +${totalPoints} points`);
+            logEvent(`🌟 Discovered ${tile.location} +${totalPoints} points`);
         }
         let options = [
             {label: '🚶 Leave', value: '1'}
         ];
         
-        // If there's only flora (no location or entity), we still want to show the leave option
-        // and potentially flora-specific options
         if (['camp', 'outpost', 'farm','hamlet', 'village', 'city'].includes(tile.location)) {
             options.push({label: '😴 Rest', value: '2'});
         }
@@ -161,16 +166,9 @@ export async function checkTileInteraction(tile) {
             options.push({label: '🏹 Sell hunts', value: '6'});
         }
         
-        // Add flora interaction if there's edible flora
-        if (['sun-flower', 'iris', 'tulip'].includes(tile.flora_type)) {
-            options.push({label: '🌱 Harvest flowers', value: '7'});
-        }
         
         let msg = `At ${tile.location !== 'none' ? tile.location : ''} ${tile.entity !== 'none' ? tile.entity : ''}`.trim();
         if (msg === 'At') msg = 'On this tile';
-        if (tile.flora_type !== 'none') {
-            msg += ` with ${tile.flora_type}`;
-        }
         let choice = await showChoiceDialog(msg, options);
         await handleChoice(choice, tile);
     }
@@ -203,129 +201,145 @@ export async function handleChoice(choice, tile) {
     } else if (choice === '3') { // Trade
         // Apply interact bonus for better trade prices
         let interactBonus = getGroupBonus('interact');
-        let buyDiscount = Math.min(0.3, interactBonus * 0.5); // Up to 30% discount on buying
-        let sellBonus = Math.min(0.5, interactBonus * 0.8); // Up to 50% bonus on selling
+        let buyDiscount = Math.min(0.3, interactBonus * 0.3); // Up to 30% discount on buying
+        let sellBonus = Math.min(0.5, interactBonus * 0.6); // Up to 50% bonus on selling
         
-        let t = await showChoiceDialog('Trade options:', [
-            {label: `📥 Buy food 🍞 (${Math.floor(10 * (1 - buyDiscount))} for 10g)`, value: '1'},
-            {label: `📥 Sell food 🍞 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`, value: '2'},
-            {label: `📥 Buy water 💧 (${Math.floor(10 * (1 - buyDiscount))} for 10g)`, value: '3'},
-            {label: `📥 Sell water 💧 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`, value: '4'},
-            {label: `📤 Sell wood 🪵 (5 for ${Math.floor(10 * (1 + sellBonus))}g)`, value: '5'},
-            {label: '📥 Buy cart 🛒 (100g for 1)', value: '6'},
-            {label: '❌ Close', value: 'close'}
-        ]);
-        if (t === 'close') return;
-        let tradeDesc = '';
-        let max_storage = getMaxStorage();
-        if (t === '1') {
-            if (gameState.gold >= 10 && gameState.food + 10 <= max_storage) {
-                let actualFood = Math.floor(10 * (1 - buyDiscount));
-                gameState.food += actualFood;
-                gameState.gold -= 10;
-                updateStatus();
-                tradeDesc = `📥 Bought ${actualFood} food 🍞 for 10g`;
-            } else {
-                await showChoiceDialog('Not enough gold or storage! ⚠️', [
-                    {label: 'OK', value: 'ok'}
-                ]);
+        let trading = true;
+        while (trading) {
+            let t = await showChoiceDialog('Trade options:', [
+                {label: `📥 Buy food 🍞 (${Math.floor(10 * (1 - buyDiscount))} for 10g)`, value: '1'},
+                {label: `📥 Sell food 🍞 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`, value: '2'},
+                {label: `📥 Buy water 💧 (${Math.floor(10 * (1 - buyDiscount))} for 10g)`, value: '3'},
+                {label: `📥 Sell water 💧 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`, value: '4'},
+                {label: `📤 Sell wood 🪵 (5 for ${Math.floor(10 * (1 + sellBonus))}g)`, value: '5'},
+                {label: '📥 Buy cart 🛒 (100g for 1)', value: '6'},
+                {label: '❌ Close', value: 'close'}
+            ]);
+            
+            if (t === 'close') {
+                trading = false;
+                continue;
             }
-        } else if (t === '2') {
-            if (gameState.food >= 10) {
-                gameState.food -= 10;
-                let actualGold = Math.floor(3 * (1 + sellBonus));
-                gameState.gold += actualGold;
-                updateStatus();
-                tradeDesc = `📥 Sold 10 food 🍞 for ${actualGold}g`;
-            } else {
-                await showChoiceDialog('Not enough food! ⚠️', [
-                    {label: 'OK', value: 'ok'}
-                ]);
+            
+            let tradeDesc = '';
+            let max_storage = getMaxStorage();
+            if (t === '1') {
+                if (gameState.gold >= 10 && gameState.food + 10 <= max_storage) {
+                    let actualFood = Math.floor(10 * (1 - buyDiscount));
+                    gameState.food += actualFood;
+                    gameState.gold -= 10;
+                    updateStatus();
+                    tradeDesc = `📥 Bought ${actualFood} food 🍞 for 10g`;
+                } else {
+                    await showChoiceDialog('Not enough gold or storage! ⚠️', [
+                        {label: 'OK', value: 'ok'}
+                    ]);
+                }
+            } else if (t === '2') {
+                if (gameState.food >= 10) {
+                    gameState.food -= 10;
+                    let actualGold = Math.floor(3 * (1 + sellBonus));
+                    gameState.gold += actualGold;
+                    updateStatus();
+                    tradeDesc = `📥 Sold 10 food 🍞 for ${actualGold}g`;
+                } else {
+                    await showChoiceDialog('Not enough food! ⚠️', [
+                        {label: 'OK', value: 'ok'}
+                    ]);
+                }
+            } else if (t === '3') {
+                if (gameState.gold >= 10 && gameState.water + 10 <= max_storage) {
+                    let actualWater = Math.floor(10 * (1 - buyDiscount));
+                    gameState.water += actualWater;
+                    gameState.gold -= 10;
+                    updateStatus();
+                    tradeDesc = `📥 Bought ${actualWater} water 💧 for 10g`;
+                } else {
+                    await showChoiceDialog('Not enough gold or storage! ⚠️', [
+                        {label: 'OK', value: 'ok'}
+                    ]);
+                }
+            } else if (t === '4') {
+                if (gameState.water >= 10) {
+                    gameState.water -= 10;
+                    let actualGold = Math.floor(3 * (1 + sellBonus));
+                    gameState.gold += actualGold;
+                    updateStatus();
+                    tradeDesc = `📥 Sold 10 water 💧 for ${actualGold}g`;
+                } else {
+                    await showChoiceDialog('Not enough water! ⚠️', [
+                        {label: 'OK', value: 'ok'}
+                    ]);
+                }
+            } else if (t === '5') {
+                if (gameState.wood >= 5) {
+                    gameState.wood -= 5;
+                    let actualGold = Math.floor(10 * (1 + sellBonus));
+                    gameState.gold += actualGold;
+                    updateStatus();
+                    tradeDesc = `📤 Sold 5 wood 🪵 for ${actualGold}g`;
+                } else {
+                    await showChoiceDialog('Not enough wood! ⚠️', [
+                        {label: 'OK', value: 'ok'}
+                    ]);
+                }
+            } else if (t === '6') {
+                if (gameState.gold >= 100) {
+                    gameState.carts += 1;
+                    gameState.gold -= 100;
+                    tradeDesc = '📥 Bought cart 🛒 for 100g';
+                } else {
+                    await showChoiceDialog('Not enough gold! ⚠️', [
+                        {label: 'OK', value: 'ok'}
+                    ]);
+                }
             }
-        } else if (t === '3') {
-            if (gameState.gold >= 10 && gameState.water + 10 <= max_storage) {
-                let actualWater = Math.floor(10 * (1 - buyDiscount));
-                gameState.water += actualWater;
-                gameState.gold -= 10;
-                updateStatus();
-                tradeDesc = `📥 Bought ${actualWater} water 💧 for 10g`;
-            } else {
-                await showChoiceDialog('Not enough gold or storage! ⚠️', [
-                    {label: 'OK', value: 'ok'}
-                ]);
+            if (tradeDesc) {
+                logEvent(tradeDesc);
             }
-        } else if (t === '4') {
-            if (gameState.water >= 10) {
-                gameState.water -= 10;
-                let actualGold = Math.floor(3 * (1 + sellBonus));
-                gameState.gold += actualGold;
-                updateStatus();
-                tradeDesc = `📥 Sold 10 water 💧 for ${actualGold}g`;
-            } else {
-                await showChoiceDialog('Not enough water! ⚠️', [
-                    {label: 'OK', value: 'ok'}
-                ]);
-            }
-        } else if (t === '5') {
-            if (gameState.wood >= 5) {
-                gameState.wood -= 5;
-                let actualGold = Math.floor(10 * (1 + sellBonus));
-                gameState.gold += actualGold;
-                updateStatus();
-                tradeDesc = `📤 Sold 5 wood 🪵 for ${actualGold}g`;
-            } else {
-                await showChoiceDialog('Not enough wood! ⚠️', [
-                    {label: 'OK', value: 'ok'}
-                ]);
-            }
-        } else if (t === '6') {
-            if (gameState.gold >= 100) {
-                gameState.carts += 1;
-                gameState.gold -= 100;
-                tradeDesc = '📥 Bought cart 🛒 for 100g';
-            } else {
-                await showChoiceDialog('Not enough gold! ⚠️', [
-                    {label: 'OK', value: 'ok'}
-                ]);
-            }
-        }
-        if (tradeDesc) {
-            logEvent(tradeDesc);
         }
     } else if (choice === '4') { // Hire
         // Apply interact bonus for hiring discounts
         let interactBonus = getGroupBonus('interact');
         let hireDiscount = Math.min(0.4, interactBonus * 0.6); // Up to 40% discount on hiring
         
-        const roles = ['native-guide👲🏻', 'cook🧑🏻‍🍳', 'guard💂🏻', 'geologist🧑🏻‍🔬', 'biologist🧑🏻‍🔬', 'translator👳🏻', 'carrier🧑🏻‍🔧', 'medic🧑🏻‍⚕️', 'navigator🧑🏻‍✈️'];
-        let hires = [];
-        for (let i = 0; i < 3; i++) {
-            let r = roles[Math.floor(Math.random() * roles.length)];
-            let baseCost = 50 + Math.floor(Math.random() * 50);
-            let actualCost = Math.floor(baseCost * (1 - hireDiscount));
-            hires.push({label: `${i+1}: ${r} for ${actualCost}g`, value: (i+1).toString(), baseCost, actualCost});
-        }
-        hires.push({label: '❌ Close', value: 'close'});
-        let c = await showChoiceDialog('Hire options:', hires);
-        if (c === 'close') return;
-        if (c && ['1','2','3'].includes(c)) {
-            let idx = parseInt(c) - 1;
-            let hireStr = hires[idx].label;
-            let role = hireStr.split(': ')[1].split(' for ')[0];
-            let cost = hires[idx].actualCost;
-            if (gameState.gold >= cost) {
-                gameState.group.push({role, bonus: getBonusForRole(role)});
-                gameState.gold -= cost;
-                updateGroupBonus(); // Recalculate group bonuses after hiring
-                let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
-                await showChoiceDialog(`Hired ${role}! 👏${discountText}`, [
-                    {label: 'OK', value: 'ok'}
-                ]);
-                logEvent(`🧍🏻 Hired ${role} for ${cost}g${discountText}`);
-            } else {
-                await showChoiceDialog('Not enough gold! ⚠️', [
-                    {label: 'OK', value: 'ok'}
-                ]);
+        let hiring = true;
+        while (hiring) {
+            const roles = ['native-guide👲🏻', 'cook🧑🏻‍🍳', 'guard💂🏻', 'geologist🧑🏻‍🔬', 'biologist🧑🏻‍🔬', 'translator👳🏻', 'carrier🧑🏻‍🔧', 'medic🧑🏻‍⚕️', 'navigator🧑🏻‍✈️'];
+            let hires = [];
+            for (let i = 0; i < 3; i++) {
+                let r = roles[Math.floor(Math.random() * roles.length)];
+                let baseCost = 50 + Math.floor(Math.random() * 50);
+                let actualCost = Math.floor(baseCost * (1 - hireDiscount));
+                hires.push({label: `${i+1}: ${r} for ${actualCost}g`, value: (i+1).toString(), baseCost, actualCost});
+            }
+            hires.push({label: '❌ Close', value: 'close'});
+            
+            let c = await showChoiceDialog('Hire options:', hires);
+            if (c === 'close') {
+                hiring = false;
+                continue;
+            }
+            
+            if (c && ['1','2','3'].includes(c)) {
+                let idx = parseInt(c) - 1;
+                let hireStr = hires[idx].label;
+                let role = hireStr.split(': ')[1].split(' for ')[0];
+                let cost = hires[idx].actualCost;
+                if (gameState.gold >= cost) {
+                    gameState.group.push({role, bonus: getBonusForRole(role)});
+                    gameState.gold -= cost;
+                    updateGroupBonus(); // Recalculate group bonuses after hiring
+                    let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
+                    await showChoiceDialog(`Hired ${role}! 👏${discountText}`, [
+                        {label: 'OK', value: 'ok'}
+                    ]);
+                    logEvent(`🧍🏻 Hired ${role} for ${cost}g${discountText}`);
+                } else {
+                    await showChoiceDialog('Not enough gold! ⚠️', [
+                        {label: 'OK', value: 'ok'}
+                    ]);
+                }
             }
         }
     } else if (choice === '5') { // Sell discoveries
@@ -344,33 +358,18 @@ export async function handleChoice(choice, tile) {
         await showChoiceDialog('Sold hunts! 🪙', [
             {label: 'OK', value: 'ok'}
         ]);
-    } else if (choice === '7') { // Harvest flowers
-        // Apply plant bonus for better harvest yields
-        let plantBonus = getGroupBonus('plant');
-        let baseFood = 2;
-        let bonusFood = Math.floor(baseFood * plantBonus);
-        let totalFood = baseFood + bonusFood;
-        
-        let max_storage = getMaxStorage();
-        if (gameState.food + totalFood <= max_storage) {
-            gameState.food += totalFood;
-            updateStatus();
-            let bonusText = bonusFood > 0 ? ` (+${bonusFood} bonus)` : '';
-            await showChoiceDialog(`Harvested flowers! 🌱 Gained ${totalFood} food${bonusText}`, [
-                {label: 'OK', value: 'ok'}
-            ]);
-            logEvent(`🌱 Harvested flowers for ${totalFood} food${bonusText}`);
-        } else {
-            await showChoiceDialog('Not enough storage for harvested food! ⚠️', [
-                {label: 'OK', value: 'ok'}
-            ]);
-        }
     }
 }
 
 export async function showMenu() {
     // Check if player is on a tile with location or entity
     let currentTile = getTile(gameState.px, gameState.py);
+    if (currentTile.location !== 'none' || currentTile.entity !== 'none'){
+        await checkTileInteraction(currentTile);
+        return;
+    }
+
+    let isFlora = false;
     
     // If there's a combat entity, handle combat first
     if (['monster', 'beast'].includes(currentTile.entity)) {
@@ -379,10 +378,8 @@ export async function showMenu() {
     }
     
     // If there's a location, entity, or edible flora, show the appropriate interaction dialog
-    if (currentTile.location !== 'none' || currentTile.entity !== 'none' || 
-        ['sun-flower', 'iris', 'tulip'].includes(currentTile.flora_type)) {
-        await checkTileInteraction(currentTile);
-        return;
+    if (['sun-flower', 'iris', 'tulip'].includes(currentTile.flora_type)) {
+        isFlora = true;
     }
     
     // Otherwise show the regular menu
@@ -392,9 +389,10 @@ export async function showMenu() {
     let msg = `${inv}\n👥 Group: ${grp}`;
     console.log('Menu message:', msg); // Debug
     let choice = await showChoiceDialog(msg, [
-        {label: '❌ Close', value: 'close'},
+        ...(isFlora ? [{label: '🌱 Harvest flowers', value: '4'}] : []),
         {label: '🏗️ Build camp ⛺ (5 🧱, 5 🪵)', value: '2'},
-        {label: '🏗️ Build outpost 🏕️ (10 🧱, 10 🪵)', value: '3'}
+        {label: '🏗️ Build outpost 🏕️ (10 🧱, 10 🪵)', value: '3'},  
+        {label: '❌ Close', value: 'close'}
     ]);
     if (choice === 'close') return;
     if (choice === '2' || choice === '3') {
@@ -446,6 +444,36 @@ export async function showMenu() {
                 {label: '❌ Close', value: 'close'}
             ]);
         }
+    }
+    if (choice === '4') {
+        // Apply plant bonus for better harvest yields
+        let plantBonus = getGroupBonus('plant');
+        let baseFood = Math.floor((Math.random() * 1.2))+ 0.1;
+        console.log(baseFood);
+        let bonusFood = Math.floor(baseFood * plantBonus);
+        console.log(bonusFood);
+        let totalFood = baseFood + bonusFood;
+        console.log(totalFood);
+        let max_storage = getMaxStorage();
+        if(totalFood > 0){
+            if (gameState.food + totalFood <= max_storage) {
+            gameState.food += totalFood;
+            updateStatus();
+            let bonusText = bonusFood > 0 ? ` (+${bonusFood} bonus)` : '';
+            await showChoiceDialog(`Harvested flowers! 🌱 Gained ${totalFood} food${bonusText}`, [
+                {label: 'OK', value: 'ok'}
+            ]);
+            logEvent(`🌱 Harvested flowers for ${totalFood} food${bonusText}`);
+        } else {
+            await showChoiceDialog('Not enough storage for harvested food! ⚠️', [
+                {label: 'OK', value: 'ok'}
+            ]);
+        }
+        }
+        else {await showChoiceDialog('Nothing to harvest! ⚠️', [
+                {label: 'OK', value: 'ok'}
+            ]);}
+
     }
 }
 
