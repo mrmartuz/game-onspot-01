@@ -123,7 +123,7 @@ export function getNumCarriers() {
 
 export function getMaxStorage() {
     // Base storage: 50 per person + 50 per carrier + 200 per cart
-    let baseStorage = 50 * gameState.group.length + 50 * getNumCarriers() + 200 * gameState.carts;
+    let baseStorage = 10 * gameState.group.length + 24 * getNumCarriers() + 200 * gameState.carts;
     
     // Apply carry bonus for additional storage capacity
     let carryBonus = gameState.groupBonus.carry || 0;
@@ -162,16 +162,16 @@ export function updateGroupBonus() {
     });
     
     // Apply bonuses based on role combinations (adjusted thresholds)
-    if (roleCounts['native-guide'] >= 2) gameState.groupBonus.navigation += 0.3;
-    if (roleCounts['explorer'] >= 2) gameState.groupBonus.discovery += 0.4; // Changed from 3 to 2
-    if (roleCounts['cook'] >= 2) gameState.groupBonus.food += 0.3;
-    if (roleCounts['guard'] >= 2) gameState.groupBonus.combat += 0.4;
-    if (roleCounts['geologist'] >= 2) gameState.groupBonus.resource += 0.3;
-    if (roleCounts['biologist'] >= 2) gameState.groupBonus.plant += 0.3;
-    if (roleCounts['translator'] >= 2) gameState.groupBonus.interact += 0.3;
-    if (roleCounts['carrier'] >= 2) gameState.groupBonus.carry += 0.4; // Changed from 3 to 2
-    if (roleCounts['medic'] >= 2) gameState.groupBonus.health += 0.4;
-    if (roleCounts['navigator'] >= 2) gameState.groupBonus.view += 1;
+    if (roleCounts['native-guide'] >= 1) gameState.groupBonus.navigation += 0.3;
+    if (roleCounts['explorer'] >= 1) gameState.groupBonus.discovery += 0.4; // Changed from 3 to 2
+    if (roleCounts['cook'] >= 1) gameState.groupBonus.food += 0.3;
+    if (roleCounts['guard'] >= 1) gameState.groupBonus.combat += 0.4;
+    if (roleCounts['geologist'] >= 1) gameState.groupBonus.resource += 0.3;
+    if (roleCounts['biologist'] >= 1) gameState.groupBonus.plant += 0.3;
+    if (roleCounts['translator'] >= 1) gameState.groupBonus.interact += 0.3;
+    if (roleCounts['carrier'] >= 1) gameState.groupBonus.carry += 0.4; // Changed from 3 to 2
+    if (roleCounts['medic'] >= 1) gameState.groupBonus.health += 0.4;
+    if (roleCounts['navigator'] >= 1) gameState.groupBonus.view += 1;
     
     // Special combination bonuses
     if (roleCounts['native-guide'] && roleCounts['navigator']) {
