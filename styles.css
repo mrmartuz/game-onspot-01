@@ -116,16 +116,6 @@ body {
     font-size: 20px;
 }
 
-@media (max-width: 600px) {
-    #gold-button,
-        #inventory-button,
-        #group-button,
-        #date-button,
-        #discoveries-button {
-            font-size: 16px;
-        }
-}
-
 #gold-button {
     min-width: 40px;
 }
@@ -276,4 +266,19 @@ body {
 
 #game-dialog button:active {
     background-color: #8a8a8a;
+}
+
+@media (max-width: 600px) {
+
+    #gold-button,
+    #inventory-button,
+    #group-button,
+    #date-button,
+    #discoveries-button {
+        font-size: 16px;
+    }
+
+    #game-dialog {
+        width: 100%;
+    }
 }
