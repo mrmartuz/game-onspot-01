@@ -44,53 +44,53 @@ export function setupInputs() {
     canvas.addEventListener('touchstart', handlePlayerInteraction);
     canvas.addEventListener('click', handlePlayerInteraction);
 
-    // Function to handle status bar stat block clicks
-    const handleStatBlockClick = (e) => {
+    // Setup click and touchstart listeners for all status buttons
+    const goldButton = document.getElementById('gold-button');
+    const inventoryButton = document.getElementById('inventory-button');
+    const groupButton = document.getElementById('group-button');
+    const dateButton = document.getElementById('date-button');
+    const discoveriesButton = document.getElementById('discoveries-button');
+
+    // Gold button
+    goldButton.addEventListener('click', showGoldDialog);
+    goldButton.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        const statBlock = e.target.closest('.stat-block');
-        if (!statBlock) return;
-        
-        const statType = statBlock.dataset.type;
-        
-        switch (statType) {
-            case 'gold':
-                showGoldDialog();
-                break;
-            case 'food':
-            case 'water':
-            case 'cart':
-                showInventoryDialog();
-                break;
-            case 'discoveries':
-                showDiscoveriesDialog();
-                break;
-            case 'health':
-            case 'group':
-                showHealthGroupDialog();
-                break;
-            default:
-                showMenu(); // Fallback to general menu
-        }
-    };
+        showGoldDialog();
+    });
 
-    // Add touch and click listeners for status bar (individual stat blocks)
-    const statusBar = document.getElementById('status-bar');
-    statusBar.addEventListener('touchstart', handleStatBlockClick);
-    statusBar.addEventListener('click', handleStatBlockClick);
+    // Inventory button
+    inventoryButton.addEventListener('click', showInventoryDialog);
+    inventoryButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        showInventoryDialog();
+    });
 
-    // Add touch and click listeners for date bar
-    const dateBar = document.getElementById('date-bar');
-    dateBar.addEventListener('touchstart', (e) => {
+    // Group button
+    groupButton.addEventListener('click', showHealthGroupDialog);
+    groupButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        showHealthGroupDialog();
+    });
+
+    // Date button
+    dateButton.addEventListener('click', () => {
+        const list = gameState.events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
+        showChoiceDialog(list || 'No events yet. 📜', [
+            {label: 'OK', value: 'ok'}
+        ]);
+    });
+    dateButton.addEventListener('touchstart', (e) => {
         e.preventDefault();
         const list = gameState.events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
         showChoiceDialog(list || 'No events yet. 📜', [
             {label: 'OK', value: 'ok'}
         ]);
     });
-    dateBar.addEventListener('click', () => {
-        const list = gameState.events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
-        showChoiceDialog(list || 'No events yet. 📜', [
-            {label: 'OK', value: 'ok'}
-        ]);
+
+    // Discoveries button
+    discoveriesButton.addEventListener('click', showDiscoveriesDialog);
+    discoveriesButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        showDiscoveriesDialog();
     });
 }

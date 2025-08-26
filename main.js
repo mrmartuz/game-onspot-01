@@ -15,28 +15,7 @@ revealAround();
 setupInputs();
 
 // Intervals
-setInterval(() => {
-    const dateBar = document.getElementById('date-bar');
-    const discoveryButton = document.getElementById('discovery-button');
-    const currentDate = getCurrentGameDate().toLocaleString();
-    const discoveriesIcon = `🌟 ${Math.floor(gameState.discoverPoints)}`;
-    dateBar.innerText = currentDate;
-    discoveryButton.innerText = discoveriesIcon;
-}, 1000);
 setInterval(timeConsumption, 1000);
-
-// Setup click handlers for bottom bar elements
-const dateBar = document.getElementById('date-bar');
-const discoveryButton = document.getElementById('discovery-button');
-
-dateBar.addEventListener('click', () => {
-    // You can add date-specific functionality here if needed
-    console.log('Date bar clicked');
-});
-
-discoveryButton.addEventListener('click', () => {
-    showDiscoveriesDialog();
-});
 
 // Async post-move logic
 async function postMove() {
