@@ -114,7 +114,13 @@ export function getGroupBonus(type) {
     const roleBonus = gameState.group.reduce((total, g) => total + (g.bonus[type] || 0), 0);
     // Add the groupBonus modifier
     const groupModifier = gameState.groupBonus[type] || 0;
-    return roleBonus + groupModifier;
+    const total = roleBonus + groupModifier;
+    
+    if (type === 'discovery' || type === 'carry') {
+        console.log(`getGroupBonus(${type}): roleBonus=${roleBonus}, groupModifier=${groupModifier}, total=${total}`);
+    }
+    
+    return total;
 }
 
 export function getNumCarriers() {
@@ -150,6 +156,9 @@ export function getBonusForRole(role) {
 }
 
 export function updateGroupBonus() {
+    console.log('updateGroupBonus called');
+    console.log('Current group:', gameState.group);
+    
     // Reset all bonuses
     Object.keys(gameState.groupBonus).forEach(key => {
         gameState.groupBonus[key] = 0;
@@ -160,6 +169,8 @@ export function updateGroupBonus() {
     gameState.group.forEach(member => {
         roleCounts[member.role] = (roleCounts[member.role] || 0) + 1;
     });
+    
+    console.log('Role counts:', roleCounts);
     
     // Apply bonuses based on role combinations (adjusted thresholds)
     if (roleCounts['native-guide'] >= 1) gameState.groupBonus.navigation += 0.3;
@@ -185,4 +196,6 @@ export function updateGroupBonus() {
         gameState.groupBonus.health += 0.2;
         gameState.groupBonus.combat += 0.2;
     }
+    
+    console.log('Final groupBonus:', gameState.groupBonus);
 }

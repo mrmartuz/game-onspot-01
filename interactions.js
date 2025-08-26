@@ -311,7 +311,7 @@ export async function handleChoice(choice, tile) {
         }
         let hiring = true;
         while (hiring) {
-            const roles = ['native-guide👲🏻', 'cook🧑🏻‍🍳', 'guard💂🏻', 'geologist🧑🏻‍🔬', 'biologist🧑🏻‍🔬', 'translator👳🏻', 'carrier🧑🏻‍🔧', 'medic🧑🏻‍⚕️', 'navigator🧑🏻‍✈️'];
+            const roles = ['native-guide🧭', 'cook🍞', 'guard⚔️', 'geologist🪵', 'biologist🌱', 'translator🤝', 'carrier📦', 'medic❤️', 'navigator👁️', 'explorer🔍'];
             let hires = [];
             for (let i = 0; i < number_of_hires; i++) {
                 let r = roles[Math.floor(Math.random() * roles.length)];
@@ -647,6 +647,10 @@ export async function showDiscoveriesDialog() {
 export async function showHealthGroupDialog() {
     let message = '';
     
+    // Debug: Log the current state
+    console.log('Current gameState.group:', gameState.group);
+    console.log('Current gameState.groupBonus:', gameState.groupBonus);
+    
     // Player character (first character) details
     const player = gameState.group[0] || {role: 'Explorer', bonus: {}};
     const playerBonus = player.bonus || {};
@@ -657,7 +661,7 @@ export async function showHealthGroupDialog() {
     
     // Add bonus details
     if (Object.keys(playerBonus).length > 0) {
-        playerStats += `Bonuses:\n`;
+        playerStats += `Individual Bonuses:\n`;
         Object.entries(playerBonus).forEach(([bonus, value]) => {
             playerStats += `  ${bonus}: +${(value * 100).toFixed(0)}%\n`;
         });
@@ -665,14 +669,23 @@ export async function showHealthGroupDialog() {
 
     message += playerStats;
     
-    message += `\nGroup Bonus:\n`;
-
-Object.entries(gameState.groupBonus).forEach(([bonus, value]) => {
-        if (value > 0) {
+    message += `\n📊 **Total Active Bonuses:**\n`;
+    
+    // Show combined bonuses (individual + group) for each type
+    const bonusTypes = ['navigation', 'discovery', 'food', 'combat', 'resource', 'plant', 'interact', 'carry', 'health', 'view'];
+    
+    bonusTypes.forEach(bonusType => {
+        const totalBonus = getGroupBonus(bonusType);
+        if (totalBonus > 0) {
             let emoji = '';
             let description = '';
             
-            switch(bonus) {
+            // Debug: Show individual vs group breakdown
+            const individualBonus = gameState.group.reduce((total, g) => total + (g.bonus[bonusType] || 0), 0);
+            const groupBonus = gameState.groupBonus[bonusType] || 0;
+            console.log(`${bonusType}: individual=${individualBonus}, group=${groupBonus}, total=${totalBonus}`);
+            
+            switch(bonusType) {
                 case 'navigation': emoji = '🧭'; description = 'Faster movement'; break;
                 case 'discovery': emoji = '🔍'; description = 'More discovery points'; break;
                 case 'food': emoji = '🍞'; description = 'Slower food consumption'; break;
@@ -685,13 +698,35 @@ Object.entries(gameState.groupBonus).forEach(([bonus, value]) => {
                 case 'view': emoji = '👁️'; description = 'Increased view distance'; break;
             }
             
-            message += `${emoji} **${bonus.charAt(0).toUpperCase() + bonus.slice(1)}**: +${(value * 100).toFixed(0)}% - ${description}\n`;
+            message += `${emoji} **${bonusType.charAt(0).toUpperCase() + bonusType.slice(1)}**: +${(totalBonus * 100).toFixed(0)}% - ${description}\n`;
         }
     });
     
-    if (Object.values(gameState.groupBonus).every(v => v === 0)) {
-        message += `No active group bonuses. Hire more specialized roles to unlock bonuses!\n`;
+    if (bonusTypes.every(type => getGroupBonus(type) === 0)) {
+        message += `No active bonuses. Hire more specialized roles to unlock bonuses!\n`;
     }
+    
+    // Show detailed breakdown for active bonuses
+    const activeBonusTypes = bonusTypes.filter(type => getGroupBonus(type) > 0);
+    if (activeBonusTypes.length > 0) {
+        message += `\n📋 **Detailed Breakdown:**\n`;
+        activeBonusTypes.forEach(bonusType => {
+            const individualBonus = gameState.group.reduce((total, g) => total + (g.bonus[bonusType] || 0), 0);
+            const groupBonus = gameState.groupBonus[bonusType] || 0;
+            const totalBonus = getGroupBonus(bonusType);
+            
+            message += `${bonusType.charAt(0).toUpperCase() + bonusType.slice(1)}: `;
+            message += `${(individualBonus * 100).toFixed(0)}% (individual) + `;
+            message += `${(groupBonus * 100).toFixed(0)}% (group) = `;
+            message += `${(totalBonus * 100).toFixed(0)}% (total)\n`;
+        });
+    }
+    
+    // Show explanation
+    message += `\n📋 **How Bonuses Work:**\n`;
+    message += `• Individual bonuses come from each character's role\n`;
+    message += `• Group bonuses are additional bonuses from role combinations\n`;
+    message += `• Total = Individual + Group bonuses\n`;
 
     // Other party members
     let otherMembers = '';
@@ -702,7 +737,7 @@ Object.entries(gameState.groupBonus).forEach(([bonus, value]) => {
             const memberBonus = member.bonus || {};
             otherMembers += `\n${i}. ${member.role}`;
             if (Object.keys(memberBonus).length > 0) {
-                otherMembers += `\n   Bonuses:`;
+                otherMembers += `\n   Individual Bonuses:`;
                 Object.entries(memberBonus).forEach(([bonus, value]) => {
                     otherMembers += ` ${bonus}+${(value * 100).toFixed(0)}%`;
                 });
