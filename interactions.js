@@ -121,8 +121,8 @@ export async function checkTileInteraction(tile) {
         await handleCombat(gameState.px, gameState.py, true);
         return;
     }
-1
-    if (tile.location !== 'none' || tile.entity !== 'none') {
+    
+    if (tile.location !== 'none' || tile.entity !== 'none' || ['sun-flower', 'iris', 'tulip'].includes(tile.flora_type)) {
         if (['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
             // Apply discovery bonus to discovery points
             let discoveryBonus = getGroupBonus('discovery');
@@ -142,6 +142,9 @@ export async function checkTileInteraction(tile) {
         let options = [
             {label: '🚶 Leave', value: '1'}
         ];
+        
+        // If there's only flora (no location or entity), we still want to show the leave option
+        // and potentially flora-specific options
         if (['camp', 'outpost', 'farm','hamlet', 'village', 'city'].includes(tile.location)) {
             options.push({label: '😴 Rest', value: '2'});
         }
@@ -157,7 +160,17 @@ export async function checkTileInteraction(tile) {
         if (['village', 'city'].includes(tile.location) || ['caravan'].includes(tile.entity)) {
             options.push({label: '🏹 Sell hunts', value: '6'});
         }
-        let msg = `At ${tile.location} ${tile.entity}`;
+        
+        // Add flora interaction if there's edible flora
+        if (['sun-flower', 'iris', 'tulip'].includes(tile.flora_type)) {
+            options.push({label: '🌱 Harvest flowers', value: '7'});
+        }
+        
+        let msg = `At ${tile.location !== 'none' ? tile.location : ''} ${tile.entity !== 'none' ? tile.entity : ''}`.trim();
+        if (msg === 'At') msg = 'On this tile';
+        if (tile.flora_type !== 'none') {
+            msg += ` with ${tile.flora_type}`;
+        }
         let choice = await showChoiceDialog(msg, options);
         await handleChoice(choice, tile);
     }
@@ -166,6 +179,9 @@ export async function checkTileInteraction(tile) {
 export async function handleChoice(choice, tile) {
     if (choice === 'close') {
         return; // Close dialog without further action
+    }
+    if (choice === '1') { // Leave
+        return; // Just close the dialog and return to game
     }
     if (choice === '2') { // Rest
         // Apply health bonus for better healing
@@ -328,10 +344,48 @@ export async function handleChoice(choice, tile) {
         await showChoiceDialog('Sold hunts! 🪙', [
             {label: 'OK', value: 'ok'}
         ]);
+    } else if (choice === '7') { // Harvest flowers
+        // Apply plant bonus for better harvest yields
+        let plantBonus = getGroupBonus('plant');
+        let baseFood = 2;
+        let bonusFood = Math.floor(baseFood * plantBonus);
+        let totalFood = baseFood + bonusFood;
+        
+        let max_storage = getMaxStorage();
+        if (gameState.food + totalFood <= max_storage) {
+            gameState.food += totalFood;
+            updateStatus();
+            let bonusText = bonusFood > 0 ? ` (+${bonusFood} bonus)` : '';
+            await showChoiceDialog(`Harvested flowers! 🌱 Gained ${totalFood} food${bonusText}`, [
+                {label: 'OK', value: 'ok'}
+            ]);
+            logEvent(`🌱 Harvested flowers for ${totalFood} food${bonusText}`);
+        } else {
+            await showChoiceDialog('Not enough storage for harvested food! ⚠️', [
+                {label: 'OK', value: 'ok'}
+            ]);
+        }
     }
 }
 
 export async function showMenu() {
+    // Check if player is on a tile with location or entity
+    let currentTile = getTile(gameState.px, gameState.py);
+    
+    // If there's a combat entity, handle combat first
+    if (['monster', 'beast'].includes(currentTile.entity)) {
+        await handleCombat(gameState.px, gameState.py, true);
+        return;
+    }
+    
+    // If there's a location, entity, or edible flora, show the appropriate interaction dialog
+    if (currentTile.location !== 'none' || currentTile.entity !== 'none' || 
+        ['sun-flower', 'iris', 'tulip'].includes(currentTile.flora_type)) {
+        await checkTileInteraction(currentTile);
+        return;
+    }
+    
+    // Otherwise show the regular menu
     let max_storage = getMaxStorage();
     let inv = `❤️‍🩹 Health: ${gameState.health} 🌟 Discoveries: ${gameState.discoverPoints} 🪙 Gold: ${gameState.gold} 🍞 Food: ${gameState.food.toFixed(1)}/${max_storage} 💧 Water: ${gameState.water.toFixed(1)}/${max_storage} ⛺ Tents: ${gameState.tents} 🧱 Mats: ${gameState.building_mats} 🪵 Wood: ${gameState.wood}`;
     let grp = gameState.group.map(g => g.role).join(', ');
