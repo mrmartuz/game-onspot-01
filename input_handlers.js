@@ -33,9 +33,16 @@ export function setupInputs() {
             y = e.clientY - rect.top;
         }
         let vx = Math.floor((x - gameState.offsetX) / gameState.tileSize);
-        let vy = Math.floor((y - gameState.offsetY) / gameState.tileSize);
-        let centerV = Math.floor(gameState.viewWidth / 2);
-        if (vx === centerV && vy === centerV) {
+        let statusBar = document.getElementById('status-bar');
+        let statusBarRect = statusBar.getBoundingClientRect();
+        let statusBarHeight = statusBarRect.height;
+        let vy = Math.floor(((y - gameState.offsetY) / gameState.tileSize));
+        
+        // Check if click is on the player (center tile)
+        let centerTileX = Math.floor(gameState.viewWidth / 2);
+        let centerTileY = Math.floor(gameState.viewHeight / 2);
+        
+        if (vx === centerTileX && vy === centerTileY) {
             showMenu();
         }
     };
