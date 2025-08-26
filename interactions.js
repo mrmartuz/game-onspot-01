@@ -38,7 +38,6 @@ export async function showChoiceDialog(message, buttons) {
             gameDialog.appendChild(btnDiv);
         }
         // Log dialog content for debugging
-        console.log('Dialog HTML:', gameDialog.innerHTML);
         // Ensure dialog is not already open
         if (gameDialog.open) {
             gameDialog.close();
@@ -151,19 +150,19 @@ export async function checkTileInteraction(tile) {
         ];
         
         if (['camp', 'outpost', 'farm','hamlet', 'village', 'city'].includes(tile.location)) {
-            options.push({label: '😴 Rest', value: '2'});
+            options.unshift({label: '😴 Rest', value: '2'});
         }
         if (['hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan'].includes(tile.entity)) {
-            options.push({label: '🪙 Trade', value: '3'});
+            options.unshift({label: '🪙 Trade', value: '3'});
         }
-        if (['outpost', 'farm', 'hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan', 'army', 'group'].includes(tile.entity)) {
-            options.push({label: '🧍🏻 Hire', value: '4'});
+        if (['outpost', 'farm', 'hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan', 'army', 'group', `npc`].includes(tile.entity)) {
+            options.unshift({label: '🧍🏻 Hire', value: '4'});
         }
         if (tile.location === 'city') {
-            options.push({label: '🌟 Sell discoveries', value: '5'});
+            options.unshift({label: '🌟 Sell discoveries', value: '5'});
         }
         if (['village', 'city'].includes(tile.location) || ['caravan'].includes(tile.entity)) {
-            options.push({label: '🏹 Sell hunts', value: '6'});
+            options.unshift({label: '🏹 Sell hunts', value: '6'});
         }
         
         
@@ -300,14 +299,21 @@ export async function handleChoice(choice, tile) {
         }
     } else if (choice === '4') { // Hire
         // Apply interact bonus for hiring discounts
+        let number_of_hires = 0;
         let interactBonus = getGroupBonus('interact');
         let hireDiscount = Math.min(0.4, interactBonus * 0.6); // Up to 40% discount on hiring
-        
+        if (tile.entity === 'caravan'  || tile.entity === 'group' || ['outpost', 'farm'].includes(tile.location)){
+            number_of_hires = Math.floor(Math.random() * 2) + 2;
+        } else if(tile.entity === 'army' || ['hamlet', 'village', 'city'].includes(tile.location)){
+            number_of_hires = Math.floor(Math.random() * 4) + 3;
+        } else {
+            number_of_hires = Math.floor(Math.random() * 2) + 1;
+        }
         let hiring = true;
         while (hiring) {
             const roles = ['native-guide👲🏻', 'cook🧑🏻‍🍳', 'guard💂🏻', 'geologist🧑🏻‍🔬', 'biologist🧑🏻‍🔬', 'translator👳🏻', 'carrier🧑🏻‍🔧', 'medic🧑🏻‍⚕️', 'navigator🧑🏻‍✈️'];
             let hires = [];
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < number_of_hires; i++) {
                 let r = roles[Math.floor(Math.random() * roles.length)];
                 let baseCost = 50 + Math.floor(Math.random() * 50);
                 let actualCost = Math.floor(baseCost * (1 - hireDiscount));
@@ -343,6 +349,7 @@ export async function handleChoice(choice, tile) {
             }
         }
     } else if (choice === '5') { // Sell discoveries
+        if(gameState.discoverPoints > 0){
         gameState.gold += gameState.discoverPoints;
         logEvent(`🪙 Sold discoveries for ${gameState.discoverPoints}g`);
         gameState.discoverPoints = 0;
@@ -350,7 +357,13 @@ export async function handleChoice(choice, tile) {
         await showChoiceDialog('Sold discoveries! 🪙', [
             {label: 'OK', value: 'ok'}
         ]);
+    } else {
+        await showChoiceDialog('No discoveries to sell! You Scum! Go discover some locations! ⚠️', [
+            {label: 'OK', value: 'ok'}
+        ]);
+    }
     } else if (choice === '6') { // Sell hunts
+        if(gameState.killPoints > 0){
         gameState.gold += gameState.killPoints;
         logEvent(`🪙 Sold hunts for ${gameState.killPoints}g`);
         gameState.killPoints = 0;
@@ -358,6 +371,11 @@ export async function handleChoice(choice, tile) {
         await showChoiceDialog('Sold hunts! 🪙', [
             {label: 'OK', value: 'ok'}
         ]);
+    } else {
+        await showChoiceDialog('No hunts to sell! Go hunt some monsters or get killed or get a job! ⚠️', [
+            {label: 'OK', value: 'ok'}
+        ]);
+    }
     }
 }
 
@@ -387,7 +405,6 @@ export async function showMenu() {
     let inv = `❤️‍🩹 Health: ${gameState.health} 🌟 Discoveries: ${gameState.discoverPoints} 🪙 Gold: ${gameState.gold} 🍞 Food: ${gameState.food.toFixed(1)}/${max_storage} 💧 Water: ${gameState.water.toFixed(1)}/${max_storage} ⛺ Tents: ${gameState.tents} 🧱 Mats: ${gameState.building_mats} 🪵 Wood: ${gameState.wood}`;
     let grp = gameState.group.map(g => g.role).join(', ');
     let msg = `${inv}\n👥 Group: ${grp}`;
-    console.log('Menu message:', msg); // Debug
     let choice = await showChoiceDialog(msg, [
         ...(isFlora ? [{label: '🌱 Harvest flowers', value: '4'}] : []),
         {label: '🏗️ Build camp ⛺ (5 🧱, 5 🪵)', value: '2'},
