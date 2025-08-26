@@ -12,7 +12,7 @@ export const gameState = {
     viewDist: 3,
     cooldown: false,
     health: 100,
-    gold: 2500+Math.floor(Math.random() * 10),
+    gold: 25+Math.floor(Math.random() * 10),
     food: 30+Math.floor(Math.random() * 10),
     water: 20+Math.floor(Math.random() * 10),
     tents: 2,
@@ -20,8 +20,6 @@ export const gameState = {
     wood: 5,
     carts: 0,
     group: [
-        {role: 'explorer', bonus: {discovery: 0.2}},
-        {role: 'carrier', bonus: {carry: 0.2}},
         {role: 'explorer', bonus: {discovery: 0.2}},
         {role: 'carrier', bonus: {carry: 0.2}},
     ],
