@@ -61,41 +61,52 @@ export function getTile(x, y) {
     });
 
     // Determine terrain based on smoothed height
-    let terrain = height < 4 ? 'sand' : height < 8 ? 'dirt' : 'rock';
+    let terrain = height < 3 ? 'sand' : height < 6 ? 'dirt' : 'rock';
 
     let location = change ? change.type : 'none';
     if (location === 'none') {
         let h1 = hash(x, y, 1);
-        if (h1 < 0.05) {
-            let locations = [];
-            if(terrain === 'sand') {
-                locations = ['ruin', 'camp', 'farm', 'outpost', 'hamlet', 'village', 'city'];
-            } else if(terrain === 'dirt') {
-                locations = ['cave', 'ruin', 'camp', 'farm', 'outpost', 'hamlet', 'village', 'city'];
-            } else if(terrain === 'rock') {
-                locations = ['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin', 'camp', 'outpost'];
+        let locations = [];
+        if (biome === 'desert' && terrain === 'rock') {
+            if (h1 < 0.2) { // 20% chance for peaks in desert rock
+                locations = ['peaks', 'peaks', 'peaks', 'volcano', 'canyon', 'geyser', 'monster caves', 'outpost']; // Bias toward peaks
             }
+        } else if (terrain === 'sand') {
+            if (h1 < 0.05) {
+                locations = ['ruin', 'camp', 'farm', 'outpost', 'hamlet', 'village', 'city'];
+            }
+        } else if (terrain === 'dirt') {
+            if (h1 < 0.05) {
+                locations = ['cave', 'ruin', 'camp', 'farm', 'outpost', 'camp', 'hamlet', 'ruin', 'village', 'city'];
+            }
+        } else if (terrain === 'rock') {
+            if (h1 < 0.17) {
+                locations = ['waterfalls', 'outpost', 'cave', 'ruin'];
+            } else {
+                locations = ['peaks', 'peaks', 'peaks', 'volcano', 'canyon', 'geyser', 'monster caves','peaks', 'camp', 'peaks'];
+            }
+        }
+        if (locations.length > 0) {
             location = locations[Math.floor(hash(x, y, 2) * locations.length)];
         }
     }
-
     // Determine flora type based on biome if flora is present
     let flora_type = 'none';
-    if (flora > 6) {
+    if (flora > 5) {
         biome = getBiome(x, y);
         let flora_options = [];
         if (biome === 'temperate' && terrain === 'dirt') {
-            flora_options = ['oak', 'iris', 'tulip', 'sun-flower'];
+            flora_options = ['oak', 'iris', 'tulip', 'sun-flower', 'oak'];
         } else if (biome === 'temperate' && terrain === 'sand') {
             flora_options = ['dead-tree, sun-flower'];
         } else if (biome === 'taiga' && terrain === 'dirt') {
-            flora_options = ['pine', 'mushroom', 'tulip'];
+            flora_options = ['pine', 'mushroom', 'tulip', 'pine'];
         } else if (biome === 'taiga' && terrain === 'sand') {
             flora_options = ['dead-tree'];
         } else if (biome === 'desert' && terrain === 'dirt') {
             flora_options = ['palm', 'cactus', 'tulip'];
         } else if (biome === 'desert' && terrain === 'sand') {
-            flora_options = ['cactus'];
+            flora_options = ['cactus', 'dead-tree'];
         }
         if (flora_options.length > 0) {
             flora_type = flora_options[Math.floor(hash(x, y, 7) * flora_options.length)];
@@ -209,7 +220,7 @@ export function updateTile(x, y) {
 
 export function getEmojiForLocation(type) {
     const map = {
-        'waterfalls': '🏞️', 'canyon': '⛰️', 'geyser': '🌋', 'peaks': '🏔️',
+        'waterfalls': '🏞️','volcano':'🌋', 'canyon': '⛰️', 'geyser': '🗻', 'peaks': '🏔️',
         'monster caves': '🕷️', 'cave': '🦇', 'ruin': '🏚️', 'camp': '⛺',
         'farm': '🏡', 'outpost': '🏕️', 'hamlet': '🏠', 'village': '🏘️', 'city': '🏰'
     };
