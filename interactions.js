@@ -120,12 +120,13 @@ export async function checkTileInteraction(tile) {
         await handleCombat(gameState.px, gameState.py, true);
         return;
     }
-    
+
     if (tile.location !== 'none' || tile.entity !== 'none') {
         if (['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
             // Apply discovery bonus to discovery points
-            if(gameState.discoveredLocations.includes(tile.location)){
-                await showChoiceDialog(`You've already discovered ${tile.location}! 🌟`, [
+            const positionKey = `${gameState.px},${gameState.py}`;
+            if(gameState.discoveredLocations.has(positionKey)){
+                await showChoiceDialog(`You've already discovered this ${tile.location}! 🌟`, [
                     {label: 'OK', value: 'ok'}
                 ]);
                 return;
@@ -134,11 +135,11 @@ export async function checkTileInteraction(tile) {
             let basePoints = 10;
             let bonusPoints = Math.floor(basePoints * discoveryBonus * Math.random()); // Random bonus based on discovery skill
             let totalPoints = basePoints + bonusPoints;
-            
+
             gameState.discoverPoints += totalPoints;
-            gameState.discoveredLocations.push(tile.location); // Add location to discovered locations
+            gameState.discoveredLocations.add(positionKey); // Add position to discovered locations
             updateStatus();
-            
+
             let bonusText = bonusPoints > 0 ? ` (+${bonusPoints} bonus)` : '';
             await showChoiceDialog(`Discovered ${tile.location}! 🌟${bonusText}`, [
                 {label: 'OK', value: 'ok'}
