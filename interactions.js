@@ -1,5 +1,5 @@
 import { gameState } from './game_variables.js';
-import { getGroupBonus, getTile, getMaxStorage, getBonusForRole, updateGroupBonus } from './utils.js';
+import { getGroupBonus, getTile, getMaxStorage, getBonusForRole, updateGroupBonus, updateTile } from './utils.js';
 import { logEvent, getCurrentGameDate } from './time_system.js';
 import { updateStatus } from './rendering.js';
 

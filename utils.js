@@ -15,6 +15,11 @@ export function getBiome(x, y) {
 export function getTile(x, y) {
     const key = `${x},${y}`;
 
+    if(gameState.killed.has(key)) {
+        let tile = gameState.visited.get(key);
+        tile.entity = 'none';
+        return tile;
+    }
     if(gameState.visited.has(key)) {
         return gameState.visited.get(key);
     }
@@ -23,13 +28,13 @@ export function getTile(x, y) {
     let change = gameState.changed.find(t => t.x === x && t.y === y);
     
     let entity = 'none';
-    let h3 = hash(x, y, 3);
+    if(!gameState.killed.has(key)) {
+        let h3 = hash(x, y, 3);
     if (h3 < 0.05) {
         const entities = ['monster', 'beast', 'animal', 'npc', 'group', 'army', 'trader', 'caravan'];
         entity = entities[Math.floor(hash(x, y, 4) * entities.length)];
     }
-    if (gameState.killed.has(key)) entity = 'none';
-
+    }
     // Compute raw height and flora
     let rawHeight = hash(x, y, 5) * 11;
     let rawFlora = hash(x, y, 6) * 11;
@@ -80,10 +85,10 @@ export function getTile(x, y) {
                 locations = ['cave', 'ruin', 'camp', 'farm', 'outpost', 'camp', 'hamlet', 'ruin', 'village', 'city'];
             }
         } else if (terrain === 'rock') {
-            if (h1 < 0.17) {
-                locations = ['waterfalls', 'outpost', 'cave', 'ruin'];
+            if (h1 < 0.05) {
+                locations = ['waterfalls', 'outpost', 'volcano', 'geyser', 'cave', 'ruin', 'monster caves', 'camp'];
             } else {
-                locations = ['peaks', 'peaks', 'peaks', 'volcano', 'canyon', 'geyser', 'monster caves','peaks', 'camp', 'peaks'];
+                locations = ['peaks'];
             }
         }
         if (locations.length > 0) {
@@ -137,12 +142,14 @@ export function getTile(x, y) {
                 color = '#2b9348';
             }            
         } else {
-            if(r < 0.33) {
-                color = '#191611';
-            } else if(r < 0.66) {
+            if(r < 0.25) {
+                color = '#174424';
+            } else if(r < 0.5) {
+                color = '#1b2e1b';
+            } else if(r < 0.75) {
                 color = '#1B1E15';
             } else {
-                color = '#1C2618';
+                color = '#0b2312';
             }
         }
     } else if(biome === 'taiga') {

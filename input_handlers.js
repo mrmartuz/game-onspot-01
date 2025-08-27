@@ -42,15 +42,16 @@ export function setupInputs() {
         let centerTileY = Math.floor(gameState.viewHeight / 2);
         
         if (vx === centerTileX && vy === centerTileY) {
-            showMenu();
-            console.log();
-            
+            showMenu();            
         }
     };
 
     // Add touch and click listeners for canvas (player interaction)
     canvas.addEventListener('touchstart', handlePlayerInteraction, { passive: true });
     canvas.addEventListener('click', handlePlayerInteraction, { passive: true });
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+    }, { passive: false });
 
     // Setup click and touchstart listeners for all status buttons
     const goldButton = document.getElementById('gold-button');
@@ -84,9 +85,6 @@ export function setupInputs() {
     dateButton.addEventListener('click', showEventsDialog, { passive: true });
     dateButton.addEventListener('touchstart', (e) => {
      showEventsDialog();
-    }, { passive: true });
-    dateButton.addEventListener('touchstart', (e) => {
-        showEventsDialog();
     }, { passive: true });
 
     // Discoveries button
