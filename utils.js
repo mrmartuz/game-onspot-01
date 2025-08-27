@@ -98,7 +98,7 @@ export function getTile(x, y) {
         if (biome === 'temperate' && terrain === 'dirt') {
             flora_options = ['oak', 'iris', 'tulip', 'sun-flower', 'oak'];
         } else if (biome === 'temperate' && terrain === 'sand') {
-            flora_options = ['dead-tree, sun-flower'];
+            flora_options = ['dead-tree', 'sun-flower'];
         } else if (biome === 'taiga' && terrain === 'dirt') {
             flora_options = ['pine', 'mushroom', 'tulip', 'pine'];
         } else if (biome === 'taiga' && terrain === 'sand') {

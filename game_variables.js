@@ -11,7 +11,7 @@ export const gameState = {
     seed: Math.floor(Math.random() * 1000000000), // Randomized seed for procedural generation
     viewWidth: 21,
     viewHeight: 21,
-    viewDist: 5,
+    viewDist: 10,
     cooldown: false,
     health: 100,
     gold: 25+Math.floor(Math.random() * 10),
