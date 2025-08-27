@@ -37,6 +37,7 @@ async function postMove() {
 }
 
 // Game loop (30 FPS)
+// Game loop (30 FPS)
 let lastFrameTime = 0;
 const targetFrameTime = 1000 / 30;
 function loop(timestamp) {
@@ -50,9 +51,14 @@ function loop(timestamp) {
     let offsetDeltaY = 0;
     if (gameState.moving) {
         let now = performance.now();
-        let fraction = (now - gameState.moveStartTime) / gameState.moveDuration;
-        if (fraction >= 1) {
-            fraction = 1;
+        let unclampedFraction = (now - gameState.moveStartTime) / gameState.moveDuration;
+        let fraction = Math.min(1, unclampedFraction); // Clamp to prevent overshoot if frame is late
+        offsetDeltaX = -fraction * gameState.moveDx * gameState.tileSize;
+        offsetDeltaY = -fraction * gameState.moveDy * gameState.tileSize;
+
+        draw(offsetDeltaX, offsetDeltaY); // Draw BEFORE updating position
+
+        if (unclampedFraction >= 1) {
             gameState.moving = false;
             gameState.prevx = gameState.px;
             gameState.prevy = gameState.py;
@@ -67,10 +73,10 @@ function loop(timestamp) {
                 gameState.cooldown = false;
             });
         }
-        offsetDeltaX = -fraction * gameState.moveDx * gameState.tileSize;
-        offsetDeltaY = -fraction * gameState.moveDy * gameState.tileSize;
+        // No draw here—it's already done above
+    } else {
+        draw(offsetDeltaX, offsetDeltaY); // Non-moving case
     }
-    draw(offsetDeltaX, offsetDeltaY);
     requestAnimationFrame(loop);
 }
 loop();
