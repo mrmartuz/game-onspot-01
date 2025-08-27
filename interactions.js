@@ -121,7 +121,6 @@ export async function checkAdjacentMonsters() {
 
 
 
-
 export async function checkTileInteraction(tile) {
     if (['monster', 'beast'].includes(tile.entity)) {
         await handleCombat(gameState.px, gameState.py, true);
@@ -132,7 +131,7 @@ export async function checkTileInteraction(tile) {
         if (['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
             // Apply discovery bonus to discovery points
             const positionKey = `${gameState.px},${gameState.py}`;
-            if (gameState.discoveredLocations.includes(positionKey)) { // Use .includes() instead of .has()
+            if (gameState.discoveredLocations.includes(positionKey)) { // Use .includes() for array
                 await showChoiceDialog(`You've already discovered this ${tile.location}! 🌟`, [
                     {label: 'OK', value: 'ok'}
                 ]);
@@ -144,7 +143,7 @@ export async function checkTileInteraction(tile) {
             let totalPoints = basePoints + bonusPoints;
 
             gameState.discoverPoints += totalPoints;
-            gameState.discoveredLocations.push(positionKey); // Use .push() instead of .add()
+            gameState.discoveredLocations.push(positionKey); // Use .push() for array
             updateStatus();
 
             let bonusText = bonusPoints > 0 ? ` (+${bonusPoints} bonus)` : '';
@@ -153,32 +152,18 @@ export async function checkTileInteraction(tile) {
             ]);
             logEvent(`🌟 Discovered ${tile.location} +${totalPoints} points`);
         }
-            let discoveryBonus = getGroupBonus('discovery');
-            let basePoints = 10;
-            let bonusPoints = Math.floor(basePoints * discoveryBonus * Math.random()); // Random bonus based on discovery skill
-            let totalPoints = basePoints + bonusPoints;
 
-            gameState.discoverPoints += totalPoints;
-            gameState.discoveredLocations.add(positionKey); // Add position to discovered locations
-            updateStatus();
-
-            let bonusText = bonusPoints > 0 ? ` (+${bonusPoints} bonus)` : '';
-            await showChoiceDialog(`Discovered ${tile.location}! 🌟${bonusText}`, [
-                {label: 'OK', value: 'ok'}
-            ]);
-            logEvent(`🌟 Discovered ${tile.location} +${totalPoints} points`);
-        
         let options = [
             {label: '🚶 Leave', value: '1'}
         ];
-        
-        if (['camp', 'outpost', 'farm','hamlet', 'village', 'city'].includes(tile.location)) {
+
+        if (['camp', 'outpost', 'farm', 'hamlet', 'village', 'city'].includes(tile.location)) {
             options.unshift({label: '😴 Rest', value: '2'});
         }
         if (['hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan'].includes(tile.entity)) {
             options.unshift({label: '🪙 Trade', value: '3'});
         }
-        if (['outpost', 'farm', 'hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan', 'army', 'group', `npc`].includes(tile.entity)) {
+        if (['outpost', 'farm', 'hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan', 'army', 'group', 'npc'].includes(tile.entity)) {
             options.unshift({label: '🧍🏻 Hire', value: '4'});
         }
         if (tile.location === 'city') {
@@ -187,14 +172,19 @@ export async function checkTileInteraction(tile) {
         if (['village', 'city'].includes(tile.location) || ['caravan'].includes(tile.entity)) {
             options.unshift({label: '🏹 Sell hunts', value: '6'});
         }
-        
-        
+
         let msg = `At ${tile.location !== 'none' ? tile.location : ''} ${tile.entity !== 'none' ? tile.entity : ''}`.trim();
         if (msg === 'At') msg = 'On this tile';
         let choice = await showChoiceDialog(msg, options);
         await handleChoice(choice, tile);
     }
 }
+
+
+
+
+
+
 
 export async function handleChoice(choice, tile) {
     if (choice === 'close') {
