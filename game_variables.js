@@ -1,9 +1,11 @@
+import { getTile } from './utils.js';
+
 export const gameState = {
     px: 0,
     py: 0,
     prevx: 0,
     prevy: 0,
-    visited: new Set(['0,0']),
+    visited: new Map(),
     changed: [], // {x, y, type}
     killed: new Set(),
     seed: Math.floor(Math.random() * 1000000000), // Randomized seed for procedural generation

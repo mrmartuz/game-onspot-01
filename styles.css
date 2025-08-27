@@ -94,7 +94,6 @@ body {
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    padding: 0 10px;
     gap: 30px;
 }
 
@@ -165,7 +164,6 @@ body {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 0 10px;
 }
 
 #group-bonus-button {

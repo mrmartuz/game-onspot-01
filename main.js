@@ -1,21 +1,22 @@
 import { resize, draw, updateStatus, canvas, ctx } from './rendering.js';
 import { revealAround } from './movement.js';
 import { gameState } from './game_variables.js';
-import { getTile, updateGroupBonus } from './utils.js';
-import { checkAdjacentMonsters, checkTileInteraction, showChoiceDialog, showDiscoveriesDialog } from './interactions.js';
+import { getTile, updateGroupBonus, updateTile } from './utils.js';
+import { checkAdjacentMonsters, checkTileInteraction, showChoiceDialog } from './interactions.js';
 import { getCurrentGameDate, timeConsumption } from './time_system.js';
 import { setupInputs } from './input_handlers.js';
 
 // Setup
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resize, { passive: true });
 resize();
-updateGroupBonus(); // Initialize group bonuses
-console.log('Initial group bonuses:', gameState.groupBonus); // Debug log
+updateGroupBonus();
+gameState.visited.set('0,0', getTile(0, 0));
 revealAround();
 setupInputs();
 
 // Intervals
 setInterval(timeConsumption, 1000);
+setInterval(updateStatus, 1000);
 
 // Async post-move logic
 async function postMove() {
@@ -35,8 +36,16 @@ async function postMove() {
     }
 }
 
-// Game loop
-function loop() {
+// Game loop (30 FPS)
+let lastFrameTime = 0;
+const targetFrameTime = 1000 / 30;
+function loop(timestamp) {
+    if (timestamp - lastFrameTime < targetFrameTime) {
+        requestAnimationFrame(loop);
+        return;
+    }
+    lastFrameTime = timestamp;
+
     let offsetDeltaX = 0;
     let offsetDeltaY = 0;
     if (gameState.moving) {
@@ -49,7 +58,10 @@ function loop() {
             gameState.prevy = gameState.py;
             gameState.px += gameState.moveDx;
             gameState.py += gameState.moveDy;
-            gameState.visited.add(`${gameState.px},${gameState.py}`);
+            const key = `${gameState.px},${gameState.py}`;
+            if (!gameState.visited.has(key)) {
+                gameState.visited.set(key, getTile(gameState.px, gameState.py));
+            }
             revealAround();
             postMove().then(() => {
                 gameState.cooldown = false;
@@ -59,7 +71,6 @@ function loop() {
         offsetDeltaY = -fraction * gameState.moveDy * gameState.tileSize;
     }
     draw(offsetDeltaX, offsetDeltaY);
-    updateStatus();
     requestAnimationFrame(loop);
 }
 loop();

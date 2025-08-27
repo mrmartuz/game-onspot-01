@@ -1,5 +1,5 @@
 import { gameState } from './game_variables.js';
-import { getTile, getEmojiForFlora, getEmojiForLocation, getEmojiForEntity, getMaxStorage, hash } from './utils.js';
+import { getTile, getEmojiForFlora, getEmojiForLocation, getEmojiForEntity, getMaxStorage, hash, interpolateColor } from './utils.js';
 import { getCurrentGameDate } from './time_system.js';
 
 export const canvas = document.getElementById('game-canvas');
@@ -33,21 +33,36 @@ export function draw(offsetDeltaX, offsetDeltaY) {
                 ctx.fillRect(drawX, drawY, gameState.tileSize, gameState.tileSize);
                 continue;
             }
-            ctx.fillStyle = tile.terrain === 'sand' ? 'yellow' : tile.terrain === 'dirt' ? 'green' : 'gray';
+
+            ctx.fillStyle = tile.color || 'red';
+
             ctx.fillRect(drawX, drawY, gameState.tileSize, gameState.tileSize);
 
             // Render grass tufts spread across the full tile
-            if (tile.terrain === 'dirt' && tile.flora > 0) {
+            if (tile.flora > 0) {
                 const tuftCount = tile.flora * 3; // Up to 30 tufts at flora=10; adjust for density
-                for (let i = 0; i < tuftCount; i++) {
-                    // Vary green shade for depth (darker to lighter green)
-                    const greenShade = Math.floor(100 + hash(tx, ty, 500 + i) * 100); // 100-200 for rgb(0, greenShade, 0)
-                    ctx.fillStyle = `rgb(0, ${greenShade}, 0)`;
-                    const rx = Math.floor(hash(tx, ty, 100 + i) * gameState.tileSize);
-                    const baseY = drawY + Math.floor(hash(tx, ty, 200 + i) * gameState.tileSize); // Random across full height
-                    const tuftWidth = 2 + Math.floor(hash(tx, ty, 300 + i) * 3); // 2-4px wide
-                    const tuftHeight = 4 + Math.floor(hash(tx, ty, 400 + i) * 5); // 4-8px tall
-                    ctx.fillRect(drawX + rx, baseY - tuftHeight, tuftWidth, tuftHeight); // Draw upward from base
+                if (tile.terrain === 'dirt') {
+                    for (let i = 0; i < tuftCount; i++) {
+                        // Vary green shade for depth (darker to lighter green)
+                        const greenShade = Math.floor(100 + hash(tx, ty, 500 + i) * 100); // 100-200 for rgb(0, greenShade, 0)
+                        ctx.fillStyle = `rgb(0, ${greenShade}, 0)`;
+                        const rx = Math.floor(hash(tx, ty, 100 + i) * gameState.tileSize);
+                        const baseY = drawY + Math.floor(hash(tx, ty, 200 + i) * gameState.tileSize); // Random across full height
+                        const tuftWidth = 2 + Math.floor(hash(tx, ty, 300 + i) * 3); // 2-4px wide
+                        const tuftHeight = 4 + Math.floor(hash(tx, ty, 400 + i) * 5); // 4-8px tall
+                        ctx.fillRect(drawX + rx, baseY - tuftHeight, tuftWidth, tuftHeight); // Draw upward from base
+                    }
+                }
+                if (tile.terrain === 'sand') {
+                    for (let i = 0; i < tuftCount; i++) {
+                        const yellowShade = Math.floor(100 + hash(tx, ty, 500 + i) * 100); // 100-200 for rgb(0, greenShade, 0)
+                        ctx.fillStyle = `rgb(180, ${yellowShade}, 0)`;
+                        const rx = Math.floor(hash(tx, ty, 100 + i) * gameState.tileSize);
+                        const baseY = drawY + Math.floor(hash(tx, ty, 200 + i) * gameState.tileSize); // Random across full height
+                        const tuftWidth = 2; // 2-4px wide
+                        const tuftHeight = 2; // 4-8px tall
+                        ctx.fillRect(drawX + rx, baseY - tuftHeight, tuftWidth, tuftHeight); // Draw upward from base
+                    }
                 }
             }
 
@@ -73,6 +88,9 @@ export function draw(offsetDeltaX, offsetDeltaY) {
     ctx.arc(playerX, playerY, gameState.tileSize / 3, 0, Math.PI * 2);
     ctx.fill();
 }
+
+
+
 
 export function updateStatus() {
     // Update individual stat elements

@@ -22,7 +22,6 @@ export function setupInputs() {
 
     // Function to handle player interaction (for both touch and click)
     const handlePlayerInteraction = (e) => {
-        e.preventDefault();
         let rect = canvas.getBoundingClientRect();
         let x, y;
         if (e.type === 'touchstart') {
@@ -44,12 +43,14 @@ export function setupInputs() {
         
         if (vx === centerTileX && vy === centerTileY) {
             showMenu();
+            console.log();
+            
         }
     };
 
     // Add touch and click listeners for canvas (player interaction)
-    canvas.addEventListener('touchstart', handlePlayerInteraction);
-    canvas.addEventListener('click', handlePlayerInteraction);
+    canvas.addEventListener('touchstart', handlePlayerInteraction, { passive: true });
+    canvas.addEventListener('click', handlePlayerInteraction, { passive: true });
 
     // Setup click and touchstart listeners for all status buttons
     const goldButton = document.getElementById('gold-button');
@@ -59,39 +60,39 @@ export function setupInputs() {
     const discoveriesButton = document.getElementById('discoveries-button');
 
     // Gold button
-    goldButton.addEventListener('click', showGoldDialog);
+    goldButton.addEventListener('click', showGoldDialog, { passive: true });
     goldButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
+
         showGoldDialog();
-    });
+    }, { passive: true });
 
     // Inventory button
-    inventoryButton.addEventListener('click', showInventoryDialog);
+    inventoryButton.addEventListener('click', showInventoryDialog, { passive: true });
     inventoryButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
+
         showInventoryDialog();
-    });
+    }, { passive: true });
 
     // Group button
-    groupButton.addEventListener('click', showHealthGroupDialog);
+    groupButton.addEventListener('click', showHealthGroupDialog, { passive: true });
     groupButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
+
         showHealthGroupDialog();
-    });
+    }, { passive: true });
 
     // Date button
-    dateButton.addEventListener('click', () => {
-        showEventsDialog();
-    });
+    dateButton.addEventListener('click', showEventsDialog, { passive: true });
     dateButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
+     showEventsDialog();
+    }, { passive: true });
+    dateButton.addEventListener('touchstart', (e) => {
         showEventsDialog();
-    });
+    }, { passive: true });
 
     // Discoveries button
-    discoveriesButton.addEventListener('click', showDiscoveriesDialog);
+    discoveriesButton.addEventListener('click', showDiscoveriesDialog, { passive: true });
     discoveriesButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
+
         showDiscoveriesDialog();
-    });
+    }, { passive: true });
 }

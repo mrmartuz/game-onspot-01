@@ -38,10 +38,15 @@ export function revealAround() {
     let viewBonus = getGroupBonus('view');
     let currentViewDist = gameState.viewDist + Math.floor(viewBonus);
     
-    for (let ddx = -currentViewDist; ddx <= currentViewDist; ddx++) {
-        for (let ddy = -currentViewDist; ddy <= currentViewDist; ddy++) {
-            if (Math.sqrt(ddx * ddx + ddy * ddy) <= currentViewDist) {
-                gameState.visited.add(`${gameState.px + ddx},${gameState.py + ddy}`);
+    for (let dx = -currentViewDist; dx <= currentViewDist; dx++) {
+        for (let dy = -currentViewDist; dy <= currentViewDist; dy++) {
+            if (Math.abs(dx) + Math.abs(dy) <= currentViewDist) {
+                const x = gameState.px + dx;
+                const y = gameState.py + dy;
+                const key = `${x},${y}`;
+                if (!gameState.visited.has(key)) {
+                    gameState.visited.set(key, getTile(x, y));
+                }
             }
         }
     }

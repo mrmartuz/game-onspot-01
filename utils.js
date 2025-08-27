@@ -14,15 +14,14 @@ export function getBiome(x, y) {
 
 export function getTile(x, y) {
     const key = `${x},${y}`;
-    let change = gameState.changed.find(t => t.x === x && t.y === y);
-    let location = change ? change.type : 'none';
-    if (location === 'none') {
-        let h1 = hash(x, y, 1);
-        if (h1 < 0.05) {
-            const locations = ['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin', 'camp', 'farm', 'outpost', 'hamlet', 'village', 'city'];
-            location = locations[Math.floor(hash(x, y, 2) * locations.length)];
-        }
+
+    if(gameState.visited.has(key)) {
+        return gameState.visited.get(key);
     }
+
+    let biome = getBiome(x, y);
+    let change = gameState.changed.find(t => t.x === x && t.y === y);
+    
     let entity = 'none';
     let h3 = hash(x, y, 3);
     if (h3 < 0.05) {
@@ -64,24 +63,148 @@ export function getTile(x, y) {
     // Determine terrain based on smoothed height
     let terrain = height < 4 ? 'sand' : height < 8 ? 'dirt' : 'rock';
 
+    let location = change ? change.type : 'none';
+    if (location === 'none') {
+        let h1 = hash(x, y, 1);
+        if (h1 < 0.05) {
+            let locations = [];
+            if(terrain === 'sand') {
+                locations = ['ruin', 'camp', 'farm', 'outpost', 'hamlet', 'village', 'city'];
+            } else if(terrain === 'dirt') {
+                locations = ['cave', 'ruin', 'camp', 'farm', 'outpost', 'hamlet', 'village', 'city'];
+            } else if(terrain === 'rock') {
+                locations = ['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin', 'camp', 'outpost'];
+            }
+            location = locations[Math.floor(hash(x, y, 2) * locations.length)];
+        }
+    }
+
     // Determine flora type based on biome if flora is present
     let flora_type = 'none';
     if (flora > 6) {
-        let biome = getBiome(x, y);
+        biome = getBiome(x, y);
         let flora_options = [];
-        if (biome === 'temperate') {
+        if (biome === 'temperate' && terrain === 'dirt') {
             flora_options = ['oak', 'iris', 'tulip', 'sun-flower'];
-        } else if (biome === 'taiga') {
-            flora_options = ['pine', 'mushroom'];
-        } else if (biome === 'desert') {
-            flora_options = ['palm', 'cactus', 'dead-tree'];
+        } else if (biome === 'temperate' && terrain === 'sand') {
+            flora_options = ['dead-tree, sun-flower'];
+        } else if (biome === 'taiga' && terrain === 'dirt') {
+            flora_options = ['pine', 'mushroom', 'tulip'];
+        } else if (biome === 'taiga' && terrain === 'sand') {
+            flora_options = ['dead-tree'];
+        } else if (biome === 'desert' && terrain === 'dirt') {
+            flora_options = ['palm', 'cactus', 'tulip'];
+        } else if (biome === 'desert' && terrain === 'sand') {
+            flora_options = ['cactus'];
         }
         if (flora_options.length > 0) {
             flora_type = flora_options[Math.floor(hash(x, y, 7) * flora_options.length)];
         }
     }
 
-    return { height, inclination, terrain, flora, location, entity, flora_type };
+    let color = 'red';
+    let r = Math.random();
+    if(biome === 'temperate') {
+        if(terrain === 'sand') {
+            if(r < 0.25) {
+                color = '#AACC00';
+            } else if(r < 0.5) {
+                color = '#80B918';
+            } else if(r < 0.75) {
+                color = '#55a630';
+            } else {
+                color = '#BFD200';
+            }
+        } else if(terrain === 'dirt') {
+            if(r < 0.25) {
+                color = '#AACC00';
+            } else if(r < 0.5) {
+                color = '#80B918';
+            } else if(r < 0.75) {
+                color = '#55a630';
+            } else {
+                color = '#2b9348';
+            }            
+        } else {
+            if(r < 0.33) {
+                color = '#191611';
+            } else if(r < 0.66) {
+                color = '#1B1E15';
+            } else {
+                color = '#1C2618';
+            }
+        }
+    } else if(biome === 'taiga') {
+        if(terrain === 'sand') {
+            if(r < 0.25) {
+                color = '#191611';
+            } else if(r < 0.5) {
+                color = '#1B1E15';
+            } else {
+                color = '#1C2618';
+            }
+        } else if(terrain === 'dirt') {
+            if(r < 0.25) {
+                color = '#191611';
+            } else if(r < 0.5) {
+                color = '#1B1E15';
+            } else {
+                color = '#1C2618';
+            }
+        } else {
+            if(r < 0.33) {
+                color = '#191611';
+            } else if(r < 0.66) {
+                color = '#1B1E15';
+            } else { 
+                color = '#1C2618';
+            }
+        }
+    } else if(biome === 'desert') {
+        if(terrain === 'sand') {
+            if(r < 0.25) {
+                color = '#AACC00';
+            } else if(r < 0.5) {
+                color = '#80B918';
+            } else if(r < 0.75) {
+                color = '#D4D700';
+            } else {
+                color = '#BFD200';
+            }
+        } else if(terrain === 'dirt') {
+            if(r < 0.25) {
+                color = '#AACC00';
+            } else if(r < 0.5) {
+                color = '#80B918';
+            } else if(r < 0.75) {
+                color = '#D4D700';
+            } else {
+                color = '#BFD200';
+            }
+        } else {
+            if(r < 0.33) {
+                color = '#191611';
+            } else if(r < 0.66) {
+                color = '#1B1E15';
+            } else {
+                color = '#1C2618';
+            }
+        }
+    }
+
+    const tile = { height, inclination, terrain, flora, location, entity, flora_type, biome, color };
+    if(gameState.visited.has(key)) {
+        gameState.visited.set(key, tile);
+    }
+    return tile;
+}
+
+export function updateTile(x, y) {
+    const key = `${x},${y}`;
+    if (gameState.visited.has(key)) {
+        const tile = getTile(x, y); // Regenerate tile to reflect changes
+        gameState.visited.set(key, tile);
+    }
 }
 
 export function getEmojiForLocation(type) {
@@ -198,4 +321,22 @@ export function updateGroupBonus() {
     }
     
     console.log('Final groupBonus:', gameState.groupBonus);
+}
+
+// In utils.js
+export function colorToRGB(color) {
+    const ctx = document.createElement('canvas').getContext('2d');
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, 1, 1);
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    return { r, g, b };
+}
+
+export function interpolateColor(color1, color2, factor) {
+    const c1 = typeof color1 === 'string' ? colorToRGB(color1) : color1;
+    const c2 = typeof color2 === 'string' ? colorToRGB(color2) : color2;
+    const r = Math.round(c1.r + (c2.r - c1.r) * factor);
+    const g = Math.round(c1.g + (c2.g - c1.g) * factor);
+    const b = Math.round(c1.b + (c2.b - c1.b) * factor);
+    return `rgb(${r}, ${g}, ${b})`;
 }
