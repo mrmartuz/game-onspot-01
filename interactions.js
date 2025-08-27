@@ -150,7 +150,7 @@ export async function checkTileInteraction(tile) {
             await showChoiceDialog(`Discovered ${tile.location}! 🌟${bonusText}`, [
                 {label: 'OK', value: 'ok'}
             ]);
-            logEvent(`🌟 Discovered ${tile.location} +${totalPoints} points`);
+            logEvent(`🌟 Discovered ${tile.location} at positionKey +${totalPoints} points`);
         }
 
         let options = [
