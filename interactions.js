@@ -103,6 +103,25 @@ export async function handleCombat(ex, ey, isOnTile = false) {
     }
 }
 
+
+export async function checkAdjacentMonsters() {
+    for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+            if (dx === 0 && dy === 0) continue;
+            let tile = getTile(gameState.px + dx, gameState.py + dy);
+            if (tile.entity === 'monster' || tile.entity === 'beast') {
+                await handleCombat(gameState.px + dx, gameState.py + dy);
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
 export async function checkTileInteraction(tile) {
     if (['monster', 'beast'].includes(tile.entity)) {
         await handleCombat(gameState.px, gameState.py, true);
