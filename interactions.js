@@ -103,18 +103,6 @@ export async function handleCombat(ex, ey, isOnTile = false) {
     }
 }
 
-export async function checkAdjacentMonsters() {
-    for (let dx = -1; dx <= 1; dx++) {
-        for (let dy = -1; dy <= 1; dy++) {
-            if (dx === 0 && dy === 0) continue;
-            let tile = getTile(gameState.px + dx, gameState.py + dy);
-            if (tile.entity === 'monster' || tile.entity === 'beast') {
-                await handleCombat(gameState.px + dx, gameState.py + dy);
-            }
-        }
-    }
-}
-
 export async function checkTileInteraction(tile) {
     if (['monster', 'beast'].includes(tile.entity)) {
         await handleCombat(gameState.px, gameState.py, true);
@@ -125,12 +113,27 @@ export async function checkTileInteraction(tile) {
         if (['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
             // Apply discovery bonus to discovery points
             const positionKey = `${gameState.px},${gameState.py}`;
-            if(gameState.discoveredLocations.has(positionKey)){
+            if (gameState.discoveredLocations.includes(positionKey)) { // Use .includes() instead of .has()
                 await showChoiceDialog(`You've already discovered this ${tile.location}! 🌟`, [
                     {label: 'OK', value: 'ok'}
                 ]);
                 return;
             }
+            let discoveryBonus = getGroupBonus('discovery');
+            let basePoints = 10;
+            let bonusPoints = Math.floor(basePoints * discoveryBonus * Math.random());
+            let totalPoints = basePoints + bonusPoints;
+
+            gameState.discoverPoints += totalPoints;
+            gameState.discoveredLocations.push(positionKey); // Use .push() instead of .add()
+            updateStatus();
+
+            let bonusText = bonusPoints > 0 ? ` (+${bonusPoints} bonus)` : '';
+            await showChoiceDialog(`Discovered ${tile.location}! 🌟${bonusText}`, [
+                {label: 'OK', value: 'ok'}
+            ]);
+            logEvent(`🌟 Discovered ${tile.location} +${totalPoints} points`);
+        }
             let discoveryBonus = getGroupBonus('discovery');
             let basePoints = 10;
             let bonusPoints = Math.floor(basePoints * discoveryBonus * Math.random()); // Random bonus based on discovery skill
