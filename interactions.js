@@ -148,7 +148,7 @@ export async function checkTileInteraction(tile) {
                 {label: 'OK', value: 'ok'}
             ]);
             logEvent(`🌟 Discovered ${tile.location} +${totalPoints} points`);
-        }
+        
         let options = [
             {label: '🚶 Leave', value: '1'}
         ];
