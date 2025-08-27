@@ -22,8 +22,13 @@ async function postMove() {
     let tile = getTile(gameState.px, gameState.py);
     await checkAdjacentMonsters();
     await checkTileInteraction(tile);
-    if (gameState.health <= 0 || gameState.gold < -50) {
-        await showChoiceDialog('Game Over! ☠️', [
+    if (gameState.health <= 0) {
+        await showChoiceDialog('You died fighting! ☠️', [
+            { label: '🔄 Restart Game', value: 'restart' }
+        ]);
+        location.reload();
+    } else if (gameState.gold < -50) {
+        await showChoiceDialog('You paid your debt with your life! ☠️', [
             { label: '🔄 Restart Game', value: 'restart' }
         ]);
         location.reload();

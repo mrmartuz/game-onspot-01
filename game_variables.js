@@ -55,5 +55,5 @@ export const gameState = {
 
 // Time system constants (unchanged, as they're immutable)
 export const game_start_real = Date.now();
-export const game_start_date = new Date("1500-01-01T00:00:00");
+export const game_start_date = new Date(`${(Math.floor(Math.random() * 300) + Math.floor(Math.random() * 300)).toString().padStart(4, '0')}-${(Math.floor(Math.random() * 12) + 1).toString().padStart(2, '0')}-${(Math.floor(Math.random() * 28) + 1).toString().padStart(2, '0')}T${(Math.floor(Math.random() * 24)).toString().padStart(2, '0')}:00:00`);
 export const acceleration = 720; // 1 game day per 2 real minutes (86400 seconds / 120 seconds = 720)

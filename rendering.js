@@ -76,18 +76,18 @@ export function draw(offsetDeltaX, offsetDeltaY) {
 
 export function updateStatus() {
     // Update individual stat elements
-    document.getElementById('gold-button').innerText = `🪙: ${Math.floor(gameState.gold)}`;
+    document.getElementById('gold-button').innerText = `[🪙: ${Math.floor(gameState.gold)}]`;
     
     // Update inventory elements
-    document.getElementById('status-bar-food').innerText = `🍞: ${Math.floor(gameState.food)}`;
+    document.getElementById('status-bar-food').innerText = `[🍞: ${Math.floor(gameState.food)}`;
     document.getElementById('status-bar-water').innerText = `💧: ${Math.floor(gameState.water)}`;
-    document.getElementById('status-bar-cart').innerText = `🛒: ${Math.floor(getMaxStorage())}`;
+    document.getElementById('status-bar-cart').innerText = `🛒: ${Math.floor(getMaxStorage())}]`;
     
     // Update group elements
-    document.getElementById('status-bar-health').innerText = `❤️‍🩹: ${Math.floor(gameState.health)}`;
-    document.getElementById('status-bar-group').innerText = `👥: ${gameState.group.length}`;
+    document.getElementById('status-bar-health').innerText = `[❤️‍🩹: ${Math.floor(gameState.health)}`;
+    document.getElementById('status-bar-group').innerText = `👥: ${gameState.group.length}]`;
     
     // Update date and discoveries
-    document.getElementById('date-button').innerText = getCurrentGameDate().toLocaleString();
-    document.getElementById('discoveries-button').innerText = `🌟: ${Math.floor(gameState.discoverPoints)}`;
+    document.getElementById('date-button').innerText = `📜[${getCurrentGameDate().toLocaleDateString()}]⌚[${getCurrentGameDate().getHours()}]`;
+    document.getElementById('discoveries-button').innerText = `🌟[🔍: ${Math.floor(gameState.discoverPoints)} ⚔️: ${Math.floor(gameState.killPoints)}]`;
 }

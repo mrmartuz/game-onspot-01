@@ -1,5 +1,5 @@
 import { move } from './movement.js';
-import { showMenu, showChoiceDialog, showGoldDialog, showInventoryDialog, showDiscoveriesDialog, showHealthGroupDialog } from './interactions.js';
+import { showMenu, showChoiceDialog, showGoldDialog, showInventoryDialog, showDiscoveriesDialog, showHealthGroupDialog, showEventsDialog } from './interactions.js';
 import { gameState } from './game_variables.js';
 import { canvas } from './rendering.js';
 
@@ -81,17 +81,11 @@ export function setupInputs() {
 
     // Date button
     dateButton.addEventListener('click', () => {
-        const list = gameState.events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
-        showChoiceDialog(list || 'No events yet. 📜', [
-            {label: 'OK', value: 'ok'}
-        ]);
+        showEventsDialog();
     });
     dateButton.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        const list = gameState.events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
-        showChoiceDialog(list || 'No events yet. 📜', [
-            {label: 'OK', value: 'ok'}
-        ]);
+        showEventsDialog();
     });
 
     // Discoveries button

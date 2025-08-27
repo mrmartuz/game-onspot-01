@@ -767,3 +767,10 @@ export async function showHealthGroupDialog() {
         {label: '❌ Close', value: 'close'}
     ]);
 }
+
+export async function showEventsDialog() {
+    const list = gameState.events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
+        showChoiceDialog(`The events of your journey so far: 📜\n\n${list}` || 'No events yet. 📜', [
+            {label: 'OK', value: 'ok'}
+        ]);
+}
