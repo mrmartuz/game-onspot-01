@@ -151,7 +151,7 @@ export async function checkTileInteraction(tile) {
             }
             let discoveryBonus = getGroupBonus('discovery');
             let basePoints = 10;
-            let bonusPoints = Math.floor(basePoints * discoveryBonus * Math.random());
+            let bonusPoints = Math.floor(discoveryBonus + Math.random() * 5 + basePoints);
             let totalPoints = basePoints + bonusPoints;
 
             gameState.discoverPoints += totalPoints;
@@ -785,7 +785,7 @@ export async function showHealthGroupDialog() {
     if (Object.keys(playerBonus).length > 0) {
         playerStats += `Individual Bonuses:\n`;
         Object.entries(playerBonus).forEach(([bonus, value]) => {
-            playerStats += `  ${bonus}: +${(value * 100).toFixed(0)}%\n`;
+            playerStats += `  ${bonus}: +${value.toFixed(1)}\n`;
         });
     }
 
@@ -823,7 +823,7 @@ export async function showHealthGroupDialog() {
                 case 'view': emoji = '👁️'; description = 'Increased view distance'; break;
             }
             
-            message += `${emoji} **${bonusType.charAt(0).toUpperCase() + bonusType.slice(1)}**: +${(totalBonus * 100).toFixed(0)}% - ${description}\n`;
+            message += `${emoji} **${bonusType.charAt(0).toUpperCase() + bonusType.slice(1)}**: +${totalBonus.toFixed(1)} - ${description}\n`;
         }
     });
     
@@ -844,9 +844,9 @@ export async function showHealthGroupDialog() {
             const totalBonus = getGroupBonus(bonusType);
             
             message += `${bonusType.charAt(0).toUpperCase() + bonusType.slice(1)}: `;
-            message += `${(individualBonus * 100).toFixed(0)}% (individual) + `;
-            message += `${(groupBonus * 100).toFixed(0)}% (group) = `;
-            message += `${(totalBonus * 100).toFixed(0)}% (total)\n`;
+            message += `${individualBonus} (individual) + `;
+            message += `${groupBonus} (group) = `;
+            message += `+${totalBonus.toFixed(1)} (total)\n`;
         });
     }
     
@@ -867,7 +867,7 @@ export async function showHealthGroupDialog() {
             if (Object.keys(memberBonus).length > 0) {
                 otherMembers += `\n   Individual Bonuses:`;
                 Object.entries(memberBonus).forEach(([bonus, value]) => {
-                    otherMembers += ` ${bonus}+${(value * 100).toFixed(0)}%`;
+                    otherMembers += ` ${bonus}+${value.toFixed(1)}`;
                 });
             }
         }

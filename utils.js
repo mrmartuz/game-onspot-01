@@ -275,11 +275,11 @@ export function getNumCarriers() {
 
 export function getMaxStorage() {
     // Base storage: 50 per person + 50 per carrier + 200 per cart
-    let baseStorage = 10 * gameState.group.length + 24 * getNumCarriers() + 200 * gameState.carts;
+    let baseStorage = 10 * gameState.group.filter(g => g.role.replace(/[^\w-]/g, '') !== 'carrier').length + 24 * getNumCarriers() + 200 * gameState.carts;
     
     // Apply carry bonus for additional storage capacity
     let carryBonus = gameState.groupBonus.carry || 0;
-    let bonusStorage = Math.floor(baseStorage * carryBonus);
+    let bonusStorage = Math.floor(carryBonus);
     
     return baseStorage + bonusStorage;
 }
