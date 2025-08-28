@@ -586,13 +586,9 @@ export async function showMenu() {
     if (choice === '4') {
         // Apply plant bonus for better harvest yields
         let plantBonus = getGroupBonus('plant');
-        console.log("plantBonus:", plantBonus);
         let baseFood = Math.floor((Math.random() * 1.2))+ 0.1;
-        console.log(baseFood);
         let bonusFood = Math.floor(baseFood * plantBonus);
-        console.log(bonusFood);
-        let totalFood = baseFood + bonusFood;
-        console.log(totalFood);
+        let totalFood = baseFood + bonusFood + plantBonus;
         let max_storage = getMaxStorage();
         if(totalFood > 0){
             if (gameState.food + totalFood <= max_storage) {
