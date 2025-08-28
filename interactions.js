@@ -824,20 +824,20 @@ export async function showHealthGroupDialog() {
     
     // Other party members
     let otherMembers = '';
-    if (gameState.group.length > 1) {
-        otherMembers = `\n👥 **Other Party Members:**\n`;
-        for (let i = 1; i < gameState.group.length; i++) {
-            const member = gameState.group[i];
-            const memberBonus = member.bonus || {};
-            otherMembers += `\n${i}. ${member.role}`;
-            if (Object.keys(memberBonus).length > 0) {
-                otherMembers += `\n   Individual Bonuses:`;
-                Object.entries(memberBonus).forEach(([bonus, value]) => {
-                    otherMembers += ` ${bonus}+${value.toFixed(1)}`;
-                });
-            }
+if (gameState.group.length > 1) {
+    otherMembers = `\n👥 **Other Party Members:**\n`;
+    for (let i = 1; i < gameState.group.length; i++) {
+        const member = gameState.group[i];
+        const memberBonus = member.bonus || {};
+        const occupation = member.enhancedBonus ? member.enhancedBonus.f : member.role;
+        otherMembers += `\n${i}. ${occupation}`;
+        if (Object.keys(memberBonus).length > 0) {
+            Object.entries(memberBonus).forEach(([bonus, value]) => {
+                otherMembers += ` ${bonus}+${value.toFixed(1)}`;
+            });
         }
     }
+}
     
      else {
         otherMembers = `👥 **No other party members**`;
@@ -858,9 +858,7 @@ export async function showHealthGroupDialog() {
 
 export async function showDetailedBreakdownDialog() {
     let message = '';
-    message += `\n📋 **Detailed Breakdown:**\n`;
-    // Show explanation
-    message += `How Bonuses Work:\n\n`;
+    message += `\n📋 How Bonuses Work:\n`;
     message += `• Individual bonuses come from each character's role\n`;
     message += `• Group bonuses are additional bonuses from role combinations\n`;
     message += `• Total = Individual + Group bonuses\n\n`;
@@ -896,6 +894,13 @@ export async function showDetailedBreakdownDialog() {
             message += `${individualBonus.toFixed(1)} (individual) + `;
             message += `${groupBonus.toFixed(1)} (group) = `;
             message += `+${totalBonus.toFixed(1)} (total)\n`;
+        });
+    }
+    let enhancedBonuses = getEnhancedBonusForRole(gameState.group[0].role);
+    if (enhancedBonuses.length > 0) {
+        message += `\nEnhanced Bonuses:\n`;
+        enhancedBonuses.forEach(bonus => {
+            message += `${emoji[bonus.type]} ${bonus.type.charAt(0).toUpperCase() + bonus.type.slice(1)}: +${bonus.value} ${bonus.description}\n`;
         });
     }
     
