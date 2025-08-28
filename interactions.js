@@ -394,7 +394,7 @@ export async function handleChoice(choice, tile) {
                         `🌟 **Enhanced Character Available!** 🌟\n\n` +
                         `Role: ${role}\n` +
                         `Enhanced Bonus: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type}\n` +
-                        `Specialty: ${hire.enhancedBonus.description}\n\n` +
+                        `Speciality: ${hire.enhancedBonus.description}\n\n` +
                         `**Options:**\n` +
                         `1. Hire Basic: ${actualCost}g\n` +
                         `2. Hire Enhanced: ${actualCost + hire.upgradeCost}g (+${hire.upgradeCost}g upgrade)\n` +
@@ -416,12 +416,12 @@ export async function handleChoice(choice, tile) {
                             let finalBonus = {...getBonusForRole(role)};
                             finalBonus[hire.enhancedBonus.type] = (finalBonus[hire.enhancedBonus.type] || 0) + hire.enhancedBonus.value;
                             
-                            gameState.group.push({role, bonus: finalBonus});
+                            gameState.group.push({role, speciality: hire.enhancedBonus.description, bonus: finalBonus});
                             gameState.gold -= actualCost;
                             updateGroupBonus();
                             
                             let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
-                            await showChoiceDialog(`🌟 Hired Enhanced ${role}! 👏\nEnhanced Bonus: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type}\nSpecialty: ${hire.enhancedBonus.description}${discountText}`, [
+                            await showChoiceDialog(`🌟 Hired Enhanced ${role}! 👏\nEnhanced Bonus: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type}\nSpeciality: ${hire.enhancedBonus.description}${discountText}`, [
                                 {label: 'OK', value: 'ok'}
                             ]);
                             logEvent(`🌟 Hired Enhanced ${role} for ${actualCost}g${discountText} (Enhanced: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type} - ${hire.enhancedBonus.description})`);
@@ -764,6 +764,18 @@ export async function showDiscoveriesDialog() {
 
 export async function showHealthGroupDialog() {
     let message = '';
+    let emoji = {
+        'native-guide': '🧭',
+        'cook': '🍞',
+        'guard': '⚔️',
+        'geologist': '🪵',
+        'biologist': '🌱',
+        'translator': '🤝',
+        'carrier': '📦',
+        'medic': '❤️',
+        'navigator': '👁️',
+        'explorer': '🔍'
+    };
     
     // Debug: Log the current state
     console.log('Current gameState.group:', gameState.group);
@@ -828,9 +840,10 @@ if (gameState.group.length > 1) {
     otherMembers = `\n👥 **Other Party Members:**\n`;
     for (let i = 1; i < gameState.group.length; i++) {
         const member = gameState.group[i];
+        console.log(member);
         const memberBonus = member.bonus || {};
-        const occupation = member.enhancedBonus ? member.enhancedBonus.f : member.role;
-        otherMembers += `\n${i}. ${occupation}`;
+        const occupation = member.speciality ? member.speciality.toLowerCase() : member.role.toLowerCase();
+        otherMembers += `\n${i}. ${occupation}${member.speciality ? emoji[member.role.replace(/[^\w-]/g, '')] : ''}:`;
         if (Object.keys(memberBonus).length > 0) {
             Object.entries(memberBonus).forEach(([bonus, value]) => {
                 otherMembers += ` ${bonus}+${value.toFixed(1)}`;

@@ -237,7 +237,7 @@ export function getEmojiForLocation(type) {
 export function getEmojiForFlora(type) {
     const map = {
         'oak': '🌳', 'pine': '🌲', 'palm': '🌴', 'cactus': '🌵',
-        'sun-flower': '🌻', 'iris': '🪻', 'tulip': '🌷', 'mushroom': '🍄', 'dead-tree': '🪾'
+        'sun-flower': '🌻', 'iris': '🪻', 'tulip': '🌷', 'mushroom': '🍄', 'dead-tree': '🌵'
     };
     return map[type] || '🍀';
 }
