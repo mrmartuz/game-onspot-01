@@ -1,5 +1,5 @@
 import { gameState } from './game_variables.js';
-import { getGroupBonus, getTile, getMaxStorage, getBonusForRole, getEnhancedBonusForRole, updateGroupBonus, updateTile } from './utils.js';
+import { getGroupBonus, getTile, getMaxStorage, getBonusForRole, getEnhancedBonusForRole, updateGroupBonus, updateTile, checkDeath } from './utils.js';
 import { logEvent, getCurrentGameDate } from './time_system.js';
 import { updateStatus } from './rendering.js';
 
@@ -99,6 +99,18 @@ export async function handleCombat(ex, ey, isOnTile = false) {
         gameState.health -= finalDamage;
         updateStatus();
         logEvent(`🤕 Defeated by ${entity} at (${ex},${ey})`);
+        let death = await checkDeath();
+        if(death === 'health'){
+            await showChoiceDialog('You died fighting! ☠️', [
+            { label: '🔄 Restart Game', value: 'restart' }
+            ]);
+            location.reload();
+        } else if(death === 'gold'){
+            await showChoiceDialog('You paid your debt with your life! ☠️', [
+                { label: '🔄 Restart Game', value: 'restart' }
+            ]);
+            location.reload();
+        }
         return false;
     }
 }
@@ -173,10 +185,15 @@ export async function checkTileInteraction(tile) {
             options.unshift({label: '🏹 Sell hunts', value: '6'});
         }
 
-        let msg = `At ${tile.location !== 'none' ? tile.location : ''} ${tile.entity !== 'none' ? tile.entity : ''}`.trim();
-        if (msg === 'At') msg = 'On this tile';
-        let choice = await showChoiceDialog(msg, options);
-        await handleChoice(choice, tile);
+        let msg = '';
+        if(tile.location === 'peaks' && tile.entity === 'none'){
+            return;
+        }
+        msg = `At ${tile.location !== 'none' ? tile.location : ''} ${tile.entity !== 'none' ? tile.entity : ''}`.trim();
+            if (msg === 'At') msg = 'On this tile';
+            let choice = await showChoiceDialog(msg, options);
+            await handleChoice(choice, tile);
+        
     }
 }
 
@@ -868,7 +885,7 @@ export async function showHealthGroupDialog() {
 
 export async function showEventsDialog() {
     const list = gameState.events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
-        showChoiceDialog(`The events of your journey so far: 📜\n\n${list}` || 'No events yet. 📜', [
-            {label: 'OK', value: 'ok'}
-        ]);
+    await showChoiceDialog(`The events of your journey so far: 📜\n\n${list}` || 'No events yet. 📜', [
+        {label: 'OK', value: 'ok'}
+    ]);
 }

@@ -590,3 +590,11 @@ export function getEnhancedBonusForRole(role) {
     // Return a random enhanced bonus for this role
     return possibleBonuses[Math.floor(Math.random() * possibleBonuses.length)];
 }
+
+export async function checkDeath() {
+    if (gameState.health <= 0) {
+        return 'health';
+    } else if (gameState.gold < -50) {
+        return 'gold';
+    }
+}
