@@ -22,8 +22,8 @@ export const gameState = {
     wood: 5,
     carts: 0,
     group: [
-        {role: 'explorer🔍', bonus: {discovery: 0.2}},
-        {role: 'carrier📦', bonus: {carry: 0.2}},
+        {role: 'explorer🔍'},
+        {role: 'carrier📦'},
     ],
     groupBonus: {
         'navigation': 0,

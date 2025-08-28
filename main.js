@@ -1,7 +1,7 @@
 import { resize, draw, updateStatus, canvas, ctx } from './rendering.js';
 import { revealAround } from './movement.js';
 import { gameState } from './game_variables.js';
-import { getTile, updateGroupBonus, updateTile } from './utils.js';
+import { getTile, updateGroupBonus, updateTile, ensureGroupBonuses } from './utils.js';
 import { checkAdjacentMonsters, checkTileInteraction, showChoiceDialog } from './interactions.js';
 import { getCurrentGameDate, timeConsumption } from './time_system.js';
 import { setupInputs } from './input_handlers.js';
@@ -9,6 +9,7 @@ import { setupInputs } from './input_handlers.js';
 // Setup
 window.addEventListener('resize', resize, { passive: true });
 resize();
+ensureGroupBonuses(); // Fix any missing bonuses in existing group members
 updateGroupBonus();
 gameState.visited.set('0,0', getTile(0, 0));
 revealAround();

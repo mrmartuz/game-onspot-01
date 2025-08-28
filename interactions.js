@@ -1,5 +1,5 @@
 import { gameState } from './game_variables.js';
-import { getGroupBonus, getTile, getMaxStorage, getBonusForRole, updateGroupBonus, updateTile } from './utils.js';
+import { getGroupBonus, getTile, getMaxStorage, getBonusForRole, getEnhancedBonusForRole, updateGroupBonus, updateTile } from './utils.js';
 import { logEvent, getCurrentGameDate } from './time_system.js';
 import { updateStatus } from './rendering.js';
 
@@ -128,7 +128,7 @@ export async function checkTileInteraction(tile) {
     }
 
     if (tile.location !== 'none' || tile.entity !== 'none') {
-        if (['waterfalls', 'canyon', 'geyser', 'peaks', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
+        if (['waterfalls', 'canyon', 'geyser', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
             // Apply discovery bonus to discovery points
             const positionKey = `${gameState.px},${gameState.py}`;
             if (gameState.discoveredLocations.includes(positionKey)) { // Use .includes() for array
@@ -330,7 +330,31 @@ export async function handleChoice(choice, tile) {
                 let r = roles[Math.floor(Math.random() * roles.length)];
                 let baseCost = 50 + Math.floor(Math.random() * 50);
                 let actualCost = Math.floor(baseCost * (1 - hireDiscount));
-                hires.push({label: `${i+1}: ${r} for ${actualCost}g`, value: (i+1).toString(), baseCost, actualCost});
+                
+                // 15% chance for enhanced personal bonus
+                let hasEnhancedBonus = Math.random() < 0.15;
+                let enhancedBonus = null;
+                let upgradeCost = 0;
+                
+                if (hasEnhancedBonus) {
+                    enhancedBonus = getEnhancedBonusForRole(r);
+                    upgradeCost = Math.floor(baseCost * 0.8); // 80% of base cost for upgrade
+                }
+                
+                let label = `${i+1}: ${r} for ${actualCost}g`;
+                if (hasEnhancedBonus) {
+                    label += ` ⭐ (Enhanced: +${enhancedBonus.value} ${enhancedBonus.type})`;
+                }
+                
+                hires.push({
+                    label: label, 
+                    value: (i+1).toString(), 
+                    baseCost, 
+                    actualCost,
+                    hasEnhancedBonus,
+                    enhancedBonus,
+                    upgradeCost
+                });
             }
             hires.push({label: '❌ Close', value: 'close'});
             
@@ -342,22 +366,89 @@ export async function handleChoice(choice, tile) {
             
             if (c && ['1','2','3'].includes(c)) {
                 let idx = parseInt(c) - 1;
-                let hireStr = hires[idx].label;
-                let role = hireStr.split(': ')[1].split(' for ')[0];
-                let cost = hires[idx].actualCost;
-                if (gameState.gold >= cost) {
-                    gameState.group.push({role, bonus: getBonusForRole(role)});
-                    gameState.gold -= cost;
-                    updateGroupBonus(); // Recalculate group bonuses after hiring
-                    let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
-                    await showChoiceDialog(`Hired ${role}! 👏${discountText}`, [
-                        {label: 'OK', value: 'ok'}
-                    ]);
-                    logEvent(`🧍🏻 Hired ${role} for ${cost}g${discountText}`);
+                let hire = hires[idx];
+                let role = hire.label.split(': ')[1].split(' for ')[0];
+                let baseCost = hire.baseCost;
+                let actualCost = hire.actualCost;
+                
+                if (hire.hasEnhancedBonus) {
+                    // Show upgrade choice dialog
+                    let upgradeChoice = await showChoiceDialog(
+                        `🌟 **Enhanced Character Available!** 🌟\n\n` +
+                        `Role: ${role}\n` +
+                        `Enhanced Bonus: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type}\n` +
+                        `Specialty: ${hire.enhancedBonus.description}\n\n` +
+                        `**Options:**\n` +
+                        `1. Hire Basic: ${actualCost}g\n` +
+                        `2. Hire Enhanced: ${actualCost + hire.upgradeCost}g (+${hire.upgradeCost}g upgrade)\n` +
+                        `3. Cancel`,
+                        [
+                            {label: `Basic Hire (${actualCost}g)`, value: 'basic'},
+                            {label: `Enhanced Hire (${actualCost + hire.upgradeCost}g)`, value: 'enhanced'},
+                            {label: '❌ Cancel', value: 'cancel'}
+                        ]
+                    );
+                    
+                    if (upgradeChoice === 'cancel') {
+                        continue;
+                    }
+                    
+                    if (upgradeChoice === 'enhanced') {
+                        actualCost += hire.upgradeCost;
+                        if (gameState.gold >= actualCost) {
+                            let finalBonus = {...getBonusForRole(role)};
+                            finalBonus[hire.enhancedBonus.type] = (finalBonus[hire.enhancedBonus.type] || 0) + hire.enhancedBonus.value;
+                            
+                            gameState.group.push({role, bonus: finalBonus});
+                            gameState.gold -= actualCost;
+                            updateGroupBonus();
+                            
+                            let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
+                            await showChoiceDialog(`🌟 Hired Enhanced ${role}! 👏\nEnhanced Bonus: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type}\nSpecialty: ${hire.enhancedBonus.description}${discountText}`, [
+                                {label: 'OK', value: 'ok'}
+                            ]);
+                            logEvent(`🌟 Hired Enhanced ${role} for ${actualCost}g${discountText} (Enhanced: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type} - ${hire.enhancedBonus.description})`);
+                        } else {
+                            await showChoiceDialog('Not enough gold for enhanced hire! ⚠️', [
+                                {label: 'OK', value: 'ok'}
+                            ]);
+                            continue;
+                        }
+                    } else {
+                        // Basic hire
+                        if (gameState.gold >= actualCost) {
+                            gameState.group.push({role, bonus: getBonusForRole(role)});
+                            gameState.gold -= actualCost;
+                            updateGroupBonus();
+                            
+                            let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
+                            await showChoiceDialog(`Hired ${role}! 👏${discountText}`, [
+                                {label: 'OK', value: 'ok'}
+                            ]);
+                            logEvent(`🧍🏻 Hired ${role} for ${actualCost}g${discountText}`);
+                        } else {
+                            await showChoiceDialog('Not enough gold! ⚠️', [
+                                {label: 'OK', value: 'ok'}
+                            ]);
+                        }
+                    }
                 } else {
-                    await showChoiceDialog('Not enough gold! ⚠️', [
-                        {label: 'OK', value: 'ok'}
-                    ]);
+                    // Regular hire without enhanced bonus
+                    if (gameState.gold >= actualCost) {
+                        gameState.group.push({role, bonus: getBonusForRole(role)});
+                        gameState.gold -= actualCost;
+                        updateGroupBonus();
+                        
+                        let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
+                        await showChoiceDialog(`Hired ${role}! 👏${discountText}`, [
+                            {label: 'OK', value: 'ok'}
+                        ]);
+                        logEvent(`🧍🏻 Hired ${role} for ${actualCost}g${discountText}`);
+                    } else {
+                        await showChoiceDialog('Not enough gold! ⚠️', [
+                            {label: 'OK', value: 'ok'}
+                        ]);
+                    }
                 }
             }
         }
@@ -576,11 +667,12 @@ export async function showGoldDialog() {
     // Calculate role-based additional costs
     const roleExpenses = gameState.group.reduce((total, member) => {
         let roleCost = 0;
-        if (member.role.includes('guide')) roleCost = 1.0;      // Guides cost more
-        else if (member.role.includes('cook')) roleCost = 0.8;   // Cooks cost more
-        else if (member.role.includes('guard')) roleCost = 1.2;  // Guards cost more
-        else if (member.role.includes('medic')) roleCost = 1.5;  // Medics cost more
-        else if (member.role.includes('navigator')) roleCost = 0.9; // Navigators cost more
+        const cleanRole = member.role.replace(/[^\w-]/g, '');
+        if (cleanRole.includes('guide')) roleCost = 1.0;      // Guides cost more
+        else if (cleanRole.includes('cook')) roleCost = 0.8;   // Cooks cost more
+        else if (cleanRole.includes('guard')) roleCost = 1.2;  // Guards cost more
+        else if (cleanRole.includes('medic')) roleCost = 1.5;  // Medics cost more
+        else if (cleanRole.includes('navigator')) roleCost = 0.9; // Navigators cost more
         else roleCost = 0.3; // Base additional cost for other roles
         
         return total + roleCost;
@@ -694,7 +786,10 @@ export async function showHealthGroupDialog() {
             let description = '';
             
             // Debug: Show individual vs group breakdown
-            const individualBonus = gameState.group.reduce((total, g) => total + (g.bonus[bonusType] || 0), 0);
+            const individualBonus = gameState.group.reduce((total, g) => {
+                const memberBonus = g.bonus || {};
+                return total + (memberBonus[bonusType] || 0);
+            }, 0);
             const groupBonus = gameState.groupBonus[bonusType] || 0;
             console.log(`${bonusType}: individual=${individualBonus}, group=${groupBonus}, total=${totalBonus}`);
             
@@ -724,7 +819,10 @@ export async function showHealthGroupDialog() {
     if (activeBonusTypes.length > 0) {
         message += `\n📋 **Detailed Breakdown:**\n`;
         activeBonusTypes.forEach(bonusType => {
-            const individualBonus = gameState.group.reduce((total, g) => total + (g.bonus[bonusType] || 0), 0);
+            const individualBonus = gameState.group.reduce((total, g) => {
+                const memberBonus = g.bonus || {};
+                return total + (memberBonus[bonusType] || 0);
+            }, 0);
             const groupBonus = gameState.groupBonus[bonusType] || 0;
             const totalBonus = getGroupBonus(bonusType);
             

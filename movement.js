@@ -13,11 +13,12 @@ export function move(dx, dy) {
     
     // Apply terrain-specific navigation bonuses
     gameState.group.forEach(g => {
-        if (g.role === 'navigator' && tile.terrain === 'dirt' && tile.flora < 6) {
+        const cleanRole = g.role.replace(/[^\w-]/g, '');
+        if (cleanRole === 'navigator' && tile.terrain === 'dirt' && tile.flora < 6) {
             navigationBonus += 0.2;
-        } else if (g.role === 'native-guide' && tile.flora >= 6) {
+        } else if (cleanRole === 'native-guide' && tile.flora >= 6) {
             navigationBonus += 0.2;
-        } else if (g.role === 'explorer' && tile.location !== 'none' && tile.flora < 3) {
+        } else if (cleanRole === 'explorer' && tile.location !== 'none' && tile.flora < 3) {
             navigationBonus += 0.2;
         }
     });
