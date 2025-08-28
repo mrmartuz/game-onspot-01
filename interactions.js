@@ -1,5 +1,5 @@
 import { gameState } from './game_variables.js';
-import { getGroupBonus, getTile, getMaxStorage, getBonusForRole, getEnhancedBonusForRole, updateGroupBonus, updateTile, checkDeath } from './utils.js';
+import { getGroupBonus, getTile, getMaxStorage, getBonusForRole, getEnhancedBonusForRole, updateGroupBonus, checkDeath, getNumCarriers } from './utils.js';
 import { logEvent, getCurrentGameDate } from './time_system.js';
 import { updateStatus } from './rendering.js';
 
@@ -728,15 +728,14 @@ export async function showInventoryDialog() {
     // Get next consumption times
     const { nextFood, nextWater, nextGold, currentHour, currentMinute } = getNextConsumptionTimes();
     
-    const message = `📦 **Party Inventory**\n\n` +
-                   `🍞 Food: ${gameState.food.toFixed(1)}/${maxStorage}\n` +
-                   `🍞 Daily Total: -${dailyFoodConsumption.toFixed(1)}/day\n` +
-                   `💧 Water: ${gameState.water.toFixed(1)}/${maxStorage}\n` +
-                   `💧 Daily Total: -${dailyWaterConsumption.toFixed(1)}/day\n` +
+    const message = `📦 **Party Inventory**\n` +
+                   `🛒: ${gameState.carts}*100 + 📦: ${getNumCarriers()}*24 + 👥: ${gameState.group.length - getNumCarriers() - gameState.carts}*10\n`  + `📦 Max Storage: ${maxStorage}\n\n` +
+                   `🪙 Gold: ${gameState.gold}\n` +
+                   `🍞 Food: ${gameState.food.toFixed(1)} -${dailyFoodConsumption.toFixed(1)}/day\n` +
+                   `💧 Water: ${gameState.water.toFixed(1)} -${dailyWaterConsumption.toFixed(1)}/day\n` +
                    `🪵 Wood: ${gameState.wood}\n` +
                    `⛺ Tents: ${gameState.tents}\n` +
                    `🧱 Building Materials: ${gameState.building_mats}\n` +
-                   `🛒 Carts: ${gameState.carts}\n\n` +
                    `**Daily Expenses:**\n` +
                    `💰 Gold: -${dailyGoldExpense.toFixed(1)}/day (consumed at noon)\n` +
                    `💰 Next Gold Expense: ${nextGold > 23 ? (nextGold - 24) : nextGold}:00\n\n` +
@@ -847,14 +846,37 @@ export async function showHealthGroupDialog() {
     message += otherMembers;
     
     
-    return showChoiceDialog(message, [
+    const choice = await showChoiceDialog(message, [
         {label:'Detailed Breakdown', value: 'detailed-breakdown'},
         {label: '❌ Close', value: 'close'}
     ]);
+
+    if (choice === 'detailed-breakdown') {
+        return showDetailedBreakdownDialog();
+    }
 }
 
 export async function showDetailedBreakdownDialog() {
     let message = '';
+    message += `\n📋 **Detailed Breakdown:**\n`;
+    // Show explanation
+    message += `How Bonuses Work:\n\n`;
+    message += `• Individual bonuses come from each character's role\n`;
+    message += `• Group bonuses are additional bonuses from role combinations\n`;
+    message += `• Total = Individual + Group bonuses\n\n`;
+    let bonusTypes = ['navigation', 'discovery', 'food', 'combat', 'resource', 'plant', 'interact', 'carry', 'health', 'view'];
+    let emoji = {
+        'navigation': '🧭',
+        'discovery': '🔍',
+        'food': '🍞',
+        'combat': '⚔️',
+        'resource': '🪵',
+        'plant': '🌱',
+        'interact': '🤝',
+        'carry': '📦',
+        'health': '❤️',
+        'view': '👁️'
+    };
     if (bonusTypes.every(type => getGroupBonus(type) === 0)) {
         message += `No active bonuses. Hire more specialized roles to unlock bonuses!\n`;
     }
@@ -862,7 +884,6 @@ export async function showDetailedBreakdownDialog() {
     // Show detailed breakdown for active bonuses
     const activeBonusTypes = bonusTypes.filter(type => getGroupBonus(type) > 0);
     if (activeBonusTypes.length > 0) {
-        message += `\n📋 **Detailed Breakdown:**\n`;
         activeBonusTypes.forEach(bonusType => {
             const individualBonus = gameState.group.reduce((total, g) => {
                 const memberBonus = g.bonus || {};
@@ -871,18 +892,13 @@ export async function showDetailedBreakdownDialog() {
             const groupBonus = gameState.groupBonus[bonusType] || 0;
             const totalBonus = getGroupBonus(bonusType);
             
-            message += `${bonusType.charAt(0).toUpperCase() + bonusType.slice(1)}: `;
+            message += `${emoji[bonusType]} ${bonusType.charAt(0).toUpperCase() + bonusType.slice(1)}: `;
             message += `${individualBonus.toFixed(1)} (individual) + `;
             message += `${groupBonus.toFixed(1)} (group) = `;
             message += `+${totalBonus.toFixed(1)} (total)\n`;
         });
     }
-    // Show explanation
-    message += `\n📋 **How Bonuses Work:**\n`;
-    message += `• Individual bonuses come from each character's role\n`;
-    message += `• Group bonuses are additional bonuses from role combinations\n`;
-    message += `• Total = Individual + Group bonuses\n`;
-
+    
     return showChoiceDialog(message, [
         {label: '❌ Close', value: 'close'}
     ]);
