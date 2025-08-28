@@ -306,7 +306,6 @@ export function getBonusForRole(role) {
 
 export function updateGroupBonus() {
     console.log('updateGroupBonus called');
-    console.log('Current group:', gameState.group);
     
     // Ensure all group members have proper bonus properties
     ensureGroupBonuses();
@@ -322,169 +321,163 @@ export function updateGroupBonus() {
         // Strip emojis from role names for matching
         const cleanRole = member.role.replace(/[^\w-]/g, '');
         roleCounts[cleanRole] = (roleCounts[cleanRole] || 0) + 1;
-        console.log(`Member: ${member.role} -> Clean: ${cleanRole}`);
     });
-    
-    console.log('Role counts (cleaned):', roleCounts);
     
     // Apply bonuses based on role combinations with scaling
     if (roleCounts['native-guide'] >= 1) {
         gameState.groupBonus.navigation += 0.3;
-        console.log(`Added navigation bonus: +0.3 (1+ native-guide)`);
         // Additional bonus for multiple guides
         if (roleCounts['native-guide'] >= 2) {
             gameState.groupBonus.navigation += 0.2;
-            console.log(`Added navigation bonus: +0.2 (2+ native-guide)`);
+
         }
         if (roleCounts['native-guide'] >= 3) {
             gameState.groupBonus.navigation += 0.1;
-            console.log(`Added navigation bonus: +0.1 (3+ native-guide)`);
+
         }
     }
     
     if (roleCounts['explorer'] >= 1) {
-        gameState.groupBonus.discovery += 0.4;
-        console.log(`Added discovery bonus: +0.4 (1+ explorer)`);
+        gameState.groupBonus.discovery += 0.1;
+
         // Additional bonus for multiple explorers
         if (roleCounts['explorer'] >= 2) {
             gameState.groupBonus.discovery += 0.3;
-            console.log(`Added discovery bonus: +0.3 (2+ explorer)`);
+
         }
         if (roleCounts['explorer'] >= 3) {
-            gameState.groupBonus.discovery += 0.2;
-            console.log(`Added discovery bonus: +0.2 (3+ explorer)`);
+            gameState.groupBonus.discovery += 0.3;
+
         }
     }
     
     if (roleCounts['cook'] >= 1) {
         gameState.groupBonus.food += 0.3;
-        console.log(`Added food bonus: +0.3 (1+ cook)`);
+
         // Additional bonus for multiple cooks
         if (roleCounts['cook'] >= 2) {
             gameState.groupBonus.food += 0.2;
-            console.log(`Added food bonus: +0.2 (2+ cook)`);
+
         }
         if (roleCounts['cook'] >= 3) {
             gameState.groupBonus.food += 0.1;
-            console.log(`Added food bonus: +0.1 (3+ cook)`);
+
         }
     }
     
     if (roleCounts['guard'] >= 1) {
         gameState.groupBonus.combat += 0.4;
-        console.log(`Added combat bonus: +0.4 (1+ guard)`);
+
         // Additional bonus for multiple guards
         if (roleCounts['guard'] >= 2) {
             gameState.groupBonus.combat += 0.3;
-            console.log(`Added combat bonus: +0.3 (2+ guard)`);
+
         }
         if (roleCounts['guard'] >= 3) {
             gameState.groupBonus.combat += 0.2;
-            console.log(`Added combat bonus: +0.2 (3+ guard)`);
+
         }
     }
     
     if (roleCounts['geologist'] >= 1) {
         gameState.groupBonus.resource += 0.3;
-        console.log(`Added resource bonus: +0.3 (1+ geologist)`);
+
         // Additional bonus for multiple geologists
         if (roleCounts['geologist'] >= 2) {
             gameState.groupBonus.resource += 0.2;
-            console.log(`Added resource bonus: +0.2 (2+ geologist)`);
+
         }
         if (roleCounts['geologist'] >= 3) {
             gameState.groupBonus.resource += 0.1;
-            console.log(`Added resource bonus: +0.1 (3+ geologist)`);
+
         }
     }
     
     if (roleCounts['biologist'] >= 1) {
         gameState.groupBonus.plant += 0.3;
-        console.log(`Added plant bonus: +0.3 (1+ biologist)`);
+        
         // Additional bonus for multiple biologists
         if (roleCounts['biologist'] >= 2) {
             gameState.groupBonus.plant += 0.2;
-            console.log(`Added plant bonus: +0.2 (2+ biologist)`);
+            
         }
         if (roleCounts['biologist'] >= 3) {
             gameState.groupBonus.plant += 0.1;
-            console.log(`Added plant bonus: +0.1 (3+ biologist)`);
+            
         }
     }
     
     if (roleCounts['translator'] >= 1) {
         gameState.groupBonus.interact += 0.3;
-        console.log(`Added interact bonus: +0.3 (1+ translator)`);
+        
         // Additional bonus for multiple translators
         if (roleCounts['translator'] >= 2) {
             gameState.groupBonus.interact += 0.2;
-            console.log(`Added interact bonus: +0.2 (2+ translator)`);
+            
         }
         if (roleCounts['translator'] >= 3) {
             gameState.groupBonus.interact += 0.1;
-            console.log(`Added interact bonus: +0.1 (3+ translator)`);
+            
         }
     }
     
     if (roleCounts['carrier'] >= 1) {
-        gameState.groupBonus.carry += 0.4;
-        console.log(`Added carry bonus: +0.4 (1+ carrier)`);
+        gameState.groupBonus.carry += 0.1;
+        
         // Additional bonus for multiple carriers
         if (roleCounts['carrier'] >= 2) {
-            gameState.groupBonus.carry += 0.3;
-            console.log(`Added carry bonus: +0.3 (2+ carrier)`);
+            gameState.groupBonus.carry += 0.2;
+            
         }
         if (roleCounts['carrier'] >= 3) {
-            gameState.groupBonus.carry += 0.2;
-            console.log(`Added carry bonus: +0.2 (3+ carrier)`);
+            gameState.groupBonus.carry += 0.1;
+            
         }
     }
     
     if (roleCounts['medic'] >= 1) {
         gameState.groupBonus.health += 0.4;
-        console.log(`Added health bonus: +0.4 (1+ medic)`);
+        
         // Additional bonus for multiple medics
         if (roleCounts['medic'] >= 2) {
             gameState.groupBonus.health += 0.3;
-            console.log(`Added health bonus: +0.3 (2+ medic)`);
+            
         }
         if (roleCounts['medic'] >= 3) {
             gameState.groupBonus.health += 0.2;
-            console.log(`Added health bonus: +0.2 (3+ medic)`);
+        
         }
     }
     
     if (roleCounts['navigator'] >= 1) {
         gameState.groupBonus.view += 1;
-        console.log(`Added view bonus: +1 (1+ navigator)`);
+        
         // Additional bonus for multiple navigators
         if (roleCounts['navigator'] >= 2) {
             gameState.groupBonus.view += 0.5;
-            console.log(`Added view bonus: +0.5 (2+ navigator)`);
+            
         }
         if (roleCounts['navigator'] >= 3) {
             gameState.groupBonus.view += 0.25;
-            console.log(`Added view bonus: +0.25 (3+ navigator)`);
+            
         }
     }
     
     // Special combination bonuses
     if (roleCounts['native-guide'] && roleCounts['navigator']) {
         gameState.groupBonus.navigation += 0.2;
-        console.log(`Added navigation bonus: +0.2 (native-guide + navigator combo)`);
+        
     }
     if (roleCounts['geologist'] && roleCounts['biologist']) {
         gameState.groupBonus.resource += 0.2;
         gameState.groupBonus.plant += 0.2;
-        console.log(`Added resource/plant bonus: +0.2 (geologist + biologist combo)`);
+        
     }
     if (roleCounts['medic'] && roleCounts['guard']) {
         gameState.groupBonus.health += 0.2;
         gameState.groupBonus.combat += 0.2;
-        console.log(`Added health/combat bonus: +0.2 (medic + guard combo)`);
+        
     }
-    
-    console.log('Final groupBonus:', gameState.groupBonus);
 }
 
 // In utils.js

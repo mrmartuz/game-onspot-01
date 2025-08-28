@@ -381,7 +381,7 @@ export async function handleChoice(choice, tile) {
                 continue;
             }
             
-            if (c && ['1','2','3'].includes(c)) {
+            if (c && c !== 'close' && !isNaN(parseInt(c)) && parseInt(c) >= 1 && parseInt(c) <= number_of_hires) {
                 let idx = parseInt(c) - 1;
                 let hire = hires[idx];
                 let role = hire.label.split(': ')[1].split(' for ')[0];
@@ -586,6 +586,7 @@ export async function showMenu() {
     if (choice === '4') {
         // Apply plant bonus for better harvest yields
         let plantBonus = getGroupBonus('plant');
+        console.log("plantBonus:", plantBonus);
         let baseFood = Math.floor((Math.random() * 1.2))+ 0.1;
         console.log(baseFood);
         let bonusFood = Math.floor(baseFood * plantBonus);
@@ -808,7 +809,6 @@ export async function showHealthGroupDialog() {
                 return total + (memberBonus[bonusType] || 0);
             }, 0);
             const groupBonus = gameState.groupBonus[bonusType] || 0;
-            console.log(`${bonusType}: individual=${individualBonus}, group=${groupBonus}, total=${totalBonus}`);
             
             switch(bonusType) {
                 case 'navigation': emoji = '🧭'; description = 'Faster movement'; break;
@@ -827,6 +827,38 @@ export async function showHealthGroupDialog() {
         }
     });
     
+    // Other party members
+    let otherMembers = '';
+    if (gameState.group.length > 1) {
+        otherMembers = `\n👥 **Other Party Members:**\n`;
+        for (let i = 1; i < gameState.group.length; i++) {
+            const member = gameState.group[i];
+            const memberBonus = member.bonus || {};
+            otherMembers += `\n${i}. ${member.role}`;
+            if (Object.keys(memberBonus).length > 0) {
+                otherMembers += `\n   Individual Bonuses:`;
+                Object.entries(memberBonus).forEach(([bonus, value]) => {
+                    otherMembers += ` ${bonus}+${value.toFixed(1)}`;
+                });
+            }
+        }
+    }
+    
+     else {
+        otherMembers = `👥 **No other party members**`;
+    }
+    
+    message += otherMembers;
+    
+    
+    return showChoiceDialog(message, [
+        {label:'Detailed Breakdown', value: 'detailed-breakdown'},
+        {label: '❌ Close', value: 'close'}
+    ]);
+}
+
+export async function showDetailedBreakdownDialog() {
+    let message = '';
     if (bonusTypes.every(type => getGroupBonus(type) === 0)) {
         message += `No active bonuses. Hire more specialized roles to unlock bonuses!\n`;
     }
@@ -844,40 +876,17 @@ export async function showHealthGroupDialog() {
             const totalBonus = getGroupBonus(bonusType);
             
             message += `${bonusType.charAt(0).toUpperCase() + bonusType.slice(1)}: `;
-            message += `${individualBonus} (individual) + `;
-            message += `${groupBonus} (group) = `;
+            message += `${individualBonus.toFixed(1)} (individual) + `;
+            message += `${groupBonus.toFixed(1)} (group) = `;
             message += `+${totalBonus.toFixed(1)} (total)\n`;
         });
     }
-    
     // Show explanation
     message += `\n📋 **How Bonuses Work:**\n`;
     message += `• Individual bonuses come from each character's role\n`;
     message += `• Group bonuses are additional bonuses from role combinations\n`;
     message += `• Total = Individual + Group bonuses\n`;
 
-    // Other party members
-    let otherMembers = '';
-    if (gameState.group.length > 1) {
-        otherMembers = `\n👥 **Other Party Members:**\n`;
-        for (let i = 1; i < gameState.group.length; i++) {
-            const member = gameState.group[i];
-            const memberBonus = member.bonus || {};
-            otherMembers += `\n${i}. ${member.role}`;
-            if (Object.keys(memberBonus).length > 0) {
-                otherMembers += `\n   Individual Bonuses:`;
-                Object.entries(memberBonus).forEach(([bonus, value]) => {
-                    otherMembers += ` ${bonus}+${value.toFixed(1)}`;
-                });
-            }
-        }
-    } else {
-        otherMembers = `\n👥 **No other party members**`;
-    }
-    
-    message += otherMembers;
-    
-    
     return showChoiceDialog(message, [
         {label: '❌ Close', value: 'close'}
     ]);
