@@ -184,7 +184,9 @@ export async function checkTileInteraction(tile) {
         if (['village', 'city'].includes(tile.location) || ['caravan'].includes(tile.entity)) {
             options.unshift({label: '🏹 Sell hunts', value: '6'});
         }
-
+        if (tile.entity === 'animal') {
+            options.unshift({label: '🏹 Hunt', value: '7'});
+        }
         let msg = '';
         if(tile.location === 'peaks' && tile.entity === 'none'){
             return;
@@ -496,9 +498,90 @@ export async function handleChoice(choice, tile) {
         await showChoiceDialog('No hunts to sell! Go hunt some monsters or get killed or get a job! ⚠️', [
             {label: 'OK', value: 'ok'}
         ]);
-    }
+    } 
+    } else if (choice === '7') {
+        await handleAnimal(gameState.px, gameState.py);
     }
 }
+
+export async function handleAnimal(x, y) {
+    let tile = getTile(x, y);
+    if (tile.entity === 'animal' && gameState.food > 0) {
+        let hunting = true;
+        while (hunting && gameState.food > 0) {
+            gameState.food -= 1;
+            let r = Math.floor(Math.random() * 100 + getGroupBonus('combat'));
+            if (r > 80) {
+                gameState.killPoints += 1 + getGroupBonus('food');
+                gameState.food += 1 + getGroupBonus('food');
+                logEvent(`🪙 You killed an animal and gained 1 kill point!`);
+                let choice = await showChoiceDialog(`🪙 You killed an animal and gained 1 kill point!`, [
+                    {label: '🏹 Hunt again', value: '7'},
+                    {label: 'Leave', value: 'leave'}
+                ]);
+                if (choice === '7') {
+                    continue; // Continue hunting
+                } else {
+                    hunting = false; // Stop hunting
+                }
+            } else if (r > 50) {
+                logEvent(`You failed to kill an animal.`);
+                let choice = await showChoiceDialog(`You failed to kill an animal.`, [
+                    {label: '🏹 Hunt again', value: '7'},
+                    {label: 'Leave', value: 'leave'}
+                ]);
+                if (choice === '7') {
+                    continue; // Continue hunting
+                } else {
+                    hunting = false; // Stop hunting
+                }
+            } else if (r > 20) {
+                let health = Math.floor(Math.random() * 5);
+                gameState.health -= health;
+                logEvent(`You failed to kill an animal and injured yourself. You lost ${health} health.`);
+                let choice = await showChoiceDialog(`You failed to kill an animal and injured yourself. You lost ${health} health.`, [
+                    {label: '🏹 Hunt again', value: '7'},
+                    {label: 'Leave', value: 'leave'}
+                ]);
+                if (choice === '7') {
+                    continue; // Continue hunting
+                } else {
+                    hunting = false; // Stop hunting
+                }
+            } else if (r > 10) {
+                let health = Math.floor(Math.random() * 20 + 5);
+                gameState.health -= health;
+                logEvent(`You failed to kill an animal, gravely injured yourself. You lost ${health} health.`);
+                let choice = await showChoiceDialog(`You failed to kill an animal and gravely injured yourself. You lost ${health} health.`, [
+                    {label: '🏹 Hunt again', value: '7'},
+                    {label: 'Leave', value: 'leave'}
+                ]);
+                if (choice === '7') {
+                    continue; // Continue hunting
+                } else {
+                    hunting = false; // Stop hunting
+                }
+            } else {
+                gameState.group.splice(Math.floor(Math.random()*gameState.group.length), 1);   //TODO REMOVE A CHARACTER FROM THE GROUP
+                let health = Math.floor(Math.random() * 20 + 5);
+                gameState.health -= health;
+                logEvent(`You failed to kill an animal, gravely injured yourself and lost one of your men. You lost ${health} health.`);
+                let choice = await showChoiceDialog(`You failed to kill an animal, gravely injured yourself and lost one of your men. You lost ${health} health.`, [
+                    {label: '🏹 Hunt again', value: '7'},
+                    {label: 'Leave', value: 'leave'}
+                ]);
+                if (choice === '7') {
+                    continue; // Continue hunting
+                } else {
+                    hunting = false; // Stop hunting
+                }
+            }
+            updateStatus();
+        }
+    }
+}
+
+
 
 export async function showMenu() {
     // Check if player is on a tile with location or entity
