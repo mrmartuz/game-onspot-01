@@ -1,6 +1,7 @@
 import { gameState } from './game_variables.js';
-import { getTile, getEmojiForFlora, getEmojiForLocation, getEmojiForEntity, getMaxStorage, hash, interpolateColor } from './utils.js';
 import { getCurrentGameDate } from './time_system.js';
+import { getTile, getEmojiForFlora, getEmojiForLocation, getEmojiForEntity } from './rendering/tile.js';
+import { getMaxStorage, hash } from './utils.js';
 
 export const canvas = document.getElementById('game-canvas');
 export const ctx = canvas.getContext('2d');

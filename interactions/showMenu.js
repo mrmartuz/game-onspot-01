@@ -1,5 +1,5 @@
 import { gameState } from '../game_variables.js';
-import { getTile } from '../utils.js';
+import { getTile } from '../rendering/tile.js';
 import { getCheckTileInteractionDialog } from '../interactions.js';
 import { getHandleCombatDialog } from '../interactions.js';
 import { getMaxStorage } from '../utils.js';

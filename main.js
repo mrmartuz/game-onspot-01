@@ -1,9 +1,10 @@
 import { resize, draw, updateStatus, canvas, ctx } from './rendering.js';
 import { revealAround } from './movement.js';
 import { gameState } from './game_variables.js';
-import { getTile, updateGroupBonus, updateTile, ensureGroupBonuses, checkDeath } from './utils.js';
-import { getCheckAdjacentMonstersDialog, getCheckTileInteractionDialog, getShowChoiceDialog } from './interactions.js';
-import { getCurrentGameDate, timeConsumption } from './time_system.js';
+import { updateGroupBonus, ensureGroupBonuses, checkDeath } from './utils.js';
+import { getTile } from './rendering/tile.js';
+import { getCheckAdjacentMonstersDialog, getCheckTileInteractionDialog, getShowDeathDialog } from './interactions.js';
+import { timeConsumption } from './time_system.js';
 import { setupInputs } from './input_handlers.js';
 
 // Setup
@@ -30,8 +31,6 @@ async function postMove() {
     }
 }
 
-// Game loop (30 FPS)
-// Game loop (30 FPS)
 let lastFrameTime = 0;
 const targetFrameTime = 1000 / 30;
 function loop(timestamp) {
