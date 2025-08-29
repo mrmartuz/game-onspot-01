@@ -2,585 +2,37 @@ import { gameState } from './game_variables.js';
 import { getGroupBonus, getTile, getMaxStorage, getBonusForRole, getEnhancedBonusForRole, updateGroupBonus, checkDeath, getNumCarriers } from './utils.js';
 import { logEvent, getCurrentGameDate } from './time_system.js';
 import { updateStatus } from './rendering.js';
+import { showChoiceDialog } from './interactions/showDialog.js';
+import { handleCombat, checkAdjacentMonsters } from './interactions/combatDialog.js';
+import { checkTileInteraction } from './interactions/tileInteraction.js';
+import { handleChoice } from './interactions/handleChoice.js';
+import { handleAnimal } from './interactions/handleAnimalDialog.js';
 
-const gameDialog = document.getElementById('game-dialog');
+export async function getShowChoiceDialog(message, buttons) {
+    return showChoiceDialog(message, buttons);
+}
 
-export async function showChoiceDialog(message, buttons) {
-    return new Promise((resolve) => {
-        gameDialog.innerHTML = '';
-        // Wrap the message in a div
-        const pDiv = document.createElement('div');
-        const p = document.createElement('p');
-        p.textContent = message || 'No message provided'; // Fallback for empty message
-        pDiv.appendChild(p);
-        gameDialog.appendChild(pDiv);
-        // Wrap each button in its own div
-        if (buttons && buttons.length > 0) {
-            buttons.forEach(({label, value}) => {
-                const btnDiv = document.createElement('div');
-                const btn = document.createElement('button');
-                btn.textContent = label || 'Unnamed Button';
-                btn.addEventListener('click', () => {
-                    gameDialog.close(value);
-                });
-                btnDiv.appendChild(btn);
-                gameDialog.appendChild(btnDiv);
-            });
-        } else {
-            console.warn('showChoiceDialog: No buttons provided, adding fallback Close button');
-            const btnDiv = document.createElement('div');
-            const btn = document.createElement('button');
-            btn.textContent = '❌ Close';
-            btn.addEventListener('click', () => {
-                gameDialog.close('close');
-            });
-            btnDiv.appendChild(btn);
-            gameDialog.appendChild(btnDiv);
-        }
-        // Log dialog content for debugging
-        // Ensure dialog is not already open
-        if (gameDialog.open) {
-            gameDialog.close();
-        }
-        gameDialog.showModal();
-        gameDialog.addEventListener('close', () => resolve(gameDialog.returnValue), {once: true});
-    });
+export async function getHandleCombatDialog(ex, ey, isOnTile = false){
+    return handleCombat(ex, ey, isOnTile);
+}
+
+export async function getCheckAdjacentMonstersDialog(){
+    return checkAdjacentMonsters();
+}
+
+export async function getCheckTileInteractionDialog(tile){
+    return checkTileInteraction(tile);
+}
+
+export async function getHandleChoiceDialog(choice, tile){
+    return handleChoice(choice, tile);
+}
+
+export async function getHandleAnimalDialog(x, y){
+    return handleAnimal(x, y);
 }
 
 
-
-
-export async function handleCombat(ex, ey, isOnTile = false) {
-    let tile = getTile(ex, ey);
-    let entity = tile.entity;
-    let input = await showChoiceDialog(`Hostile ${entity} at (${ex},${ey})!`, [
-        {label: '⚔️ Attack', value: '1'},
-        {label: '🌬️ Flee', value: '2'}
-    ]);
-    if (input === '2') {
-        if (isOnTile) {
-            gameState.px = gameState.prevx;
-            gameState.py = gameState.prevy;
-            await showChoiceDialog('Fled back. 😵‍💫', [
-                {label: 'OK', value: 'ok'}
-            ]);
-        } else {
-            await showChoiceDialog('Fled, staying put. 😅', [
-                {label: 'OK', value: 'ok'}
-            ]);
-        }
-        return false;
-    }
-    
-    // Apply combat bonus for better success chance
-    let combatBonus = getGroupBonus('combat');
-    let baseSuccessChance = 0.5;
-    let success = Math.random() < baseSuccessChance + combatBonus;
-    
-    if (success) {
-        await showChoiceDialog('Victory! 🏆', [
-            {label: 'OK', value: 'ok'}
-        ]);
-        gameState.killed.add(`${ex},${ey}`);
-        gameState.killPoints += 5;
-        updateStatus();
-        logEvent(`🏆 Defeated ${entity} at (${ex},${ey})`);
-        return true;
-    } else {
-        // Apply health bonus to reduce damage taken
-        let healthBonus = getGroupBonus('health');
-        let damageReduction = healthBonus * 0.5; // Health bonus reduces damage by up to 50%
-        let baseDamage = isOnTile ? 20 : 10;
-        let finalDamage = Math.max(1, baseDamage * (1 - damageReduction));
-        
-        await showChoiceDialog('Defeat! Took damage.🤕', [
-            {label: 'OK', value: 'ok'}
-        ]);
-        gameState.health -= finalDamage;
-        updateStatus();
-        logEvent(`🤕 Defeated by ${entity} at (${ex},${ey})`);
-        let death = await checkDeath();
-        if(death === 'health'){
-            await showChoiceDialog('You died fighting! ☠️', [
-            { label: '🔄 Restart Game', value: 'restart' }
-            ]);
-            location.reload();
-        } else if(death === 'gold'){
-            await showChoiceDialog('You paid your debt with your life! ☠️', [
-                { label: '🔄 Restart Game', value: 'restart' }
-            ]);
-            location.reload();
-        }
-        return false;
-    }
-}
-
-
-export async function checkAdjacentMonsters() {
-    for (let dx = -1; dx <= 1; dx++) {
-        for (let dy = -1; dy <= 1; dy++) {
-            if (dx === 0 && dy === 0) continue;
-            let tile = getTile(gameState.px + dx, gameState.py + dy);
-            if (tile.entity === 'monster' || tile.entity === 'beast') {
-                await handleCombat(gameState.px + dx, gameState.py + dy);
-            }
-        }
-    }
-}
-
-
-
-
-
-
-export async function checkTileInteraction(tile) {
-    if (['monster', 'beast'].includes(tile.entity)) {
-        await handleCombat(gameState.px, gameState.py, true);
-        return;
-    }
-
-    if (tile.location !== 'none' || tile.entity !== 'none') {
-        if (['waterfalls', 'canyon', 'geyser', 'monster caves', 'cave', 'ruin'].includes(tile.location)) {
-            // Apply discovery bonus to discovery points
-            const positionKey = `${gameState.px},${gameState.py}`;
-            if (gameState.discoveredLocations.includes(positionKey)) { // Use .includes() for array
-                await showChoiceDialog(`You've already discovered this ${tile.location}! 🌟`, [
-                    {label: 'OK', value: 'ok'}
-                ]);
-                return;
-            }
-            let discoveryBonus = getGroupBonus('discovery');
-            let basePoints = 10;
-            let bonusPoints = Math.floor(discoveryBonus + Math.random() * 5 + basePoints);
-            let totalPoints = basePoints + bonusPoints;
-
-            gameState.discoverPoints += totalPoints;
-            gameState.discoveredLocations.push(positionKey); // Use .push() for array
-            updateStatus();
-
-            let bonusText = bonusPoints > 0 ? ` (+${bonusPoints} bonus)` : '';
-            await showChoiceDialog(`Discovered ${tile.location}! 🌟${bonusText}`, [
-                {label: 'OK', value: 'ok'}
-            ]);
-            logEvent(`🌟 Discovered ${tile.location} at ${positionKey} +${totalPoints} points`);
-        }
-
-        let options = [
-            {label: '🚶 Leave', value: '1'}
-        ];
-
-        if (['camp', 'outpost', 'farm', 'hamlet', 'village', 'city'].includes(tile.location)) {
-            options.unshift({label: `😴 Rest (-${gameState.group.length * 0.5}🍞 - ${gameState.group.length * 0.5}💧 -2🪙)`, value: '2'});
-        }
-        if (['hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan'].includes(tile.entity)) {
-            options.unshift({label: '🪙 Trade', value: '3'});
-        }
-        if (['outpost', 'farm', 'hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan', 'army', 'group', 'npc'].includes(tile.entity)) {
-            options.unshift({label: '🧍🏻 Hire', value: '4'});
-        }
-        if (tile.location === 'city') {
-            options.unshift({label: '🌟 Sell discoveries', value: '5'});
-        }
-        if (['village', 'city'].includes(tile.location) || ['caravan'].includes(tile.entity)) {
-            options.unshift({label: '🏹 Sell hunts', value: '6'});
-        }
-        if (tile.entity === 'animal') {
-            options.unshift({label: '🏹 Hunt', value: '7'});
-        }
-        let msg = '';
-        if(tile.location === 'peaks' && tile.entity === 'none'){
-            return;
-        }
-        msg = `At ${tile.location !== 'none' ? tile.location : ''} ${tile.entity !== 'none' ? tile.entity : ''}`.trim();
-            if (msg === 'At') msg = 'On this tile';
-            let choice = await showChoiceDialog(msg, options);
-            await handleChoice(choice, tile);
-        
-    }
-}
-
-
-
-
-
-
-
-export async function handleChoice(choice, tile) {
-    if (choice === 'close') {
-        return; // Close dialog without further action
-    }
-    if (choice === '1') { // Leave
-        return; // Just close the dialog and return to game
-    }
-    if (choice === '2') { // Rest
-        // Apply health bonus for better healing
-        let healthBonus = getGroupBonus('health');
-        let baseHealing = 10;
-        let bonusHealing = Math.floor(baseHealing * healthBonus * 0.5); // Health bonus adds up to 50% more healing
-        let totalHealing = baseHealing + bonusHealing;
-        
-        gameState.health = Math.min(100, gameState.health + totalHealing);
-        gameState.food -= gameState.group.length * 0.5;
-        gameState.water -= gameState.group.length * 0.5;
-        gameState.gold -= 2
-        updateStatus();
-        
-        let bonusText = bonusHealing > 0 ? ` (+${bonusHealing} bonus)` : '';
-        await showChoiceDialog(`Rested. 😴 Healed ${totalHealing} health${bonusText}`, [
-            {label: 'OK', value: 'ok'}
-        ]);
-        logEvent(`😴 Rested and healed ${totalHealing} health${bonusText}`);
-    } else if (choice === '3') { // Trade
-        // Apply interact bonus for better trade prices
-        let interactBonus = getGroupBonus('interact');
-        let buyDiscount = Math.min(0.3, interactBonus * 0.3); // Up to 30% discount on buying
-        let sellBonus = Math.min(0.5, interactBonus * 0.6); // Up to 50% bonus on selling
-        
-        let trading = true;
-        while (trading) {
-            let t = await showChoiceDialog('Trade options:', [
-                {label: `📥 Buy food 🍞 (${Math.floor(10 * (1 - buyDiscount))} for 10g)`, value: '1'},
-                {label: `📥 Sell food 🍞 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`, value: '2'},
-                {label: `📥 Buy water 💧 (${Math.floor(10 * (1 - buyDiscount))} for 10g)`, value: '3'},
-                {label: `📥 Sell water 💧 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`, value: '4'},
-                {label: `📤 Sell wood 🪵 (5 for ${Math.floor(10 * (1 + sellBonus))}g)`, value: '5'},
-                {label: '📥 Buy cart 🛒 (100g for 1)', value: '6'},
-                {label: '❌ Close', value: 'close'}
-            ]);
-            
-            if (t === 'close') {
-                trading = false;
-                continue;
-            }
-            
-            let tradeDesc = '';
-            let max_storage = getMaxStorage();
-            if (t === '1') {
-                if (gameState.gold >= 10 && gameState.food + 10 <= max_storage) {
-                    let actualFood = Math.floor(10 * (1 - buyDiscount));
-                    gameState.food += actualFood;
-                    gameState.gold -= 10;
-                    updateStatus();
-                    tradeDesc = `📥 Bought ${actualFood} food 🍞 for 10g`;
-                } else {
-                    await showChoiceDialog('Not enough gold or storage! ⚠️', [
-                        {label: 'OK', value: 'ok'}
-                    ]);
-                }
-            } else if (t === '2') {
-                if (gameState.food >= 10) {
-                    gameState.food -= 10;
-                    let actualGold = Math.floor(3 * (1 + sellBonus));
-                    gameState.gold += actualGold;
-                    updateStatus();
-                    tradeDesc = `📥 Sold 10 food 🍞 for ${actualGold}g`;
-                } else {
-                    await showChoiceDialog('Not enough food! ⚠️', [
-                        {label: 'OK', value: 'ok'}
-                    ]);
-                }
-            } else if (t === '3') {
-                if (gameState.gold >= 10 && gameState.water + 10 <= max_storage) {
-                    let actualWater = Math.floor(10 * (1 - buyDiscount));
-                    gameState.water += actualWater;
-                    gameState.gold -= 10;
-                    updateStatus();
-                    tradeDesc = `📥 Bought ${actualWater} water 💧 for 10g`;
-                } else {
-                    await showChoiceDialog('Not enough gold or storage! ⚠️', [
-                        {label: 'OK', value: 'ok'}
-                    ]);
-                }
-            } else if (t === '4') {
-                if (gameState.water >= 10) {
-                    gameState.water -= 10;
-                    let actualGold = Math.floor(3 * (1 + sellBonus));
-                    gameState.gold += actualGold;
-                    updateStatus();
-                    tradeDesc = `📥 Sold 10 water 💧 for ${actualGold}g`;
-                } else {
-                    await showChoiceDialog('Not enough water! ⚠️', [
-                        {label: 'OK', value: 'ok'}
-                    ]);
-                }
-            } else if (t === '5') {
-                if (gameState.wood >= 5) {
-                    gameState.wood -= 5;
-                    let actualGold = Math.floor(10 * (1 + sellBonus));
-                    gameState.gold += actualGold;
-                    updateStatus();
-                    tradeDesc = `📤 Sold 5 wood 🪵 for ${actualGold}g`;
-                } else {
-                    await showChoiceDialog('Not enough wood! ⚠️', [
-                        {label: 'OK', value: 'ok'}
-                    ]);
-                }
-            } else if (t === '6') {
-                if (gameState.gold >= 100) {
-                    gameState.carts += 1;
-                    gameState.gold -= 100;
-                    tradeDesc = '📥 Bought cart 🛒 for 100g';
-                } else {
-                    await showChoiceDialog('Not enough gold! ⚠️', [
-                        {label: 'OK', value: 'ok'}
-                    ]);
-                }
-            }
-            if (tradeDesc) {
-                logEvent(tradeDesc);
-            }
-        }
-    } else if (choice === '4') { // Hire
-        // Apply interact bonus for hiring discounts
-        let number_of_hires = 0;
-        let interactBonus = getGroupBonus('interact');
-        let hireDiscount = Math.min(0.4, interactBonus * 0.6); // Up to 40% discount on hiring
-        if (tile.entity === 'caravan'  || tile.entity === 'group' || ['outpost', 'farm'].includes(tile.location)){
-            number_of_hires = Math.floor(Math.random() * 2) + 2;
-        } else if(tile.entity === 'army' || ['hamlet', 'village', 'city'].includes(tile.location)){
-            number_of_hires = Math.floor(Math.random() * 4) + 3;
-        } else {
-            number_of_hires = Math.floor(Math.random() * 2) + 1;
-        }
-        let hiring = true;
-        while (hiring) {
-            const roles = ['native-guide🧭', 'cook🍞', 'guard⚔️', 'geologist🪵', 'biologist🌱', 'translator🤝', 'carrier📦', 'medic❤️', 'navigator👁️', 'explorer🔍'];
-            let hires = [];
-            for (let i = 0; i < number_of_hires; i++) {
-                let r = roles[Math.floor(Math.random() * roles.length)];
-                let baseCost = 50 + Math.floor(Math.random() * 50);
-                let actualCost = Math.floor(baseCost * (1 - hireDiscount));
-                
-                // 15% chance for enhanced personal bonus
-                let hasEnhancedBonus = Math.random() < 0.15;
-                let enhancedBonus = null;
-                let upgradeCost = 0;
-                
-                if (hasEnhancedBonus) {
-                    enhancedBonus = getEnhancedBonusForRole(r);
-                    upgradeCost = Math.floor(baseCost * 0.8); // 80% of base cost for upgrade
-                }
-                
-                let label = `${i+1}: ${r} for ${actualCost}g`;
-                if (hasEnhancedBonus) {
-                    label += ` ⭐ (Enhanced: +${enhancedBonus.value} ${enhancedBonus.type})`;
-                }
-                
-                hires.push({
-                    label: label, 
-                    value: (i+1).toString(), 
-                    baseCost, 
-                    actualCost,
-                    hasEnhancedBonus,
-                    enhancedBonus,
-                    upgradeCost
-                });
-            }
-            hires.push({label: '❌ Close', value: 'close'});
-            
-            let c = await showChoiceDialog('Hire options:', hires);
-            if (c === 'close') {
-                hiring = false;
-                continue;
-            }
-            
-            if (c && c !== 'close' && !isNaN(parseInt(c)) && parseInt(c) >= 1 && parseInt(c) <= number_of_hires) {
-                let idx = parseInt(c) - 1;
-                let hire = hires[idx];
-                let role = hire.label.split(': ')[1].split(' for ')[0];
-                let baseCost = hire.baseCost;
-                let actualCost = hire.actualCost;
-                
-                if (hire.hasEnhancedBonus) {
-                    // Show upgrade choice dialog
-                    let upgradeChoice = await showChoiceDialog(
-                        `🌟 **Enhanced Character Available!** 🌟\n\n` +
-                        `Role: ${role}\n` +
-                        `Enhanced Bonus: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type}\n` +
-                        `Speciality: ${hire.enhancedBonus.description}\n\n` +
-                        `**Options:**\n` +
-                        `1. Hire Basic: ${actualCost}g\n` +
-                        `2. Hire Enhanced: ${actualCost + hire.upgradeCost}g (+${hire.upgradeCost}g upgrade)\n` +
-                        `3. Cancel`,
-                        [
-                            {label: `Basic Hire (${actualCost}g)`, value: 'basic'},
-                            {label: `Enhanced Hire (${actualCost + hire.upgradeCost}g)`, value: 'enhanced'},
-                            {label: '❌ Cancel', value: 'cancel'}
-                        ]
-                    );
-                    
-                    if (upgradeChoice === 'cancel') {
-                        continue;
-                    }
-                    
-                    if (upgradeChoice === 'enhanced') {
-                        actualCost += hire.upgradeCost;
-                        if (gameState.gold >= actualCost) {
-                            let finalBonus = {...getBonusForRole(role)};
-                            finalBonus[hire.enhancedBonus.type] = (finalBonus[hire.enhancedBonus.type] || 0) + hire.enhancedBonus.value;
-                            
-                            gameState.group.push({role, speciality: hire.enhancedBonus.description, bonus: finalBonus});
-                            gameState.gold -= actualCost;
-                            updateGroupBonus();
-                            
-                            let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
-                            await showChoiceDialog(`🌟 Hired Enhanced ${role}! 👏\nEnhanced Bonus: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type}\nSpeciality: ${hire.enhancedBonus.description}${discountText}`, [
-                                {label: 'OK', value: 'ok'}
-                            ]);
-                            logEvent(`🌟 Hired Enhanced ${role} for ${actualCost}g${discountText} (Enhanced: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type} - ${hire.enhancedBonus.description})`);
-                        } else {
-                            await showChoiceDialog('Not enough gold for enhanced hire! ⚠️', [
-                                {label: 'OK', value: 'ok'}
-                            ]);
-                            continue;
-                        }
-                    } else {
-                        // Basic hire
-                        if (gameState.gold >= actualCost) {
-                            gameState.group.push({role, bonus: getBonusForRole(role)});
-                            gameState.gold -= actualCost;
-                            updateGroupBonus();
-                            
-                            let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
-                            await showChoiceDialog(`Hired ${role}! 👏${discountText}`, [
-                                {label: 'OK', value: 'ok'}
-                            ]);
-                            logEvent(`🧍🏻 Hired ${role} for ${actualCost}g${discountText}`);
-                        } else {
-                            await showChoiceDialog('Not enough gold! ⚠️', [
-                                {label: 'OK', value: 'ok'}
-                            ]);
-                        }
-                    }
-                } else {
-                    // Regular hire without enhanced bonus
-                    if (gameState.gold >= actualCost) {
-                        gameState.group.push({role, bonus: getBonusForRole(role)});
-                        gameState.gold -= actualCost;
-                        updateGroupBonus();
-                        
-                        let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
-                        await showChoiceDialog(`Hired ${role}! 👏${discountText}`, [
-                            {label: 'OK', value: 'ok'}
-                        ]);
-                        logEvent(`🧍🏻 Hired ${role} for ${actualCost}g${discountText}`);
-                    } else {
-                        await showChoiceDialog('Not enough gold! ⚠️', [
-                            {label: 'OK', value: 'ok'}
-                        ]);
-                    }
-                }
-            }
-        }
-    } else if (choice === '5') { // Sell discoveries
-        if(gameState.discoverPoints > 0){
-        gameState.gold += gameState.discoverPoints;
-        logEvent(`🪙 Sold discoveries for ${gameState.discoverPoints}g`);
-        gameState.discoverPoints = 0;
-        updateStatus();
-        await showChoiceDialog('Sold discoveries! 🪙', [
-            {label: 'OK', value: 'ok'}
-        ]);
-    } else {
-        await showChoiceDialog('No discoveries to sell! You Scum! Go discover some locations! ⚠️', [
-            {label: 'OK', value: 'ok'}
-        ]);
-    }
-    } else if (choice === '6') { // Sell hunts
-        if(gameState.killPoints > 0){
-        gameState.gold += gameState.killPoints;
-        logEvent(`🪙 Sold hunts for ${gameState.killPoints}g`);
-        gameState.killPoints = 0;
-        updateStatus();
-        await showChoiceDialog('Sold hunts! 🪙', [
-            {label: 'OK', value: 'ok'}
-        ]);
-    } else {
-        await showChoiceDialog('No hunts to sell! Go hunt some monsters or get killed or get a job! ⚠️', [
-            {label: 'OK', value: 'ok'}
-        ]);
-    } 
-    } else if (choice === '7') {
-        await handleAnimal(gameState.px, gameState.py);
-    }
-}
-
-export async function handleAnimal(x, y) {
-    let tile = getTile(x, y);
-    if (tile.entity === 'animal' && gameState.food > 0) {
-        let hunting = true;
-        while (hunting && gameState.food > 0) {
-            gameState.food -= 1;
-            let r = Math.floor(Math.random() * 100 + getGroupBonus('combat'));
-            if (r > 80) {
-                gameState.killPoints += 10 + getGroupBonus('food');
-                gameState.food += 1 + getGroupBonus('food');
-                logEvent(`🪙🏹 You killed an animal and gained 10 kill point!`);
-                let choice = await showChoiceDialog(`🪙🏹 You killed an animal and gained 1 kill point!`, [
-                    {label: '🏹 Hunt again', value: '7'},
-                    {label: 'Leave', value: 'leave'}
-                ]);
-                if (choice === '7') {
-                    continue; // Continue hunting
-                } else {
-                    hunting = false; // Stop hunting
-                }
-            } else if (r > 50) {
-                logEvent(`You failed to kill an animal.`);
-                let choice = await showChoiceDialog(`You failed to kill an animal.`, [
-                    {label: '🏹 Hunt again', value: '7'},
-                    {label: 'Leave', value: 'leave'}
-                ]);
-                if (choice === '7') {
-                    continue; // Continue hunting
-                } else {
-                    hunting = false; // Stop hunting
-                }
-            } else if (r > 20) {
-                let health = Math.floor(Math.random() * 5);
-                gameState.health -= health;
-                logEvent(`You failed to kill an animal and injured yourself. You lost ${health} health.`);
-                let choice = await showChoiceDialog(`You failed to kill an animal and injured yourself. You lost ${health} health.`, [
-                    {label: '🏹 Hunt again', value: '7'},
-                    {label: 'Leave', value: 'leave'}
-                ]);
-                if (choice === '7') {
-                    continue; // Continue hunting
-                } else {
-                    hunting = false; // Stop hunting
-                }
-            } else if (r > 10) {
-                let health = Math.floor(Math.random() * 20 + 5);
-                gameState.health -= health;
-                logEvent(`You failed to kill an animal, gravely injured yourself. You lost ${health} health.`);
-                let choice = await showChoiceDialog(`You failed to kill an animal and gravely injured yourself. You lost ${health} health.`, [
-                    {label: '🏹 Hunt again', value: '7'},
-                    {label: 'Leave', value: 'leave'}
-                ]);
-                if (choice === '7') {
-                    continue; // Continue hunting
-                } else {
-                    hunting = false; // Stop hunting
-                }
-            } else {
-                gameState.group.splice(Math.floor(Math.random()*gameState.group.length), 1);   //TODO REMOVE A CHARACTER FROM THE GROUP
-                let health = Math.floor(Math.random() * 20 + 5);
-                gameState.health -= health;
-                logEvent(`You failed to kill an animal, gravely injured yourself and lost one of your men. You lost ${health} health.`);
-                let choice = await showChoiceDialog(`You failed to kill an animal, gravely injured yourself and lost one of your men. You lost ${health} health.`, [
-                    {label: '🏹 Hunt again', value: '7'},
-                    {label: 'Leave', value: 'leave'}
-                ]);
-                if (choice === '7') {
-                    continue; // Continue hunting
-                } else {
-                    hunting = false; // Stop hunting
-                }
-            }
-            updateStatus();
-        }
-    }
-}
 
 
 
@@ -588,7 +40,7 @@ export async function showMenu() {
     // Check if player is on a tile with location or entity
     let currentTile = getTile(gameState.px, gameState.py);
     if (currentTile.location !== 'none' || currentTile.entity !== 'none'){
-        await checkTileInteraction(currentTile);
+        await getCheckTileInteractionDialog(currentTile);
         return;
     }
 
@@ -596,7 +48,7 @@ export async function showMenu() {
     
     // If there's a combat entity, handle combat first
     if (['monster', 'beast'].includes(currentTile.entity)) {
-        await handleCombat(gameState.px, gameState.py, true);
+        await getHandleCombatDialog(gameState.px, gameState.py, true);
         return;
     }
     
@@ -610,7 +62,7 @@ export async function showMenu() {
     let inv = `❤️‍🩹 Health: ${gameState.health} 🌟 Discoveries: ${gameState.discoverPoints} 🪙 Gold: ${gameState.gold} 🍞 Food: ${gameState.food.toFixed(1)}/${max_storage} 💧 Water: ${gameState.water.toFixed(1)}/${max_storage} ⛺ Tents: ${gameState.tents} 🧱 Mats: ${gameState.building_mats} 🪵 Wood: ${gameState.wood}`;
     let grp = gameState.group.map(g => g.role).join(', ');
     let msg = `${inv}\n👥 Group: ${grp}`;
-    let choice = await showChoiceDialog(msg, [
+    let choice = await getShowChoiceDialog(msg, [
         ...(isFlora ? [{label: '🌱 Harvest flowers', value: '4'}] : []),
         {label: '🏗️ Build camp ⛺ (5 🪵)', value: '2'},
         {label: '🏗️ Build outpost 🏕️ (10 🧱, 10 🪵)', value: '3'},  
@@ -618,11 +70,11 @@ export async function showMenu() {
     ]);
     if (choice === 'close') return;
     if (choice === '2' || choice === '3') {
-        let costMats = choice === '2' ? 1 : 10;
+        let costMats = choice === '2' ? 0 : 10;
         let costWood = choice === '2' ? 5 : 10;
         let type = choice === '2' ? 'camp' : 'outpost';
         if (gameState.building_mats >= costMats && gameState.wood >= costWood) {
-            let dirStr = await showChoiceDialog('You are building a ' + (choice === '2' ? '⛺camp' : '🏕️outpost') +'\nDo you want to build it here?', [
+            let dirStr = await getShowChoiceDialog('You are building a ' + (choice === '2' ? '⛺camp' : '🏕️outpost') +'\nDo you want to build it here?', [
                 {label: '🏗️ Confirm', value: 'C'},
                 {label: '❌ Close', value: 'close'}
             ]);
@@ -645,22 +97,22 @@ export async function showMenu() {
                     gameState.visited.set(key, tile);
                     gameState.building_mats -= costMats;
                     gameState.wood -= costWood;
-                    await showChoiceDialog(`Built ${type}! 🏗️`, [
+                    await getShowChoiceDialog(`Built ${type}! 🏗️`, [
                         {label: 'OK', value: 'ok'}
                     ]);
                     logEvent(`🏗️ Built ${type} at (${bx},${by})`);
                 } else {
-                    await showChoiceDialog('Cannot build there.There is something already there 🚫', [
+                    await getShowChoiceDialog('Cannot build there.There is something already there 🚫', [
                         {label: '❌ Close', value: 'close'}
                     ]);
                 }
             } else {
-                await showChoiceDialog('Invalid direction. ❓', [
+                await getShowChoiceDialog('Invalid direction. ❓', [
                     {label: '❌ Close', value: 'close'}
                 ]);
             }
         } else {
-            await showChoiceDialog('Not enough materials! ⚠️', [
+            await getShowChoiceDialog('Not enough materials! ⚠️', [
                 {label: '❌ Close', value: 'close'}
             ]);
         }
@@ -677,42 +129,21 @@ export async function showMenu() {
             gameState.food += totalFood;
             updateStatus();
             let bonusText = bonusFood > 0 ? ` (+${bonusFood} bonus)` : '';
-            await showChoiceDialog(`Harvested flowers! 🌱 Gained ${totalFood} food${bonusText}`, [
+            await getShowChoiceDialog(`Harvested flowers! 🌱 Gained ${totalFood} food${bonusText}`, [
                 {label: 'OK', value: 'ok'}
             ]);
             logEvent(`🌱 Harvested flowers for ${totalFood} food${bonusText}`);
         } else {
-            await showChoiceDialog('Not enough storage for harvested food! ⚠️', [
+            await getShowChoiceDialog('Not enough storage for harvested food! ⚠️', [
                 {label: 'OK', value: 'ok'}
             ]);
         }
         }
-        else {await showChoiceDialog('Nothing to harvest! ⚠️', [
+        else {await getShowChoiceDialog('Nothing to harvest! ⚠️', [
                 {label: 'OK', value: 'ok'}
             ]);}
 
     }
-}
-
-// Helper function to check supply status
-function getSupplyStatus() {
-    const dailyFoodConsumption = gameState.group.length * (1 - getGroupBonus('food'));
-    const dailyWaterConsumption = gameState.group.length;
-    
-    const daysOfFood = dailyFoodConsumption > 0 ? gameState.food / dailyFoodConsumption : Infinity;
-    const daysOfWater = dailyWaterConsumption > 0 ? gameState.water / dailyWaterConsumption : Infinity;
-    
-    let warnings = [];
-    
-    if (daysOfFood <= 1) warnings.push('🍞 CRITICAL: Food will run out in less than 1 day!');
-    else if (daysOfFood <= 3) warnings.push('🍞 WARNING: Food will run out in less than 3 days');
-    else if (daysOfFood <= 7) warnings.push('🍞 Notice: Food will run out in less than 7 days');
-    
-    if (daysOfWater <= 1) warnings.push('💧 CRITICAL: Water will run out in less than 1 day!');
-    else if (daysOfWater <= 3) warnings.push('💧 WARNING: Water will run out in less than 3 days');
-    else if (daysOfWater <= 7) warnings.push('💧 Notice: Water will run out in less than 7 days');
-    
-    return { warnings, daysOfFood, daysOfWater };
 }
 
 // Function to get next consumption times
@@ -786,7 +217,7 @@ export async function showGoldDialog() {
                    `**Party Members:** ${gameState.group.length}\n` +
                    `**Days Until Bankrupt:** ${Math.floor(gameState.gold / totalDailyExpense)} days`;
     
-    return showChoiceDialog(message, [
+    return getShowChoiceDialog(message, [
         {label: '❌ Close', value: 'close'}
     ]);
 }
@@ -824,7 +255,7 @@ export async function showInventoryDialog() {
                    `**Current Game Time:** ${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}\n` +
                    `**Storage Capacity:** ${maxStorage}`;
     
-    return showChoiceDialog(message, [
+    return getShowChoiceDialog(message, [
         {label: '❌ Close', value: 'close'}
     ]);
 }
@@ -839,7 +270,7 @@ export async function showDiscoveriesDialog() {
                    `Combined: ${Math.floor(gameState.discoverPoints + gameState.killPoints)} 🪙\n\n` +
                    `*Sell at cities to convert to gold*`;
     
-    return showChoiceDialog(message, [
+    return getShowChoiceDialog(message, [
         {label: '❌ Close', value: 'close'}
     ]);
 }
@@ -941,7 +372,7 @@ if (gameState.group.length > 1) {
     message += otherMembers;
     
     
-    const choice = await showChoiceDialog(message, [
+    const choice = await getShowChoiceDialog(message, [
         {label:'Detailed Breakdown', value: 'detailed-breakdown'},
         {label: '❌ Close', value: 'close'}
     ]);
@@ -999,14 +430,14 @@ export async function showDetailedBreakdownDialog() {
         });
     }
     
-    return showChoiceDialog(message, [
+    return getShowChoiceDialog(message, [
         {label: '❌ Close', value: 'close'}
     ]);
 }
 
 export async function showEventsDialog() {
     const list = gameState.events.map(ev => `${ev.date}: ${ev.desc}`).join('\n');
-    await showChoiceDialog(`The events of your journey so far: 📜\n\n${list}` || 'No events yet. 📜', [
+    await getShowChoiceDialog(`The events of your journey so far: 📜\n\n${list}` || 'No events yet. 📜', [
         {label: 'OK', value: 'ok'}
     ]);
 }

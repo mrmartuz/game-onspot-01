@@ -1,5 +1,5 @@
 import { move } from './movement.js';
-import { showMenu, showChoiceDialog, showGoldDialog, showInventoryDialog, showDiscoveriesDialog, showHealthGroupDialog, showEventsDialog } from './interactions.js';
+import { showMenu, showGoldDialog, showInventoryDialog, showDiscoveriesDialog, showHealthGroupDialog, showEventsDialog } from './interactions.js';
 import { gameState } from './game_variables.js';
 import { canvas } from './rendering.js';
 
