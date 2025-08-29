@@ -650,7 +650,7 @@ export async function showMenu() {
                     ]);
                     logEvent(`🏗️ Built ${type} at (${bx},${by})`);
                 } else {
-                    await showChoiceDialog('Cannot build there. 🚫', [
+                    await showChoiceDialog('Cannot build there.There is something already there 🚫', [
                         {label: '❌ Close', value: 'close'}
                     ]);
                 }
