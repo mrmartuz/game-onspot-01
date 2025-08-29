@@ -170,7 +170,7 @@ export async function checkTileInteraction(tile) {
         ];
 
         if (['camp', 'outpost', 'farm', 'hamlet', 'village', 'city'].includes(tile.location)) {
-            options.unshift({label: '😴 Rest', value: '2'});
+            options.unshift({label: `😴 Rest (-${gameState.group.length * 0.5}🍞 - ${gameState.group.length * 0.5}💧 -2🪙)`, value: '2'});
         }
         if (['hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan'].includes(tile.entity)) {
             options.unshift({label: '🪙 Trade', value: '3'});
@@ -222,6 +222,7 @@ export async function handleChoice(choice, tile) {
         gameState.health = Math.min(100, gameState.health + totalHealing);
         gameState.food -= gameState.group.length * 0.5;
         gameState.water -= gameState.group.length * 0.5;
+        gameState.gold -= 2
         updateStatus();
         
         let bonusText = bonusHealing > 0 ? ` (+${bonusHealing} bonus)` : '';
@@ -611,31 +612,23 @@ export async function showMenu() {
     let msg = `${inv}\n👥 Group: ${grp}`;
     let choice = await showChoiceDialog(msg, [
         ...(isFlora ? [{label: '🌱 Harvest flowers', value: '4'}] : []),
-        {label: '🏗️ Build camp ⛺ (5 🧱, 5 🪵)', value: '2'},
+        {label: '🏗️ Build camp ⛺ (5 🪵)', value: '2'},
         {label: '🏗️ Build outpost 🏕️ (10 🧱, 10 🪵)', value: '3'},  
         {label: '❌ Close', value: 'close'}
     ]);
     if (choice === 'close') return;
     if (choice === '2' || choice === '3') {
-        let costMats = choice === '2' ? 5 : 10;
+        let costMats = choice === '2' ? 1 : 10;
         let costWood = choice === '2' ? 5 : 10;
         let type = choice === '2' ? 'camp' : 'outpost';
         if (gameState.building_mats >= costMats && gameState.wood >= costWood) {
-            let dirStr = await showChoiceDialog('Direction:', [
-                {label: 'N', value: 'N'},
-                {label: 'NE', value: 'NE'},
-                {label: 'E', value: 'E'},
-                {label: 'SE', value: 'SE'},
-                {label: 'S', value: 'S'},
-                {label: 'SW', value: 'SW'},
-                {label: 'W', value: 'W'},
-                {label: 'NW', value: 'NW'},
+            let dirStr = await showChoiceDialog('You are building a ' + (choice === '2' ? '⛺camp' : '🏕️outpost') +'\nDo you want to build it here?', [
+                {label: '🏗️ Confirm', value: 'C'},
                 {label: '❌ Close', value: 'close'}
             ]);
             if (dirStr === 'close') return;
             const dmap = {
-                'N': {dx:0,dy:-1}, 'NE':{dx:1,dy:-1}, 'E':{dx:1,dy:0}, 'SE':{dx:1,dy:1},
-                'S':{dx:0,dy:1}, 'SW':{dx:-1,dy:1}, 'W':{dx:-1,dy:0}, 'NW':{dx:-1,dy:-1}
+                'C': {dx:0,dy:0}
             };
             let d = dmap[dirStr];
             if (d) {
@@ -644,6 +637,12 @@ export async function showMenu() {
                 let btile = getTile(bx, by);
                 if (btile.location === 'none' && btile.entity === 'none') {
                     gameState.changed.push({x: bx, y: by, type});
+                    // Mark the tile as visited so the change is applied
+                    const key = `${bx},${by}`;
+                    gameState.visited.set(key, getTile(bx, by));
+                    let tile = getTile(bx, by);
+                    tile.location = type;
+                    gameState.visited.set(key, tile);
                     gameState.building_mats -= costMats;
                     gameState.wood -= costWood;
                     await showChoiceDialog(`Built ${type}! 🏗️`, [
@@ -780,9 +779,9 @@ export async function showGoldDialog() {
     const message = `💰 **Gold Status**\n\n` +
                    `Current Gold: ${Math.floor(gameState.gold)} 🪙\n\n` +
                    `**Daily Party Expenses:**\n` +
-                   `Base Cost: ${dailyGoldExpense.toFixed(1)} 🪙\n` +
-                   `Role Bonuses: +${roleExpenses.toFixed(1)} 🪙\n` +
-                   `Total Daily: ${totalDailyExpense.toFixed(1)} 🪙\n` +
+                   `Base Cost: -${dailyGoldExpense.toFixed(1)} 🪙\n` +
+                   `Role Costs: -${roleExpenses.toFixed(1)} 🪙\n` +
+                   `Total Daily: -${totalDailyExpense.toFixed(1)} 🪙\n` +
                    `**Consumption Time:** Noon (12:00-13:00)\n\n` +
                    `**Party Members:** ${gameState.group.length}\n` +
                    `**Days Until Bankrupt:** ${Math.floor(gameState.gold / totalDailyExpense)} days`;

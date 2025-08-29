@@ -18,8 +18,8 @@ export const gameState = {
     food: 20,
     water: 20,
     tents: 2,
-    building_mats: 5,
-    wood: 5,
+    building_mats: 10,
+    wood: 10,
     carts: 0,
     group: [
         {role: 'explorer🔍'},
