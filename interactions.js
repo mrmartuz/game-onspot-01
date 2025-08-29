@@ -513,10 +513,10 @@ export async function handleAnimal(x, y) {
             gameState.food -= 1;
             let r = Math.floor(Math.random() * 100 + getGroupBonus('combat'));
             if (r > 80) {
-                gameState.killPoints += 1 + getGroupBonus('food');
+                gameState.killPoints += 10 + getGroupBonus('food');
                 gameState.food += 1 + getGroupBonus('food');
-                logEvent(`🪙 You killed an animal and gained 1 kill point!`);
-                let choice = await showChoiceDialog(`🪙 You killed an animal and gained 1 kill point!`, [
+                logEvent(`🪙🏹 You killed an animal and gained 10 kill point!`);
+                let choice = await showChoiceDialog(`🪙🏹 You killed an animal and gained 1 kill point!`, [
                     {label: '🏹 Hunt again', value: '7'},
                     {label: 'Leave', value: 'leave'}
                 ]);
