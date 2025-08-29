@@ -1,5 +1,5 @@
-import { move } from './movement.js';
-import { getShowMenuDialog, getShowGoldDialog, getShowInventoryDialog, showDiscoveriesDialog, getShowHealthGroupDialog, showEventsDialog } from './interactions.js';
+import { move } from './movement.js';   
+import { getShowMenuDialog, getShowGoldDialog, getShowInventoryDialog, getShowDiscoveriesDialog, getShowHealthGroupDialog, getShowEventsDialog } from './interactions.js';
 import { gameState } from './game_variables.js';
 import { canvas } from './rendering.js';
 
@@ -82,15 +82,15 @@ export function setupInputs() {
     }, { passive: true });
 
     // Date button
-    dateButton.addEventListener('click', showEventsDialog, { passive: true });
+    dateButton.addEventListener('click', getShowEventsDialog, { passive: true });
     dateButton.addEventListener('touchstart', (e) => {
-     showEventsDialog();
+     getShowEventsDialog();
     }, { passive: true });
 
     // Discoveries button
-    discoveriesButton.addEventListener('click', showDiscoveriesDialog, { passive: true });
+    discoveriesButton.addEventListener('click', getShowDiscoveriesDialog, { passive: true });
     discoveriesButton.addEventListener('touchstart', (e) => {
 
-        showDiscoveriesDialog();
+        getShowDiscoveriesDialog();
     }, { passive: true });
 }
