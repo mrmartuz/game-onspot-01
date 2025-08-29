@@ -4,7 +4,7 @@ import { getGroupBonus } from '../utils.js';
 import { updateStatus } from '../rendering.js';
 import { logEvent } from '../time_system.js';
 import { checkDeath } from '../utils.js';
-import { getTile } from '../utils.js';
+import { getTile } from '../rendering/tile.js';
 
 
 export async function handleCombat(ex, ey, isOnTile = false) {

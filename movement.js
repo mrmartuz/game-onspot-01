@@ -1,5 +1,6 @@
 import { gameState } from './game_variables.js';
-import { getGroupBonus, getTile, getMaxStorage } from './utils.js';
+import { getGroupBonus, getMaxStorage } from './utils.js';
+import { getTile } from './rendering/tile.js';
 
 export function move(dx, dy) {
     if (gameState.cooldown) return;

@@ -3,7 +3,7 @@ import { getShowChoiceDialog } from '../interactions.js';
 import { getGroupBonus } from '../utils.js';
 import { updateStatus } from '../rendering.js';
 import { logEvent } from '../time_system.js';
-import { getTile } from '../utils.js';
+import { getTile } from '../rendering/tile.js';
 import { getShowDeathDialog } from '../interactions.js';
 import { showChoiceDialog } from './showDialog.js';
 
