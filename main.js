@@ -2,7 +2,7 @@ import { resize, draw, updateStatus, canvas, ctx } from './rendering.js';
 import { revealAround } from './movement.js';
 import { gameState } from './game_variables.js';
 import { getTile, updateGroupBonus, updateTile, ensureGroupBonuses, checkDeath } from './utils.js';
-import { checkAdjacentMonsters, checkTileInteraction, showChoiceDialog } from './interactions.js';
+import { getCheckAdjacentMonstersDialog, getCheckTileInteractionDialog, getShowChoiceDialog } from './interactions.js';
 import { getCurrentGameDate, timeConsumption } from './time_system.js';
 import { setupInputs } from './input_handlers.js';
 
@@ -22,19 +22,11 @@ setInterval(updateStatus, 1000);
 // Async post-move logic
 async function postMove() {
     let tile = getTile(gameState.px, gameState.py);
-    await checkAdjacentMonsters();
-    await checkTileInteraction(tile);
+    await getCheckAdjacentMonstersDialog();
+    await getCheckTileInteractionDialog(tile);
     let death = await checkDeath();
-    if(death === 'health'){
-        await showChoiceDialog('You died fighting! ☠️', [
-            { label: '🔄 Restart Game', value: 'restart' }
-        ]);
-        location.reload();
-    } else if(death === 'gold'){
-        await showChoiceDialog('You paid your debt with your life! ☠️', [
-            { label: '🔄 Restart Game', value: 'restart' }
-        ]);
-        location.reload();
+    if(death){
+        await getShowDeathDialog(death);
     }
 }
 

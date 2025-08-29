@@ -1,5 +1,3 @@
-import { getTile } from './utils.js';
-
 export const gameState = {
     px: 0,
     py: 0,
@@ -14,12 +12,12 @@ export const gameState = {
     viewDist: 3,
     cooldown: false,
     health: 100,
-    gold: 1000+Math.floor(Math.random() * 1000),
-    food: 20,
-    water: 20,
+    gold: 20+Math.floor(Math.random() * 10),
+    food: 20+Math.floor(Math.random() * 10),
+    water: 20+Math.floor(Math.random() * 10),
     tents: 2,
     building_mats: 0,
-    wood: 10,
+    wood: 5,
     carts: 0,
     group: [
         {role: 'explorer🔍'},

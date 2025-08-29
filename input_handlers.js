@@ -1,5 +1,5 @@
-import { move } from './movement.js';
-import { showMenu, showChoiceDialog, showGoldDialog, showInventoryDialog, showDiscoveriesDialog, showHealthGroupDialog, showEventsDialog } from './interactions.js';
+import { move } from './movement.js';   
+import { getShowMenuDialog, getShowGoldDialog, getShowInventoryDialog, getShowDiscoveriesDialog, getShowHealthGroupDialog, getShowEventsDialog } from './interactions.js';
 import { gameState } from './game_variables.js';
 import { canvas } from './rendering.js';
 
@@ -42,7 +42,7 @@ export function setupInputs() {
         let centerTileY = Math.floor(gameState.viewHeight / 2);
         
         if (vx === centerTileX && vy === centerTileY) {
-            showMenu();            
+            getShowMenuDialog();            
         }
     };
 
@@ -61,36 +61,36 @@ export function setupInputs() {
     const discoveriesButton = document.getElementById('discoveries-button');
 
     // Gold button
-    goldButton.addEventListener('click', showGoldDialog, { passive: true });
+    goldButton.addEventListener('click', getShowGoldDialog, { passive: true });
     goldButton.addEventListener('touchstart', (e) => {
 
-        showGoldDialog();
+        getShowGoldDialog();
     }, { passive: true });
 
     // Inventory button
-    inventoryButton.addEventListener('click', showInventoryDialog, { passive: true });
+    inventoryButton.addEventListener('click', getShowInventoryDialog, { passive: true });
     inventoryButton.addEventListener('touchstart', (e) => {
 
-        showInventoryDialog();
+        getShowInventoryDialog();
     }, { passive: true });
 
     // Group button
-    groupButton.addEventListener('click', showHealthGroupDialog, { passive: true });
+    groupButton.addEventListener('click', getShowHealthGroupDialog, { passive: true });
     groupButton.addEventListener('touchstart', (e) => {
 
-        showHealthGroupDialog();
+        getShowHealthGroupDialog();
     }, { passive: true });
 
     // Date button
-    dateButton.addEventListener('click', showEventsDialog, { passive: true });
+    dateButton.addEventListener('click', getShowEventsDialog, { passive: true });
     dateButton.addEventListener('touchstart', (e) => {
-     showEventsDialog();
+     getShowEventsDialog();
     }, { passive: true });
 
     // Discoveries button
-    discoveriesButton.addEventListener('click', showDiscoveriesDialog, { passive: true });
+    discoveriesButton.addEventListener('click', getShowDiscoveriesDialog, { passive: true });
     discoveriesButton.addEventListener('touchstart', (e) => {
 
-        showDiscoveriesDialog();
+        getShowDiscoveriesDialog();
     }, { passive: true });
 }
