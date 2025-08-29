@@ -25,16 +25,8 @@ async function postMove() {
     await getCheckAdjacentMonstersDialog();
     await getCheckTileInteractionDialog(tile);
     let death = await checkDeath();
-    if(death === 'health'){
-        await getShowChoiceDialog('You died fighting! ☠️', [
-            { label: '🔄 Restart Game', value: 'restart' }
-        ]);
-        location.reload();
-    } else if(death === 'gold'){
-        await getShowChoiceDialog('You paid your debt with your life! ☠️', [
-            { label: '🔄 Restart Game', value: 'restart' }
-        ]);
-        location.reload();
+    if(death){
+        await getShowDeathDialog(death);
     }
 }
 
