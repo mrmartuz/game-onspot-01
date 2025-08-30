@@ -31,8 +31,8 @@ export async function handleAnimal(x, y) {
                 }
                 logEvent(msg);
                 let choice = await getShowChoiceDialog(msg, [
-                    {label: '🏹 Hunt again', value: '7'},
-                    {label: 'Leave', value: 'leave'}
+                    {type: 'button', label: '🏹 Hunt again', value: '7'},
+                    {type: 'button', label: 'Leave', value: 'leave'}
                 ]);
                 if (choice === '7') {
                     continue; // Continue hunting
@@ -51,8 +51,8 @@ export async function handleAnimal(x, y) {
                 }
                 logEvent(msg);
                 let choice = await getShowChoiceDialog(msg, [
-                    {label: '🏹 Hunt again...', value: '7'},
-                    {label: 'Leave', value: 'leave'}
+                    {type: 'button', label: '🏹 Hunt again...', value: '7'},
+                    {type: 'button', label: 'Leave', value: 'leave'}
                 ]);
                 if (choice === '7') {
                     continue; // Continue hunting
@@ -73,8 +73,8 @@ export async function handleAnimal(x, y) {
                 }
                 logEvent(msg);
                 let choice = await getShowChoiceDialog(msg, [
-                    {label: '🏹 Hunt again...', value: '7'},
-                    {label: 'Leave', value: 'leave'}
+                    {type: 'button', label: '🏹 Hunt again...', value: '7'},
+                    {type: 'button', label: 'Leave', value: 'leave'}
                 ]);
 
                 if (choice === '7') {
@@ -87,8 +87,8 @@ export async function handleAnimal(x, y) {
                 gameState.health -= health;
                 logEvent(`You failed to kill an animal, gravely injured yourself. You lost ${health} health. 🩸🩸`);
                 let choice = await getShowChoiceDialog(`You failed to kill an animal and gravely injured yourself. You lost ${health} health. 🩸🩸`, [
-                    {label: '🏹 Hunt again', value: '7'},
-                    {label: 'Leave', value: 'leave'}
+                    {type: 'button', label: '🏹 Hunt again', value: '7'},
+                    {type: 'button', label: 'Leave', value: 'leave'}
                 ]);
                 if (choice === '7') {
                     continue; // Continue hunting
@@ -96,17 +96,18 @@ export async function handleAnimal(x, y) {
                     hunting = false; // Stop hunting
                 }
             } else {
-                let memberToRemove = gameState.group[Math.floor(Math.random()*gameState.group.length)];
+                let memberToRemove = gameState.group[Math.floor(Math.random()*gameState.group.length)+1];
                 if(gameState.group.length > 1){
-                gameState.group.splice(memberToRemove, 1);} else {
+                gameState.group.splice(memberToRemove, 1);
+                } else {
                     await getShowDeathDialog('hunting');
                 }   
                 let health = Math.floor(Math.random() * 20 + 5);
                 gameState.health -= health;
                 logEvent(`☠️ You failed to kill an animal, gravely injured yourself and lost one of ${memberToRemove.role} in your party ☠️. You lost ${health} health. 🩸🩸`);
                 let choice = await getShowChoiceDialog((`☠️ You failed to kill an animal, gravely injured yourself and lost one of ${memberToRemove.role} in your party ☠️. You lost ${health} health. 🩸🩸`), [
-                    {label: '🏹 Are you sure you want to Hunt again?', value: '7'},
-                    {label: 'Leave', value: 'leave'}
+                    {type: 'button', label: '🏹 Are you sure you want to Hunt again?', value: '7'},
+                    {type: 'button', label: 'Leave', value: 'leave'}
                 ]);
                 if (choice === '7') {
                     continue; // Continue hunting
@@ -117,7 +118,7 @@ export async function handleAnimal(x, y) {
             updateStatus();
         }
         showChoiceDialog(`🏹 You have ${Math.floor(gameState.food)} food left. You cant hunt anymore. You need to find some... 🍞`, [
-            {label: 'OK', value: 'ok'}
+            {type: 'button', label: 'OK', value: 'ok'}
         ]);
     }
 }
