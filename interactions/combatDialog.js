@@ -11,19 +11,19 @@ export async function handleCombat(ex, ey, isOnTile = false) {
     let tile = getTile(ex, ey);
     let entity = tile.entity;
     let input = await showChoiceDialog(`Hostile ${entity} at (${ex},${ey})!`, [
-        {label: '⚔️ Attack', value: '1'},
-        {label: '🌬️ Flee', value: '2'}
+        {type: 'button', label: '⚔️ Attack', value: '1'},
+        {type: 'button', label: '🌬️ Flee', value: '2'}
     ]);
     if (input === '2') {
         if (isOnTile) {
             gameState.px = gameState.prevx;
             gameState.py = gameState.prevy;
             await showChoiceDialog('Fled back. 😵‍💫', [
-                {label: 'OK', value: 'ok'}
+                {type: 'button', label: 'OK', value: 'ok'}
             ]);
         } else {
             await showChoiceDialog('Fled, staying put. 😅', [
-                {label: 'OK', value: 'ok'}
+                {type: 'button', label: 'OK', value: 'ok'}
             ]);
         }
         return false;
@@ -36,7 +36,7 @@ export async function handleCombat(ex, ey, isOnTile = false) {
     
     if (success) {
         await showChoiceDialog('Victory! 🏆', [
-            {label: 'OK', value: 'ok'}
+            {type: 'button', label: 'OK', value: 'ok'}
         ]);
         gameState.killed.add(`${ex},${ey}`);
         gameState.killPoints += 5;
@@ -51,7 +51,7 @@ export async function handleCombat(ex, ey, isOnTile = false) {
         let finalDamage = Math.max(1, baseDamage * (1 - damageReduction));
         
         await showChoiceDialog('Defeat! Took damage.🤕', [
-            {label: 'OK', value: 'ok'}
+            {type: 'button', label: 'OK', value: 'ok'}
         ]);
         gameState.health -= finalDamage;
         updateStatus();
@@ -59,12 +59,12 @@ export async function handleCombat(ex, ey, isOnTile = false) {
         let death = await checkDeath();
         if(death === 'health'){
             await showChoiceDialog('You died fighting! ☠️', [
-            { label: '🔄 Restart Game', value: 'restart' }
+            { type: 'button', label: '🔄 Restart Game', value: 'restart' }
             ]);
             location.reload();
         } else if(death === 'gold'){
             await showChoiceDialog('You paid your debt with your life! ☠️', [
-                { label: '🔄 Restart Game', value: 'restart' }
+                { type: 'button', label: '🔄 Restart Game', value: 'restart' }
             ]);
             location.reload();
         }
