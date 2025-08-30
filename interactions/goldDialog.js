@@ -34,6 +34,6 @@ export async function showGoldDialog() {
                    `**Days Until Bankrupt:** ${Math.floor(gameState.gold / totalDailyExpense)} days`;
     
     return getShowChoiceDialog(message, [
-        {label: '❌ Close', value: 'close'}
+        {type: 'button', label: '❌ Close', value: 'close'}
     ]);
 }

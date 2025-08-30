@@ -6,10 +6,14 @@ import { getTile } from './rendering/tile.js';
 import { getCheckAdjacentMonstersDialog, getCheckTileInteractionDialog, getShowDeathDialog } from './interactions.js';
 import { timeConsumption } from './time_system.js';
 import { setupInputs } from './input_handlers.js';
+import { getStartMenuDialog } from './interactions.js';
 
 // Setup
 window.addEventListener('resize', resize, { passive: true });
 resize();
+
+await getStartMenuDialog();
+
 ensureGroupBonuses(); // Fix any missing bonuses in existing group members
 updateGroupBonus();
 gameState.visited.set('0,0', getTile(0, 0));

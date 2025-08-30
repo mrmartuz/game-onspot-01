@@ -18,7 +18,7 @@ export async function checkTileInteraction(tile) {
             const positionKey = `${gameState.px},${gameState.py}`;
             if (gameState.discoveredLocations.includes(positionKey)) { // Use .includes() for array
                 await getShowChoiceDialog(`You've already discovered this ${tile.location}! 🌟`, [
-                    {label: 'OK', value: 'ok'}
+                    {type: 'button', label: 'OK', value: 'ok'}
                 ]);
                 return;
             }
@@ -39,26 +39,26 @@ export async function checkTileInteraction(tile) {
         }
 
         let options = [
-            {label: '🚶 Leave', value: '1'}
+            {type: 'button', label: '🚶 Leave', value: '1'}
         ];
 
         if (['camp', 'outpost', 'farm', 'hamlet', 'village', 'city'].includes(tile.location)) {
-            options.unshift({label: `😴 Rest (-${gameState.group.length * 0.5}🍞 - ${gameState.group.length * 0.5}💧 -2🪙)`, value: '2'});
+            options.unshift({type: 'button', label: `😴 Rest (-${gameState.group.length * 0.5}🍞 - ${gameState.group.length * 0.5}💧 -2🪙)`, value: '2'});
         }
         if (['hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan'].includes(tile.entity)) {
-            options.unshift({label: '🪙 Trade', value: '3'});
+            options.unshift({type: 'button', label: '🪙 Trade', value: '3'});
         }
         if (['outpost', 'farm', 'hamlet', 'village', 'city'].includes(tile.location) || ['trader', 'caravan', 'army', 'group', 'npc'].includes(tile.entity)) {
-            options.unshift({label: '🧍🏻 Hire', value: '4'});
+            options.unshift({type: 'button', label: '🧍🏻 Hire', value: '4'});
         }
         if (tile.location === 'city') {
-            options.unshift({label: '🌟 Sell discoveries', value: '5'});
+            options.unshift({type: 'button', label: '🌟 Sell discoveries', value: '5'});
         }
         if (['village', 'city'].includes(tile.location) || ['caravan'].includes(tile.entity)) {
-            options.unshift({label: '🏹 Sell hunts', value: '6'});
+            options.unshift({type: 'button', label: '🏹 Sell hunts', value: '6'});
         }
         if (tile.entity === 'animal') {
-            options.unshift({label: '🏹 Hunt', value: '7'});
+            options.unshift({type: 'button', label: '🏹 Hunt', value: '7'});
         }
         let msg = '';
         if(tile.location === 'peaks' && tile.entity === 'none'){

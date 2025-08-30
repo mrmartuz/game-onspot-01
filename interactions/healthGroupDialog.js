@@ -101,8 +101,8 @@ if (gameState.group.length > 1) {
     
     
     const choice = await getShowChoiceDialog(message, [
-        {label:'Detailed Breakdown', value: 'detailed-breakdown'},
-        {label: '❌ Close', value: 'close'}
+        {type: 'button', label:'Detailed Breakdown', value: 'detailed-breakdown'},
+        {type: 'button', label: '❌ Close', value: 'close'}
     ]);
 
     if (choice === 'detailed-breakdown') {
@@ -159,6 +159,6 @@ export async function showDetailedBreakdownDialog() {
     }
     
     return getShowChoiceDialog(message, [
-        {label: '❌ Close', value: 'close'}
+        {type: 'button', label: '❌ Close', value: 'close'}
     ]);
 }

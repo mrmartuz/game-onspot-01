@@ -42,13 +42,13 @@ export async function handleChoice(choice, tile) {
         let trading = true;
         while (trading) {
             let t = await getShowChoiceDialog('Trade options:', [
-                {label: `📥 Buy food 🍞 (${Math.floor(10 * (1 - buyDiscount))} for 10g)`, value: '1'},
-                {label: `📥 Sell food 🍞 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`, value: '2'},
-                {label: `📥 Buy water 💧 (${Math.floor(10 * (1 - buyDiscount))} for 10g)`, value: '3'},
-                {label: `📥 Sell water 💧 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`, value: '4'},
-                {label: `📤 Sell wood 🪵 (5 for ${Math.floor(10 * (1 + sellBonus))}g)`, value: '5'},
-                {label: '📥 Buy cart 🛒 (100g for 1)', value: '6'},
-                {label: '❌ Close', value: 'close'}
+                {type: 'button', label: `📥 Buy food 🍞 (${Math.floor(10 * (1 - buyDiscount))} for 10g)`, value: '1'},
+                {type: 'button', label: `📥 Sell food 🍞 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`, value: '2'},
+                {type: 'button', label: `📥 Buy water 💧 (${Math.floor(10 * (1 - buyDiscount))} for 10g)`, value: '3'},
+                {type: 'button', label: `📥 Sell water 💧 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`, value: '4'},
+                {type: 'button', label: `📤 Sell wood 🪵 (5 for ${Math.floor(10 * (1 + sellBonus))}g)`, value: '5'},
+                {type: 'button', label: '📥 Buy cart 🛒 (100g for 1)', value: '6'},
+                {type: 'button', label: '❌ Close', value: 'close'}
             ]);
             
             if (t === 'close') {
@@ -67,7 +67,7 @@ export async function handleChoice(choice, tile) {
                     tradeDesc = `📥 Bought ${actualFood} food 🍞 for 10g`;
                 } else {
                     await getShowChoiceDialog('Not enough gold or storage! ⚠️', [
-                        {label: 'OK', value: 'ok'}
+                        {type: 'button', label: 'OK', value: 'ok'}
                     ]);
                 }
             } else if (t === '2') {
@@ -79,7 +79,7 @@ export async function handleChoice(choice, tile) {
                     tradeDesc = `📥 Sold 10 food 🍞 for ${actualGold}g`;
                 } else {
                     await getShowChoiceDialog('Not enough food! ⚠️', [
-                        {label: 'OK', value: 'ok'}
+                        {type: 'button', label: 'OK', value: 'ok'}
                     ]);
                 }
             } else if (t === '3') {
@@ -91,7 +91,7 @@ export async function handleChoice(choice, tile) {
                     tradeDesc = `📥 Bought ${actualWater} water 💧 for 10g`;
                 } else {
                     await getShowChoiceDialog('Not enough gold or storage! ⚠️', [
-                        {label: 'OK', value: 'ok'}
+                        {type: 'button', label: 'OK', value: 'ok'}
                     ]);
                 }
             } else if (t === '4') {
@@ -103,7 +103,7 @@ export async function handleChoice(choice, tile) {
                     tradeDesc = `📥 Sold 10 water 💧 for ${actualGold}g`;
                 } else {
                     await getShowChoiceDialog('Not enough water! ⚠️', [
-                        {label: 'OK', value: 'ok'}
+                        {type: 'button', label: 'OK', value: 'ok'}
                     ]);
                 }
             } else if (t === '5') {
@@ -115,7 +115,7 @@ export async function handleChoice(choice, tile) {
                     tradeDesc = `📤 Sold 5 wood 🪵 for ${actualGold}g`;
                 } else {
                     await getShowChoiceDialog('Not enough wood! ⚠️', [
-                        {label: 'OK', value: 'ok'}
+                        {type: 'button', label: 'OK', value: 'ok'}
                     ]);
                 }
             } else if (t === '6') {
@@ -125,7 +125,7 @@ export async function handleChoice(choice, tile) {
                     tradeDesc = '📥 Bought cart 🛒 for 100g';
                 } else {
                     await getShowChoiceDialog('Not enough gold! ⚠️', [
-                        {label: 'OK', value: 'ok'}
+                        {type: 'button', label: 'OK', value: 'ok'}
                     ]);
                 }
             }
@@ -179,7 +179,7 @@ export async function handleChoice(choice, tile) {
                     upgradeCost
                 });
             }
-            hires.push({label: '❌ Close', value: 'close'});
+            hires.push({type: 'button', label: '❌ Close', value: 'close'});
             
             let c = await getShowChoiceDialog('Hire options:', hires);
             if (c === 'close') {
@@ -206,9 +206,9 @@ export async function handleChoice(choice, tile) {
                         `2. Hire Enhanced: ${actualCost + hire.upgradeCost}g (+${hire.upgradeCost}g upgrade)\n` +
                         `3. Cancel`,
                         [
-                            {label: `Basic Hire (${actualCost}g)`, value: 'basic'},
-                            {label: `Enhanced Hire (${actualCost + hire.upgradeCost}g)`, value: 'enhanced'},
-                            {label: '❌ Cancel', value: 'cancel'}
+                            {type: 'button', label: `Basic Hire (${actualCost}g)`, value: 'basic'},
+                            {type: 'button', label: `Enhanced Hire (${actualCost + hire.upgradeCost}g)`, value: 'enhanced'},
+                            {type: 'button', label: '❌ Cancel', value: 'cancel'}
                         ]
                     );
                     
@@ -228,12 +228,12 @@ export async function handleChoice(choice, tile) {
                             
                             let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
                             await getShowChoiceDialog(`🌟 Hired Enhanced ${role}! 👏\nEnhanced Bonus: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type}\nSpeciality: ${hire.enhancedBonus.description}${discountText}`, [
-                                {label: 'OK', value: 'ok'}
+                                {type: 'button', label: 'OK', value: 'ok'}
                             ]);
                             logEvent(`🌟 Hired Enhanced ${role} for ${actualCost}g${discountText} (Enhanced: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type} - ${hire.enhancedBonus.description})`);
                         } else {
                             await getShowChoiceDialog('Not enough gold for enhanced hire! ⚠️', [
-                                {label: 'OK', value: 'ok'}
+                                {type: 'button', label: 'OK', value: 'ok'}
                             ]);
                             continue;
                         }
@@ -246,12 +246,12 @@ export async function handleChoice(choice, tile) {
                             
                             let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
                             await getShowChoiceDialog(`Hired ${role}! 👏${discountText}`, [
-                                {label: 'OK', value: 'ok'}
+                                {type: 'button', label: 'OK', value: 'ok'}
                             ]);
                             logEvent(`🧍🏻 Hired ${role} for ${actualCost}g${discountText}`);
                         } else {
                             await getShowChoiceDialog('Not enough gold! ⚠️', [
-                                {label: 'OK', value: 'ok'}
+                                {type: 'button', label: 'OK', value: 'ok'}
                             ]);
                         }
                     }
@@ -264,12 +264,12 @@ export async function handleChoice(choice, tile) {
                         
                         let discountText = hireDiscount > 0 ? ` (${Math.floor(hireDiscount * 100)}% discount applied)` : '';
                         await getShowChoiceDialog(`Hired ${role}! 👏${discountText}`, [
-                            {label: 'OK', value: 'ok'}
+                            {type: 'button', label: 'OK', value: 'ok'}
                         ]);
                         logEvent(`🧍🏻 Hired ${role} for ${actualCost}g${discountText}`);
                     } else {
                         await getShowChoiceDialog('Not enough gold! ⚠️', [
-                            {label: 'OK', value: 'ok'}
+                            {type: 'button', label: 'OK', value: 'ok'}
                         ]);
                     }
                 }
@@ -282,11 +282,11 @@ export async function handleChoice(choice, tile) {
         gameState.discoverPoints = 0;
         updateStatus();
         await getShowChoiceDialog('Sold discoveries! 🪙', [
-            {label: 'OK', value: 'ok'}
+            {type: 'button', label: 'OK', value: 'ok'}
         ]);
     } else {
         await getShowChoiceDialog('No discoveries to sell! You Scum! Go discover some locations! ⚠️', [
-            {label: 'OK', value: 'ok'}
+            {type: 'button', label: 'OK', value: 'ok'}
         ]);
     }
     } else if (choice === '6') { // Sell hunts
@@ -296,11 +296,11 @@ export async function handleChoice(choice, tile) {
         gameState.killPoints = 0;
         updateStatus();
         await getShowChoiceDialog('Sold hunts! 🪙', [
-            {label: 'OK', value: 'ok'}
+            {type: 'button', label: 'OK', value: 'ok'}
         ]);
     } else {
         await getShowChoiceDialog('No hunts to sell! Go hunt some monsters or get killed or get a job! ⚠️', [
-            {label: 'OK', value: 'ok'}
+            {type: 'button', label: 'OK', value: 'ok'}
         ]);
     } 
     } else if (choice === '7') {

@@ -36,9 +36,9 @@ export async function showMenu() {
     let msg = `${inv}\n👥 Group: ${grp}`;
     let choice = await getShowChoiceDialog(msg, [
         ...(isFlora ? [{label: '🌱 Harvest flowers', value: '4'}] : []),
-        {label: '🏗️ Build camp ⛺ (5 🪵)', value: '2'},
-        {label: '🏗️ Build outpost 🏕️ (10 🧱, 10 🪵)', value: '3'},  
-        {label: '❌ Close', value: 'close'}
+        {type: 'button', label: '🏗️ Build camp ⛺ (5 🪵)', value: '2'},
+        {type: 'button', label: '🏗️ Build outpost 🏕️ (10 🧱, 10 🪵)', value: '3'},  
+        {type: 'button', label: '❌ Close', value: 'close'}
     ]);
     if (choice === 'close') return;
     if (choice === '2' || choice === '3') {
@@ -47,8 +47,8 @@ export async function showMenu() {
         let type = choice === '2' ? 'camp' : 'outpost';
         if (gameState.building_mats >= costMats && gameState.wood >= costWood) {
             let dirStr = await getShowChoiceDialog('You are building a ' + (choice === '2' ? '⛺camp' : '🏕️outpost') +'\nDo you want to build it here?', [
-                {label: '🏗️ Confirm', value: 'C'},
-                {label: '❌ Close', value: 'close'}
+                {type: 'button', label: '🏗️ Confirm', value: 'C'},
+                {type: 'button', label: '❌ Close', value: 'close'}
             ]);
             if (dirStr === 'close') return;
             const dmap = {
@@ -75,17 +75,17 @@ export async function showMenu() {
                     logEvent(`🏗️ Built ${type} at (${bx},${by})`);
                 } else {
                     await getShowChoiceDialog('Cannot build there.There is something already there 🚫', [
-                        {label: '❌ Close', value: 'close'}
+                        {type: 'button', label: '❌ Close', value: 'close'}
                     ]);
                 }
             } else {
                 await getShowChoiceDialog('Invalid direction. ❓', [
-                    {label: '❌ Close', value: 'close'}
+                    {type: 'button', label: '❌ Close', value: 'close'}
                 ]);
             }
         } else {
             await getShowChoiceDialog('Not enough materials! ⚠️', [
-                {label: '❌ Close', value: 'close'}
+                {type: 'button', label: '❌ Close', value: 'close'}
             ]);
         }
     }
@@ -102,17 +102,17 @@ export async function showMenu() {
             updateStatus();
             let bonusText = bonusFood > 0 ? ` (+${bonusFood} bonus)` : '';
             await getShowChoiceDialog(`Harvested flowers! 🌱 Gained ${totalFood} food${bonusText}`, [
-                {label: 'OK', value: 'ok'}
+                {type: 'button', label: 'OK', value: 'ok'}
             ]);
             logEvent(`🌱 Harvested flowers for ${totalFood} food${bonusText}`);
         } else {
             await getShowChoiceDialog('Not enough storage for harvested food! ⚠️', [
-                {label: 'OK', value: 'ok'}
+                {type: 'button', label: 'OK', value: 'ok'}
             ]);
         }
         }
         else {await getShowChoiceDialog('Nothing to harvest! ⚠️', [
-                {label: 'OK', value: 'ok'}
+                {type: 'button', label: 'OK', value: 'ok'}
             ]);}
 
     }

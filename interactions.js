@@ -10,9 +10,11 @@ import { showDeathDialog } from './interactions/deathDialog.js';
 import { showHealthGroupDialog } from './interactions/healthGroupDialog.js';
 import { showDiscoveriesDialog } from './interactions/discoveriesDialog.js';
 import { showEventsDialog } from './interactions/eventDialog.js';
+import { startMenu } from './interactions/startMenu.js';
+import { titleDialog } from './interactions/titleDialog.js';
 
-export async function getShowChoiceDialog(message, buttons) {
-    return showChoiceDialog(message, buttons);
+export async function getShowChoiceDialog(message, components) {
+    return showChoiceDialog(message, components);
 }
 
 export async function getHandleCombatDialog(ex, ey, isOnTile = false){
@@ -63,4 +65,10 @@ export async function getShowEventsDialog(){
     return showEventsDialog();
 }
 
+export async function getStartMenuDialog(){
+    return startMenu();
+}
 
+export async function getTitleDialog(){
+    return titleDialog();
+}

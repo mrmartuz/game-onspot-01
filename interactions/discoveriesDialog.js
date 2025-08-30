@@ -12,6 +12,6 @@ export async function showDiscoveriesDialog() {
                    `*Sell at cities to convert to gold*`;
     
     return getShowChoiceDialog(message, [
-        {label: '❌ Close', value: 'close'}
+        {type: 'button', label: '❌ Close', value: 'close'}
     ]);
 }

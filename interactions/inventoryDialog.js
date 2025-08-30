@@ -78,6 +78,6 @@ export async function showInventoryDialog() {
                    `**Storage Capacity:** ${maxStorage}`;
     
     return getShowChoiceDialog(message, [
-        {label: '❌ Close', value: 'close'}
+        {type: 'button', label: '❌ Close', value: 'close'}
     ]);
 }
