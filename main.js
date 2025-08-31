@@ -6,13 +6,17 @@ import { getTile } from './rendering/tile.js';
 import { getCheckAdjacentMonstersDialog, getCheckTileInteractionDialog, getShowDeathDialog } from './interactions.js';
 import { timeConsumption } from './time_system.js';
 import { setupInputs } from './input_handlers.js';
-import { getStartMenuDialog } from './interactions.js';
+import { getStartMenuDialog, getCharacterCreationDialog } from './interactions.js';
 
 // Setup
 window.addEventListener('resize', resize, { passive: true });
 resize();
 
-await getStartMenuDialog();
+const startMenu = await getStartMenuDialog();
+if(startMenu){
+    await getCharacterCreationDialog();
+}
+
 
 ensureGroupBonuses(); // Fix any missing bonuses in existing group members
 updateGroupBonus();

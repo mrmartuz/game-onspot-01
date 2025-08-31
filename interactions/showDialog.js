@@ -42,6 +42,10 @@ export async function showChoiceDialog(message, components) {
                                 inputSubmit.style.backgroundColor = 'red';
                             }
                         });
+                        } else {
+                            inputSubmit.addEventListener('click', () => {
+                                gameDialog.close(input.value);
+                            });
                         }
                         input.type = 'text';
                         input.placeholder = `Enter ${component.label}`;

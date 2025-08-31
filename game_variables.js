@@ -3,6 +3,7 @@ export const gameState = {
     py: 0,
     prevx: 0,
     prevy: 0,
+    name: '',
     visited: new Map(),
     changed: [], // {x, y, type}
     killed: new Set(),
@@ -20,8 +21,6 @@ export const gameState = {
     wood: 5,
     carts: 0,
     group: [
-        {role: 'explorer🔍'},
-        {role: 'carrier📦'},
     ],
     groupBonus: {
         'navigation': 0,
