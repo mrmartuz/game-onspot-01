@@ -35,7 +35,7 @@ export async function showMenu() {
     let grp = gameState.group.map(g => g.role).join(', ');
     let msg = `${inv}\n👥 Group: ${grp}`;
     let choice = await getShowChoiceDialog(msg, [
-        ...(isFlora ? [{label: '🌱 Harvest flowers', value: '4'}] : []),
+        ...(isFlora ? [{type: 'button', label: '🌱 Harvest flowers', value: '4'}] : []),
         {type: 'button', label: '🏗️ Build camp ⛺ (5 🪵)', value: '2'},
         {type: 'button', label: '🏗️ Build outpost 🏕️ (10 🧱, 10 🪵)', value: '3'},  
         {type: 'button', label: '❌ Close', value: 'close'}
@@ -70,7 +70,7 @@ export async function showMenu() {
                     gameState.building_mats -= costMats;
                     gameState.wood -= costWood;
                     await getShowChoiceDialog(`Built ${type}! 🏗️`, [
-                        {label: 'OK', value: 'ok'}
+                        {type: 'button', label: 'OK', value: 'ok'}
                     ]);
                     logEvent(`🏗️ Built ${type} at (${bx},${by})`);
                 } else {

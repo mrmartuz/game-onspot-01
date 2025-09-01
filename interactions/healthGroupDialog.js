@@ -27,6 +27,7 @@ export async function showHealthGroupDialog() {
     const playerBonus = player.bonus || {};
     
     let playerStats = `👤 **Player Character**\n` +
+                      `Name: ${gameState.name}\n` +
                       `Role: ${player.role}\n` +
                       `Health: ${Math.floor(gameState.health)}/100 ❤️‍🩹\n`;
     

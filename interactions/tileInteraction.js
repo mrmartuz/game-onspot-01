@@ -33,7 +33,7 @@ export async function checkTileInteraction(tile) {
 
             let bonusText = bonusPoints > 0 ? ` (+${bonusPoints} bonus)` : '';
             await getShowChoiceDialog(`Discovered ${tile.location}! 🌟${bonusText}`, [
-                {label: 'OK', value: 'ok'}
+                {type: 'button', label: 'OK', value: 'ok'}
             ]);
             logEvent(`🌟 Discovered ${tile.location} at ${positionKey} +${totalPoints} points`);
         }

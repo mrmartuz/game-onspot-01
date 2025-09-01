@@ -30,7 +30,7 @@ export async function handleChoice(choice, tile) {
         
         let bonusText = bonusHealing > 0 ? ` (+${bonusHealing} bonus)` : '';
         await getShowChoiceDialog(`Rested. 😴 Healed ${totalHealing} health${bonusText}`, [
-            {label: 'OK', value: 'ok'}
+            {type: 'button', label: 'OK', value: 'ok'}
         ]);
         logEvent(`😴 Rested and healed ${totalHealing} health${bonusText}`);
     } else if (choice === '3') { // Trade
@@ -150,6 +150,7 @@ export async function handleChoice(choice, tile) {
             const roles = ['native-guide🧭', 'cook🍞', 'guard⚔️', 'geologist🪵', 'biologist🌱', 'translator🤝', 'carrier📦', 'medic❤️', 'navigator👁️', 'explorer🔍'];
             let hires = [];
             for (let i = 0; i < number_of_hires; i++) {
+                let type = 'button';
                 let r = roles[Math.floor(Math.random() * roles.length)];
                 let baseCost = 50 + Math.floor(Math.random() * 50);
                 let actualCost = Math.floor(baseCost * (1 - hireDiscount));
@@ -170,6 +171,7 @@ export async function handleChoice(choice, tile) {
                 }
                 
                 hires.push({
+                    type: type,
                     label: label, 
                     value: (i+1).toString(), 
                     baseCost, 
