@@ -13,7 +13,7 @@ export async function startMenu() {
     ``;
 
   const choice = await getShowChoiceDialog(message, [
-    { type: 'button', label: 'Welcome Explorer to ExpoGa! ', value: 'title'},
+    { type: 'button', label: 'Welcome to ExpoGa! ', value: 'title'},
     { type: 'message', label: `You are a great man, travel the world, hire new member, gain renown, become the greatest explorer the world of ${worldName} has ever seen.`, value: '' },
     { type: 'message', label: `Are you ready to start in the world of \n ${worldName}?`, value: '' },
     { type: 'button', label: `⏫ Explore ${worldName}! ⏫`, value: 'new' },
@@ -23,13 +23,13 @@ export async function startMenu() {
     { type: 'button', label: '❌ Exit the game ❌', value: 'exit' }
   ]);
   if (choice === 'title') {
-    await getTitleDialog();
+    return choice;
   } else if (choice === 'new') {
-    return true;
+    return choice;
   } else if (choice === 'seed') {
-    await startMenu();
+    return choice;
   } else if (choice === 'exit') {
-    window.close();
+    return choice;
   }
 
 }

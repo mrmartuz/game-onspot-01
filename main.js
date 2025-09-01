@@ -6,18 +6,30 @@ import { getTile } from './rendering/tile.js';
 import { getCheckAdjacentMonstersDialog, getCheckTileInteractionDialog, getShowDeathDialog } from './interactions.js';
 import { timeConsumption } from './time_system.js';
 import { setupInputs } from './input_handlers.js';
-import { getStartMenuDialog, getCharacterCreationDialog } from './interactions.js';
+import { getStartMenuDialog, getCharacterCreationDialog, getTitleDialog} from './interactions.js';
 
 // Setup
 window.addEventListener('resize', resize, { passive: true });
 resize();
 
-const startMenu = await getStartMenuDialog();
-if(startMenu){
-    await getCharacterCreationDialog();
+let startMenu;
+while (startMenu !== "new" && startMenu !== "exit") {
+  startMenu = await getStartMenuDialog();
+  console.log("Selected option:", startMenu);
+  if (startMenu === "title") {
+    //TODO: show to player title and close it after pressing
+    //TODO: insert info about the game and mechanics
+    // await getTitleDialog();
+  } else if (startMenu === "seed") {
+    // No need to call getStartMenuDialog again; the loop will handle it
+    continue;
+  } else if (startMenu === "exit") {
+    window.close();
+  }
 }
-console.log(gameState.group);
-
+if (startMenu === "new") {
+  await getCharacterCreationDialog();
+}
 
 ensureGroupBonuses(); // Fix any missing bonuses in existing group members
 updateGroupBonus();

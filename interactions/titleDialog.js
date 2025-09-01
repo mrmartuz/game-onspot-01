@@ -1,4 +1,4 @@
-import { startMenu } from './startMenu.js';
+import { getStartMenuDialog } from '../interactions.js';
 
 export async function titleDialog() {
     const logo = '../images/logo.jpg';
@@ -18,9 +18,9 @@ export async function titleDialog() {
     img.style.objectPosition = 'center center';
     img.style.objectFit = 'contain';
     div.appendChild(img);
-    div.addEventListener('click', () => {
+    div.addEventListener('click', async () => {
         div.remove();
-        startMenu();
+        await getStartMenuDialog();
     });
     document.body.appendChild(div);
 }
