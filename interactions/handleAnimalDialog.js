@@ -12,7 +12,13 @@ export async function handleAnimal(x, y) {
     let tile = getTile(x, y);
     if (tile.entity === 'animal' && gameState.food > 0) {
         let hunting = true;
-        while (hunting && gameState.food > -20) {
+        if (gameState.food <= -20) {
+            showChoiceDialog(`🏹 You have ${Math.floor(gameState.food)} food left. You cant hunt anymore. You need to find some... 🍞`, [
+                {type: 'button', label: 'OK', value: 'ok'}
+            ]);
+            return;
+        }
+        while (hunting) {
             gameState.food -= 1;
             let r = Math.floor(Math.random() * 100 + getGroupBonus('combat'));
             if (r > 80) {
@@ -117,9 +123,7 @@ export async function handleAnimal(x, y) {
             }
             updateStatus();
         }
-        showChoiceDialog(`🏹 You have ${Math.floor(gameState.food)} food left. You cant hunt anymore. You need to find some... 🍞`, [
-            {type: 'button', label: 'OK', value: 'ok'}
-        ]);
+
     }
 }
 
