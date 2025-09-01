@@ -228,6 +228,7 @@ export function updateGroupBonus() {
 
 // Function to ensure all group members have proper bonus properties
 export function ensureGroupBonuses() {
+  console.log("ensureGroupBonuses called", gameState.group);
   gameState.group.forEach((member) => {
     if (!member.bonus || typeof member.bonus !== "object") {
       member.bonus = getBonusForRole(member.role);

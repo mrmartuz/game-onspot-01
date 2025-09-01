@@ -4,7 +4,7 @@ import { getWorldName } from "../utils.js";
 
 export async function characterCreationDialog() {
   const worldName = getWorldName(gameState.seed);
-  let name = "";
+  let name = gameState.name || "";
   let role = gameState.group[0] || "";
   let components = [];
   console.log("name:", name);
@@ -40,7 +40,7 @@ export async function characterCreationDialog() {
   } else {
     components.push({
       type: "message",
-      label: `Your role is ${role}`,
+      label: `Your role is ${role.role}`,
       value: "",
     });
     components.push({
@@ -53,7 +53,19 @@ export async function characterCreationDialog() {
   console.log("choice", choice);
   if (choice === "create" && name === "" && role === "") {
     await characterCreationDialog();
-  } else if (choice === "name") {
+  } else if (
+    choice !== "create" &&
+    choice !== "native-guide🧭" &&
+    choice !== "cook🍞" &&
+    choice !== "guard⚔️" &&
+    choice !== "geologist🪵" &&
+    choice !== "biologist🌱" &&
+    choice !== "translator🤝" &&
+    choice !== "carrier📦" &&
+    choice !== "medic❤️" &&
+    choice !== "navigator👁️" &&
+    choice !== "explorer🔍"
+  ) {
     gameState.name = choice;
     await characterCreationDialog();
   } else if (
@@ -68,11 +80,11 @@ export async function characterCreationDialog() {
     choice === "navigator👁️" ||
     choice === "explorer🔍"
   ) {
-    gameState.group[0] = choice;
+    gameState.group[0] = { role: choice };
     await characterCreationDialog();
   } else if (choice === "create" && name !== "" && role !== "") {
     gameState.name = name;
-    gameState.group[0].role = role;
+    gameState.group[0] = role;
     return true;
   }
 }

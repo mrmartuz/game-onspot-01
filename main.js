@@ -16,6 +16,7 @@ const startMenu = await getStartMenuDialog();
 if(startMenu){
     await getCharacterCreationDialog();
 }
+console.log(gameState.group);
 
 
 ensureGroupBonuses(); // Fix any missing bonuses in existing group members
