@@ -93,121 +93,121 @@ export function updateGroupBonus() {
   });
 
   // Apply bonuses based on role combinations with scaling
-  if (roleCounts["native-guide"] >= 1) {
+  if (roleCounts["native-guide"] >= 2) {
     gameState.groupBonus.navigation += 0.3;
     // Additional bonus for multiple guides
-    if (roleCounts["native-guide"] >= 2) {
+    if (roleCounts["native-guide"] >= 3) {
       gameState.groupBonus.navigation += 0.2;
     }
-    if (roleCounts["native-guide"] >= 3) {
+    if (roleCounts["native-guide"] >= 4) {
       gameState.groupBonus.navigation += 0.1;
     }
   }
 
-  if (roleCounts["explorer"] >= 1) {
+  if (roleCounts["explorer"] >= 2) {
     gameState.groupBonus.discovery += 0.1;
 
     // Additional bonus for multiple explorers
-    if (roleCounts["explorer"] >= 2) {
+    if (roleCounts["explorer"] >= 3) {
       gameState.groupBonus.discovery += 0.3;
     }
-    if (roleCounts["explorer"] >= 3) {
+    if (roleCounts["explorer"] >= 4) {
       gameState.groupBonus.discovery += 0.3;
     }
   }
 
-  if (roleCounts["cook"] >= 1) {
+  if (roleCounts["cook"] >= 2) {
     gameState.groupBonus.food += 0.3;
 
     // Additional bonus for multiple cooks
-    if (roleCounts["cook"] >= 2) {
+    if (roleCounts["cook"] >= 3) {
       gameState.groupBonus.food += 0.2;
     }
-    if (roleCounts["cook"] >= 3) {
+    if (roleCounts["cook"] >= 4) {
       gameState.groupBonus.food += 0.1;
     }
   }
 
-  if (roleCounts["guard"] >= 1) {
+  if (roleCounts["guard"] >= 2) {
     gameState.groupBonus.combat += 0.4;
 
     // Additional bonus for multiple guards
-    if (roleCounts["guard"] >= 2) {
+    if (roleCounts["guard"] >= 3) {
       gameState.groupBonus.combat += 0.3;
     }
-    if (roleCounts["guard"] >= 3) {
+    if (roleCounts["guard"] >= 4) {
       gameState.groupBonus.combat += 0.2;
     }
   }
 
-  if (roleCounts["geologist"] >= 1) {
+  if (roleCounts["geologist"] >= 2) {
     gameState.groupBonus.resource += 0.3;
 
     // Additional bonus for multiple geologists
-    if (roleCounts["geologist"] >= 2) {
+    if (roleCounts["geologist"] >= 3) {
       gameState.groupBonus.resource += 0.2;
     }
-    if (roleCounts["geologist"] >= 3) {
+    if (roleCounts["geologist"] >= 4) {
       gameState.groupBonus.resource += 0.1;
     }
   }
 
-  if (roleCounts["biologist"] >= 1) {
+  if (roleCounts["biologist"] >= 2) {
     gameState.groupBonus.plant += 0.3;
 
     // Additional bonus for multiple biologists
-    if (roleCounts["biologist"] >= 2) {
+    if (roleCounts["biologist"] >= 3) {
       gameState.groupBonus.plant += 0.2;
     }
-    if (roleCounts["biologist"] >= 3) {
+    if (roleCounts["biologist"] >= 4) {
       gameState.groupBonus.plant += 0.1;
     }
   }
 
-  if (roleCounts["translator"] >= 1) {
+  if (roleCounts["translator"] >= 2) {
     gameState.groupBonus.interact += 0.3;
 
     // Additional bonus for multiple translators
-    if (roleCounts["translator"] >= 2) {
+    if (roleCounts["translator"] >= 3) {
       gameState.groupBonus.interact += 0.2;
     }
-    if (roleCounts["translator"] >= 3) {
+    if (roleCounts["translator"] >= 4) {
       gameState.groupBonus.interact += 0.1;
     }
   }
 
-  if (roleCounts["carrier"] >= 1) {
+  if (roleCounts["carrier"] >= 2) {
     gameState.groupBonus.carry += 0.1;
 
     // Additional bonus for multiple carriers
-    if (roleCounts["carrier"] >= 2) {
+    if (roleCounts["carrier"] >= 3) {
       gameState.groupBonus.carry += 0.2;
     }
-    if (roleCounts["carrier"] >= 3) {
+    if (roleCounts["carrier"] >= 4) {
       gameState.groupBonus.carry += 0.1;
     }
   }
 
-  if (roleCounts["medic"] >= 1) {
+  if (roleCounts["medic"] >= 2) {
     gameState.groupBonus.health += 0.4;
 
     // Additional bonus for multiple medics
-    if (roleCounts["medic"] >= 2) {
+    if (roleCounts["medic"] >= 3) {
       gameState.groupBonus.health += 0.3;
     }
-    if (roleCounts["medic"] >= 3) {
+    if (roleCounts["medic"] >= 4) {
       gameState.groupBonus.health += 0.2;
     }
   }
 
-  if (roleCounts["navigator"] >= 1) {
+  if (roleCounts["navigator"] >= 2) {
     gameState.groupBonus.view += 1;
 
     // Additional bonus for multiple navigators
-    if (roleCounts["navigator"] >= 2) {
+    if (roleCounts["navigator"] >= 3) {
       gameState.groupBonus.view += 0.5;
     }
-    if (roleCounts["navigator"] >= 3) {
+    if (roleCounts["navigator"] >= 4) {
       gameState.groupBonus.view += 0.25;
     }
   }
