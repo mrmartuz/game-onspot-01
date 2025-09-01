@@ -4,6 +4,7 @@ export const gameState = {
     prevx: 0,
     prevy: 0,
     name: '',
+    groupName: '',
     visited: new Map(),
     changed: [], // {x, y, type}
     killed: new Set(),
