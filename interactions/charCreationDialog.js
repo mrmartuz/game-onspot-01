@@ -9,7 +9,7 @@ export async function characterCreationDialog() {
   let components = [];
   console.log("name:", name);
   console.log("role:", role);
-  const message = `WELOCOME TO ${worldName}`;
+  const message = `WELCOME TO ${worldName.toUpperCase()}`;
   if (name === "") {
     components.push({ type: "message", label: "Whats your name?", value: "" });
     components.push({ type: "input", label: "name", value: "name" });
@@ -50,7 +50,6 @@ export async function characterCreationDialog() {
     });
   }
   const choice = await getShowChoiceDialog(message, components);
-  console.log("choice", choice);
   if (choice === "create" && name === "" && role === "") {
     await characterCreationDialog();
   } else if (
@@ -66,7 +65,7 @@ export async function characterCreationDialog() {
     choice !== "navigator👁️" &&
     choice !== "explorer🔍"
   ) {
-    gameState.name = choice;
+    gameState.name = choice.charAt(0).toUpperCase() + choice.slice(1);
     await characterCreationDialog();
   } else if (
     choice === "native-guide🧭" ||
@@ -83,8 +82,6 @@ export async function characterCreationDialog() {
     gameState.group[0] = { role: choice };
     await characterCreationDialog();
   } else if (choice === "create" && name !== "" && role !== "") {
-    gameState.name = name;
-    gameState.group[0] = role;
     return true;
   }
 }

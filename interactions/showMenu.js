@@ -6,6 +6,7 @@ import { getMaxStorage } from '../utils.js';
 import { getGroupBonus } from '../utils.js';
 import { getShowChoiceDialog } from '../interactions.js';
 import { logEvent } from '../time_system.js';
+import { updateStatus } from '../rendering.js';
 
 
 export async function showMenu() {

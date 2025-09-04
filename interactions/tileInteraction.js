@@ -24,8 +24,8 @@ export async function checkTileInteraction(tile) {
             }
             let discoveryBonus = getGroupBonus('discovery');
             let basePoints = 10;
-            let bonusPoints = Math.floor(discoveryBonus + Math.random() * 5 + basePoints);
-            let totalPoints = basePoints + bonusPoints;
+            let bonusPoints = Math.floor(Math.random() * (5 + discoveryBonus) + basePoints);
+            let totalPoints = bonusPoints;
 
             gameState.discoverPoints += totalPoints;
             gameState.discoveredLocations.push(positionKey); // Use .push() for array
