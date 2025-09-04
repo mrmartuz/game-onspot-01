@@ -5,6 +5,9 @@ import { getShowChoiceDialog } from '../interactions.js';
 
 export async function showHealthGroupDialog() {
     let message = '';
+    message += `🛡️📍The ${gameState.groupName} ${gameState.group.length < 3 ? 'duo' : (gameState.group.length < 5 ? 'group' : (gameState.group.length < 7 ? 'party' : (gameState.group.length < 9 ? 'clan' : 'tribe')))}`;
+    message += `📍🛡️\n`;
+
     let emoji = {
         'native-guide': '🧭',
         'cook': '🍞',

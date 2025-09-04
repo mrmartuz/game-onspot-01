@@ -3,7 +3,7 @@ import { getShowChoiceDialog } from "../interactions.js";
 
 export async function showGroupCreationDialog() {
   let groupName = gameState.groupName || "";
-  const message = "Group Creation";
+  const message = "GROUP CREATION";
   let components = [];
   if (groupName) {
     components.push({
@@ -12,7 +12,7 @@ export async function showGroupCreationDialog() {
       value: groupName,
     });
   } else {
-    components.push({ type: "message", label: "Name your group:", value: "" });
+    components.push({ type: "message", label: "How is it called your group?", value: "" });
     components.push({
       type: "input",
       label: "group-name",
@@ -62,7 +62,7 @@ export async function showGroupCreationDialog() {
     choice !== "navigator👁️" &&
     choice !== "explorer🔍"
   ) {
-    gameState.groupName = choice;
+    gameState.groupName = choice.charAt(0).toUpperCase() + choice.slice(1).toLowerCase();
     return "group-name";
   } else if (
     choice === "native-guide🧭" ||
