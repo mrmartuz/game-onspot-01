@@ -14,6 +14,7 @@ import { startMenu } from './interactions/startMenu.js';
 import { titleDialog } from './interactions/titleDialog.js';
 import { characterCreationDialog } from './interactions/charCreationDialog.js';
 import { showGroupCreationDialog } from './interactions/groupCreationDialog.js';
+import { worldGenerationDialog } from './interactions/worldGenerationDialog.js';
 
 export async function getShowChoiceDialog(message, components) {
     return showChoiceDialog(message, components);
@@ -81,4 +82,8 @@ export async function getCharacterCreationDialog(){
 
 export async function getGroupCreationDialog(){
     return showGroupCreationDialog();
+}
+
+export async function getWorldGenerationDialog(){
+    return worldGenerationDialog();
 }

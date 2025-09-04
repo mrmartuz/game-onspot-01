@@ -15,34 +15,59 @@ import {
   getCharacterCreationDialog,
   getTitleDialog,
   getGroupCreationDialog,
+  getWorldGenerationDialog,
 } from "./interactions.js";
 
 // Setup
 window.addEventListener("resize", resize, { passive: true });
 resize();
 
+// Start Menu
 let startMenu;
-while (startMenu !== "new" && startMenu !== "exit") {
+while (startMenu !== "explore" && startMenu !== "exit") {
   startMenu = await getStartMenuDialog();
   console.log("Selected option:", startMenu);
   if (startMenu === "title") {
     //TODO: show to player title and close it after pressing
     //TODO: insert info about the game and mechanics
     // await getTitleDialog();
-  } else if (startMenu === "seed") {
-    // No need to call getStartMenuDialog again; the loop will handle it
+  } else if (startMenu === "load") {
     continue;
   } else if (startMenu === "exit") {
     window.close();
   }
 }
-if (startMenu === "new") {
-  await getCharacterCreationDialog();
+
+// World Generation
+let worldGenerationDialog;
+while (worldGenerationDialog !== "new" && worldGenerationDialog !== "back") {
+  worldGenerationDialog = await getWorldGenerationDialog();
+  if (worldGenerationDialog === "seed") {
+    continue;
+  }
+  if (worldGenerationDialog === "back") {
+    location.reload();
+  }
 }
+
+// Character Creation
+let characterCreation;
+while (characterCreation !== "create") {
+  characterCreation = await getCharacterCreationDialog();
+  if (characterCreation === "back") {
+    location.reload();
+  } else if (characterCreation === "create") {
+    continue;
+  }
+}
+
+// Group Creation
 let groupCreation;
 while (groupCreation !== "create") {
   groupCreation = await getGroupCreationDialog();
-  if (groupCreation === "group-name"){
+  if (groupCreation === "back") {
+    location.reload();
+  } else if (groupCreation === "create") {
     continue;
   }
 }

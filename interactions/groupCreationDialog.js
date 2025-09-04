@@ -46,6 +46,11 @@ export async function showGroupCreationDialog() {
     });
   }
   components.push({ type: "button", label: "Create", value: "create" });
+  components.push({
+    type: "button",
+    label: "❌ Back to start menu ❌",
+    value: "back",
+  });
   const choice = await getShowChoiceDialog(message, components);
   console.log(choice);
   if (
@@ -60,7 +65,8 @@ export async function showGroupCreationDialog() {
     choice !== "carrier📦" &&
     choice !== "medic❤️" &&
     choice !== "navigator👁️" &&
-    choice !== "explorer🔍"
+    choice !== "explorer🔍" &&
+    choice !== "back"
   ) {
     gameState.groupName = choice.charAt(0).toUpperCase() + choice.slice(1).toLowerCase();
     return "group-name";
@@ -74,15 +80,17 @@ export async function showGroupCreationDialog() {
     choice === "carrier📦" ||
     choice === "medic❤️" ||
     choice === "navigator👁️" ||
-    choice === "explorer🔍"
+    choice === "explorer🔍" &&
+    choice !== "back"
   ) {
     gameState.group[1] = { role: choice };
     console.log(gameState.group);
     return "group";
   } else if (choice === "create") {
     return choice;
+  } else if (choice === "back") {
+    return choice;
   }
-  return choice;
 }
 
 export function handleGroupCreationChoice(choice) {

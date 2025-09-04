@@ -49,6 +49,11 @@ export async function characterCreationDialog() {
       value: "create",
     });
   }
+  components.push({
+    type: "button",
+    label: "❌ Back to start menu ❌",
+    value: "back",
+  });
   const choice = await getShowChoiceDialog(message, components);
   if (choice === "create" && name === "" && role === "") {
     await characterCreationDialog();
@@ -63,8 +68,9 @@ export async function characterCreationDialog() {
     choice !== "carrier📦" &&
     choice !== "medic❤️" &&
     choice !== "navigator👁️" &&
-    choice !== "explorer🔍"
-  ) {
+    choice !== "explorer🔍" &&
+    choice !== "back"
+  )  {
     gameState.name = choice.charAt(0).toUpperCase() + choice.slice(1);
     await characterCreationDialog();
   } else if (
@@ -80,8 +86,10 @@ export async function characterCreationDialog() {
     choice === "explorer🔍"
   ) {
     gameState.group[0] = { role: choice };
-    await characterCreationDialog();
+    return choice;
   } else if (choice === "create" && name !== "" && role !== "") {
-    return true;
+    return choice;
+  } else if (choice === "back") {
+    return choice;
   }
 }
