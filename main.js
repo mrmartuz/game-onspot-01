@@ -3,6 +3,7 @@ import { revealAround } from "./movement.js";
 import { gameState } from "./game_variables.js";
 import { updateGroupBonus, ensureGroupBonuses, checkDeath } from "./utils.js";
 import { getTile } from "./rendering/tile.js";
+import { getLoadGameDialog } from "./interactions.js";
 import {
   getCheckAdjacentMonstersDialog,
   getCheckTileInteractionDialog,
@@ -32,11 +33,14 @@ while (startMenu !== "explore" && startMenu !== "exit") {
     //TODO: insert info about the game and mechanics
     // await getTitleDialog();
   } else if (startMenu === "load") {
-    continue;
+    console.log(startMenu);
+    await getLoadGameDialog();
+    break;
   } else if (startMenu === "exit") {
     window.close();
   }
-}
+}console.log(startMenu);
+if (startMenu !== "load") {
 
 // World Generation
 let worldGenerationDialog;
@@ -71,6 +75,11 @@ while (groupCreation !== "create") {
     continue;
   }
 }
+}
+
+// if (startMenu !== "load" || !gameState.visited.has("0,0")) {
+//   gameState.visited.set("0,0", getTile(0, 0));
+// }
 
 updateGroupBonus();
 gameState.visited.set("0,0", getTile(0, 0));

@@ -1,96 +1,118 @@
-import { move } from './movement.js';   
-import { getShowMenuDialog, getShowGoldDialog, getShowInventoryDialog, getShowDiscoveriesDialog, getShowHealthGroupDialog, getShowEventsDialog } from './interactions.js';
-import { gameState } from './game_variables.js';
-import { canvas } from './rendering.js';
+// input_handlers.js
+import { move } from "./movement.js";
+import {
+  getShowMenuDialog,
+  getShowGoldDialog,
+  getShowInventoryDialog,
+  getShowDiscoveriesDialog,
+  getShowHealthGroupDialog,
+  getShowEventsDialog,
+} from "./interactions.js";
+import { gameState } from "./game_variables.js";
+import { canvas } from "./rendering.js";
 
 const directions = [
-    {id: 'btn-n', dx: 0, dy: -1},
-    {id: 'btn-ne', dx: 1, dy: -1},
-    {id: 'btn-e', dx: 1, dy: 0},
-    {id: 'btn-se', dx: 1, dy: 1},
-    {id: 'btn-s', dx: 0, dy: 1},
-    {id: 'btn-sw', dx: -1, dy: 1},
-    {id: 'btn-w', dx: -1, dy: 0},
-    {id: 'btn-nw', dx: -1, dy: -1}
+  { id: "btn-n", dx: 0, dy: -1 },
+  { id: "btn-ne", dx: 1, dy: -1 },
+  { id: "btn-e", dx: 1, dy: 0 },
+  { id: "btn-se", dx: 1, dy: 1 },
+  { id: "btn-s", dx: 0, dy: 1 },
+  { id: "btn-sw", dx: -1, dy: 1 },
+  { id: "btn-w", dx: -1, dy: 0 },
+  { id: "btn-nw", dx: -1, dy: -1 },
 ];
 
 export function setupInputs() {
-    // Direction buttons (already working with click events)
-    directions.forEach(dir => {
-        document.getElementById(dir.id).addEventListener('click', () => move(dir.dx, dir.dy));
-    });
+  // Clear existing listeners to prevent duplicates
+  directions.forEach((dir) => {
+    const button = document.getElementById(dir.id);
+    if (button) {
+      // Remove previous listeners if any
+      button.removeEventListener("click", move);
+      button.addEventListener(
+        "click",
+        () => {
+          console.log(`Clicked direction: ${dir.id}`); // Debug
+          move(dir.dx, dir.dy);
+        },
+        { passive: true }
+      );
+    } else {
+      console.error(`Button not found: ${dir.id}`);
+    }
+  });
+  console.log("Directions setup:", directions); // Debug
 
-    // Function to handle player interaction (for both touch and click)
-    const handlePlayerInteraction = (e) => {
-        let rect = canvas.getBoundingClientRect();
-        let x, y;
-        if (e.type === 'touchstart') {
-            x = e.touches[0].clientX - rect.left;
-            y = e.touches[0].clientY - rect.top;
-        } else if (e.type === 'click') {
-            x = e.clientX - rect.left;
-            y = e.clientY - rect.top;
-        }
-        let vx = Math.floor((x - gameState.offsetX) / gameState.tileSize);
-        let statusBar = document.getElementById('status-bar');
-        let statusBarRect = statusBar.getBoundingClientRect();
-        let statusBarHeight = statusBarRect.height;
-        let vy = Math.floor(((y - gameState.offsetY) / gameState.tileSize));
-        
-        // Check if click is on the player (center tile)
-        let centerTileX = Math.floor(gameState.viewWidth / 2);
-        let centerTileY = Math.floor(gameState.viewHeight / 2);
-        
-        if (vx === centerTileX && vy === centerTileY) {
-            getShowMenuDialog();            
-        }
-    };
+  // Function to handle player interaction (for both touch and click)
+  const handlePlayerInteraction = (e) => {
+    if (gameState.cooldown) return; // Prevent interaction during cooldown
+    let rect = canvas.getBoundingClientRect();
+    let x, y;
+    if (e.type === "touchstart") {
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else if (e.type === "click") {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    }
+    let vx = Math.floor((x - gameState.offsetX) / gameState.tileSize);
+    let vy = Math.floor((y - gameState.offsetY) / gameState.tileSize);
 
-    // Add touch and click listeners for canvas (player interaction)
-    canvas.addEventListener('touchstart', handlePlayerInteraction, { passive: true });
-    canvas.addEventListener('click', handlePlayerInteraction, { passive: true });
-    canvas.addEventListener('touchend', (e) => {
-        e.preventDefault();
-    }, { passive: false });
+    // Check if click is on the player (center tile)
+    let centerTileX = Math.floor(gameState.viewWidth / 2);
+    let centerTileY = Math.floor(gameState.viewHeight / 2);
 
-    // Setup click and touchstart listeners for all status buttons
-    const goldButton = document.getElementById('gold-button');
-    const inventoryButton = document.getElementById('inventory-button');
-    const groupButton = document.getElementById('group-button');
-    const dateButton = document.getElementById('date-button');
-    const discoveriesButton = document.getElementById('discoveries-button');
+    if (vx === centerTileX && vy === centerTileY) {
+      console.log("Player clicked at center tile"); // Debug
+      getShowMenuDialog();
+    }
+  };
 
-    // Gold button
-    goldButton.addEventListener('click', getShowGoldDialog, { passive: true });
-    goldButton.addEventListener('touchstart', (e) => {
+  // Remove existing canvas listeners to prevent duplicates
+  canvas.removeEventListener("touchstart", handlePlayerInteraction);
+  canvas.removeEventListener("click", handlePlayerInteraction);
+  canvas.removeEventListener("touchend", preventDefaultTouchEnd);
 
-        getShowGoldDialog();
-    }, { passive: true });
+  // Add touch and click listeners for canvas
+  canvas.addEventListener("touchstart", handlePlayerInteraction, {
+    passive: true,
+  });
+  canvas.addEventListener("click", handlePlayerInteraction, { passive: true });
+  canvas.addEventListener("touchend", preventDefaultTouchEnd, {
+    passive: false,
+  });
 
-    // Inventory button
-    inventoryButton.addEventListener('click', getShowInventoryDialog, { passive: true });
-    inventoryButton.addEventListener('touchstart', (e) => {
+  function preventDefaultTouchEnd(e) {
+    e.preventDefault();
+  }
 
-        getShowInventoryDialog();
-    }, { passive: true });
+  // Setup click and touchstart listeners for status buttons
+  const buttons = [
+    { id: "gold-button", handler: getShowGoldDialog },
+    { id: "inventory-button", handler: getShowInventoryDialog },
+    { id: "group-button", handler: getShowHealthGroupDialog },
+    { id: "date-button", handler: getShowEventsDialog },
+    { id: "discoveries-button", handler: getShowDiscoveriesDialog },
+  ];
 
-    // Group button
-    groupButton.addEventListener('click', getShowHealthGroupDialog, { passive: true });
-    groupButton.addEventListener('touchstart', (e) => {
+  buttons.forEach(({ id, handler }) => {
+    const button = document.getElementById(id);
+    if (button) {
+      button.removeEventListener("click", handler);
+      button.removeEventListener("touchstart", handler);
+      button.addEventListener("click", handler, { passive: true });
+      button.addEventListener(
+        "touchstart",
+        (e) => {
+          console.log(`Touched button: ${id}`); // Debug
+          handler();
+        },
+        { passive: true }
+      );
+    } else {
+      console.error(`Button not found: ${id}`);
+    }
+  });
 
-        getShowHealthGroupDialog();
-    }, { passive: true });
-
-    // Date button
-    dateButton.addEventListener('click', getShowEventsDialog, { passive: true });
-    dateButton.addEventListener('touchstart', (e) => {
-     getShowEventsDialog();
-    }, { passive: true });
-
-    // Discoveries button
-    discoveriesButton.addEventListener('click', getShowDiscoveriesDialog, { passive: true });
-    discoveriesButton.addEventListener('touchstart', (e) => {
-
-        getShowDiscoveriesDialog();
-    }, { passive: true });
+  console.log("Input handlers setup complete"); // Debug
 }

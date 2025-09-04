@@ -7,6 +7,7 @@ import { getMaxStorage } from '../utils.js';
 import { getEnhancedBonusForRole } from '../utils.js';
 import { getBonusForRole } from '../utils.js';  
 import { updateGroupBonus } from '../utils.js';
+import { getSaveGameDialog } from '../interactions.js';
 
 export async function handleChoice(choice, tile) {
     if (choice === 'close') {
@@ -307,5 +308,7 @@ export async function handleChoice(choice, tile) {
     } 
     } else if (choice === '7') {
         await getHandleAnimalDialog(gameState.px, gameState.py);
+    } else if (choice === '8') {
+        await getSaveGameDialog();
     }
 }
