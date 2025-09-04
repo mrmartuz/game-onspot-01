@@ -47,7 +47,6 @@ while (groupCreation !== "create") {
   }
 }
 
-ensureGroupBonuses(); // Fix any missing bonuses in existing group members
 updateGroupBonus();
 gameState.visited.set("0,0", getTile(0, 0));
 revealAround();
