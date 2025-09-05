@@ -5,6 +5,7 @@ export const gameState = {
     prevy: 0,
     name: '',
     groupName: '',
+    mapType: 'regional', // globla, regional, local
     visited: new Map(),
     changed: [], // {x, y, type}
     killed: new Set(),
