@@ -7,8 +7,7 @@ export async function loadGameDialog() {
   const components = [
     {
       type: "message",
-      label:
-        "You can load a save game file here",
+      label: "You can load a save game file here",
       value: "",
     },
     { type: "button", label: "⏬ Load", value: "load" },
@@ -70,11 +69,20 @@ function importSaveGame() {
           }
           // Update gameState
           Object.assign(gameState, restoredData);
+
+          // Reset movement-related states when loading a saved game
+          gameState.cooldown = false;
+          gameState.moving = false;
+          gameState.moveStartTime = 0;
+          gameState.moveDuration = 0;
+          gameState.moveDx = 0;
+          gameState.moveDy = 0;
+
           console.log("Loaded gameState:", gameState);
-        //   getShowChoiceDialog("Game loaded successfully!", [
-        //     { type: "button", label: "OK", value: "ok" },
-        //   ]);
-        alert("Game loaded successfully!");
+          //   getShowChoiceDialog("Game loaded successfully!", [
+          //     { type: "button", label: "OK", value: "ok" },
+          //   ]);
+          alert("Game loaded successfully!");
         } catch (error) {
           console.error("Import error:", error);
           // getShowChoiceDialog("Error loading save file: Invalid format", [
