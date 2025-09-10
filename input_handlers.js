@@ -7,6 +7,7 @@ import {
   getShowDiscoveriesDialog,
   getShowHealthGroupDialog,
   getShowEventsDialog,
+  toggleMapType,
 } from "./interactions.js";
 import { gameState } from "./game_variables.js";
 import { canvas } from "./rendering.js";
@@ -93,6 +94,7 @@ export function setupInputs() {
     { id: "group-button", handler: getShowHealthGroupDialog },
     { id: "date-button", handler: getShowEventsDialog },
     { id: "discoveries-button", handler: getShowDiscoveriesDialog },
+    { id: "map-button", handler: toggleMapType },
   ];
 
   buttons.forEach(({ id, handler }) => {
@@ -105,9 +107,10 @@ export function setupInputs() {
         "touchstart",
         (e) => {
           console.log(`Touched button: ${id}`); // Debug
+          e.preventDefault(); // Prevent click event from firing
           handler();
         },
-        { passive: true }
+        { passive: false }
       );
     } else {
       console.error(`Button not found: ${id}`);

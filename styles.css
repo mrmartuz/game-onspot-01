@@ -101,7 +101,8 @@ body {
 #inventory-button,
 #group-button,
 #date-button,
-#discoveries-button {
+#discoveries-button,
+#map-button {
     cursor: pointer;
     padding: 0;
     margin: 0;
@@ -128,7 +129,7 @@ body {
 }
 
 #date-button {
-    min-width: 200px;
+    min-width: 150px;
 }
 
 #discoveries-button {
@@ -139,16 +140,22 @@ body {
 #inventory-button:hover,
 #group-button:hover,
 #date-button:hover,
-#discoveries-button:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+#discoveries-button:hover,
+#map-button:hover {
+    border: 1px solid rgb(54, 49, 49);
+        box-shadow: 0 0 10px rgba(54, 49, 49, 0.5);
+    background-color: rgb(54, 49, 49);
+    border-radius: 5px;
 }
 
 #gold-button:active,
 #inventory-button:active,
 #group-button:active,
 #date-button:active,
-#discoveries-button:active {
+#discoveries-button:active,
+#map-button:active {
     background-color: rgba(255, 255, 255, 0.3);
+    
 }
 
 #bottom-bar {

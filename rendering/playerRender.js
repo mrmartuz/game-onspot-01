@@ -1,6 +1,9 @@
 import { gameState } from "../game_variables.js";
 
 export function drawPlayer(ctx) {
+  if (gameState.mapType === "global") {
+    return;
+  }
   // Draw player
   let playerX =
     gameState.offsetX +
@@ -18,4 +21,3 @@ export function drawPlayer(ctx) {
   ctx.font = `${gameState.tileSize}px serif`;
   ctx.fillText(player, playerX, playerY + gameState.tileSize / 10);
 }
-

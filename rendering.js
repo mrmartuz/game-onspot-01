@@ -3,6 +3,7 @@ import { getCurrentGameDate } from "./time_system.js";
 import { getMaxStorage, hash } from "./utils.js";
 import { drawPlayer } from "./rendering/playerRender.js";
 import { drawRegionalMap } from "./rendering/regionalMapRender.js";
+import { drawGlobalMap } from "./rendering/globalMapRender.js";
 
 export const canvas = document.getElementById("game-canvas");
 export const ctx = canvas.getContext("2d");
@@ -27,6 +28,8 @@ export function draw(offsetDeltaX, offsetDeltaY) {
 
   if (gameState.mapType === "regional") {
     drawRegionalMap(ctx, offsetDeltaX, offsetDeltaY);
+  } else if (gameState.mapType === "global") {
+    drawGlobalMap(ctx);
   }
   drawPlayer(ctx);
 }

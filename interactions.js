@@ -20,6 +20,8 @@ import { showGroupCreationDialog } from "./interactions/groupCreationDialog.js";
 import { worldGenerationDialog } from "./interactions/worldGenerationDialog.js";
 import { saveGameDialog } from "./interactions/saveGameDialog.js";
 import { loadGameDialog } from "./interactions/loadGameDialog.js";
+import { gameState } from "./game_variables.js";
+import { updateStatus } from "./rendering.js";
 
 export async function getShowChoiceDialog(message, components) {
   return showChoiceDialog(message, components);
@@ -99,4 +101,15 @@ export async function getSaveGameDialog() {
 
 export async function getLoadGameDialog() {
   return loadGameDialog();
+}
+
+export async function toggleMapType() {
+  if (gameState.mapType === "global") {
+    gameState.mapType = "regional";
+  } else {
+    gameState.mapType = "global";
+  }
+  setTimeout(() => {console.log("map type changed to", gameState.mapType)},
+  1000);
+  updateStatus();
 }
