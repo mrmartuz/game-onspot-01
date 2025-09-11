@@ -67,6 +67,8 @@ export function timeConsumption() {
         logEvent(`💰 Daily expenses: -${dailyGoldExpense.toFixed(1)} gold`);
     }
     
+
+    // TODO remove this and create a proper equip system
     // Tent degradation (random chance per day)
     if (Math.random() < 0.05 * days_fraction) {
         gameState.tents = Math.max(0, gameState.tents - 1);

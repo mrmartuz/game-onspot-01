@@ -91,6 +91,8 @@ export async function showMenu() {
         }
     }
     if (choice === '4') {
+        // TODO create a proper plant system
+        // TODO keep track of actions and needs time to respawn (delete from array) resources used
         // Apply plant bonus for better harvest yields
         let plantBonus = getGroupBonus('plant');
         let baseFood = Math.floor((Math.random() * 1.2))+ 0.1;
