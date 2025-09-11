@@ -1,5 +1,5 @@
 import { getShowChoiceDialog } from "../interactions.js";
-import { gameState } from "../game_variables.js";
+import { gameState } from "../gamestate/game_variables.js";
 import { getWorldName } from "../utils.js";
 
 export async function saveGameDialog() {

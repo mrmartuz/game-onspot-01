@@ -1,4 +1,4 @@
-import { gameState } from "./game_variables.js";
+import { gameState } from "./gamestate/game_variables.js";
 import { getCurrentGameDate } from "./time_system.js";
 import { getMaxStorage, hash } from "./utils.js";
 import { drawPlayer } from "./rendering/playerRender.js";

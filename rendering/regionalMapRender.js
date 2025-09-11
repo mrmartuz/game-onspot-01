@@ -4,7 +4,7 @@ import {
   getEmojiForLocation,
   getEmojiForEntity,
 } from "./tile.js";
-import { gameState } from "../game_variables.js";
+import { gameState } from "../gamestate/game_variables.js";
 import { hash } from "../utils.js";
 
 export function drawRegionalMap(ctx, offsetDeltaX, offsetDeltaY) {

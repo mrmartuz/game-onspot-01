@@ -1,5 +1,5 @@
 import { getShowChoiceDialog } from "../interactions.js";
-import { gameState } from "../game_variables.js";
+import { gameState } from "../gamestate/game_variables.js";
 import { getWorldName } from "../utils.js";
 
 export async function characterCreationDialog() {
@@ -70,7 +70,7 @@ export async function characterCreationDialog() {
     choice !== "navigator👁️" &&
     choice !== "explorer🔍" &&
     choice !== "back"
-  )  {
+  ) {
     gameState.name = choice.charAt(0).toUpperCase() + choice.slice(1);
     await characterCreationDialog();
   } else if (

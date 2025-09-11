@@ -1,6 +1,6 @@
 import { resize, draw, updateStatus, canvas, ctx } from "./rendering.js";
 import { revealAround } from "./movement.js";
-import { gameState } from "./game_variables.js";
+import { gameState } from "./gamestate/game_variables.js";
 import { updateGroupBonus, ensureGroupBonuses, checkDeath } from "./utils.js";
 import { getTile } from "./rendering/tile.js";
 import { getLoadGameDialog } from "./interactions.js";
@@ -39,42 +39,42 @@ while (startMenu !== "explore" && startMenu !== "exit") {
   } else if (startMenu === "exit") {
     window.close();
   }
-}console.log(startMenu);
+}
+console.log(startMenu);
 if (startMenu !== "load") {
+  // World Generation
+  let worldGenerationDialog;
+  while (worldGenerationDialog !== "new" && worldGenerationDialog !== "back") {
+    worldGenerationDialog = await getWorldGenerationDialog();
+    if (worldGenerationDialog === "seed") {
+      continue;
+    }
+    if (worldGenerationDialog === "back") {
+      location.reload();
+    }
+  }
 
-// World Generation
-let worldGenerationDialog;
-while (worldGenerationDialog !== "new" && worldGenerationDialog !== "back") {
-  worldGenerationDialog = await getWorldGenerationDialog();
-  if (worldGenerationDialog === "seed") {
-    continue;
+  // Character Creation
+  let characterCreation;
+  while (characterCreation !== "create") {
+    characterCreation = await getCharacterCreationDialog();
+    if (characterCreation === "back") {
+      location.reload();
+    } else if (characterCreation === "create") {
+      continue;
+    }
   }
-  if (worldGenerationDialog === "back") {
-    location.reload();
-  }
-}
 
-// Character Creation
-let characterCreation;
-while (characterCreation !== "create") {
-  characterCreation = await getCharacterCreationDialog();
-  if (characterCreation === "back") {
-    location.reload();
-  } else if (characterCreation === "create") {
-    continue;
+  // Group Creation
+  let groupCreation;
+  while (groupCreation !== "create") {
+    groupCreation = await getGroupCreationDialog();
+    if (groupCreation === "back") {
+      location.reload();
+    } else if (groupCreation === "create") {
+      continue;
+    }
   }
-}
-
-// Group Creation
-let groupCreation;
-while (groupCreation !== "create") {
-  groupCreation = await getGroupCreationDialog();
-  if (groupCreation === "back") {
-    location.reload();
-  } else if (groupCreation === "create") {
-    continue;
-  }
-}
 }
 
 // if (startMenu !== "load" || !gameState.visited.has("0,0")) {

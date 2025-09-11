@@ -9,7 +9,7 @@ import {
   getShowEventsDialog,
   toggleMapType,
 } from "./interactions.js";
-import { gameState } from "./game_variables.js";
+import { gameState } from "./gamestate/game_variables.js";
 import { canvas } from "./rendering.js";
 
 const directions = [

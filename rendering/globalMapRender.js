@@ -1,5 +1,5 @@
 // globalMapRender.js
-import { gameState } from "../game_variables.js";
+import { gameState } from "../gamestate/game_variables.js";
 import { getTile } from "../rendering/tile.js";
 import { getEmojiForLocation } from "../rendering/tile.js";
 import { getEmojiForEntity } from "../rendering/tile.js";

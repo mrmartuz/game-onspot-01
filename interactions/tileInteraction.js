@@ -1,4 +1,4 @@
-import { gameState } from "../game_variables.js";
+import { gameState } from "../gamestate/game_variables.js";
 import { getShowChoiceDialog } from "../interactions.js";
 import { getGroupBonus } from "../utils.js";
 import { updateStatus } from "../rendering.js";

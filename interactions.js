@@ -20,7 +20,7 @@ import { showGroupCreationDialog } from "./interactions/groupCreationDialog.js";
 import { worldGenerationDialog } from "./interactions/worldGenerationDialog.js";
 import { saveGameDialog } from "./interactions/saveGameDialog.js";
 import { loadGameDialog } from "./interactions/loadGameDialog.js";
-import { gameState } from "./game_variables.js";
+import { gameState } from "./gamestate/game_variables.js";
 import { updateStatus } from "./rendering.js";
 
 export async function getShowChoiceDialog(message, components) {
@@ -109,7 +109,8 @@ export async function toggleMapType() {
   } else {
     gameState.mapType = "global";
   }
-  setTimeout(() => {console.log("map type changed to", gameState.mapType)},
-  1000);
+  setTimeout(() => {
+    console.log("map type changed to", gameState.mapType);
+  }, 1000);
   updateStatus();
 }

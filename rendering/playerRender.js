@@ -1,4 +1,4 @@
-import { gameState } from "../game_variables.js";
+import { gameState } from "../gamestate/game_variables.js";
 
 export function drawPlayer(ctx) {
   if (gameState.mapType === "global") {

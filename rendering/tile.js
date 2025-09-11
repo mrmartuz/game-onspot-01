@@ -1,4 +1,4 @@
-import { gameState } from "../game_variables.js";
+import { gameState } from "../gamestate/game_variables.js";
 import { hash } from "../utils.js";
 
 export function getBiome(x, y) {

@@ -1,4 +1,4 @@
-import { gameState } from "./game_variables.js";
+import { gameState } from "./gamestate/game_variables.js";
 
 export function hash(x, y, s) {
   let n = x * 12345 + y * 6789 + s * 98765 + gameState.seed;

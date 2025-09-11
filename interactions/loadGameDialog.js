@@ -1,5 +1,5 @@
 // saveGame.js
-import { gameState } from "../game_variables.js";
+import { gameState } from "../gamestate/game_variables.js";
 import { getShowChoiceDialog } from "../interactions.js";
 
 export async function loadGameDialog() {

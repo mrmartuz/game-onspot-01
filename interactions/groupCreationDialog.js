@@ -1,4 +1,4 @@
-import { gameState } from "../game_variables.js";
+import { gameState } from "../gamestate/game_variables.js";
 import { getShowChoiceDialog } from "../interactions.js";
 
 export async function showGroupCreationDialog() {
@@ -12,7 +12,11 @@ export async function showGroupCreationDialog() {
       value: groupName,
     });
   } else {
-    components.push({ type: "message", label: "How is it called your group?", value: "" });
+    components.push({
+      type: "message",
+      label: "How is it called your group?",
+      value: "",
+    });
     components.push({
       type: "input",
       label: "group-name",
@@ -20,22 +24,23 @@ export async function showGroupCreationDialog() {
     });
   }
   if (gameState.group.length === 1) {
-    components.push({
-      type: "message",
-      label: "Add a member to your group",
-      value: "",
-    },
-    { type: "button", label: "Native Guide🧭", value: "native-guide🧭" },
-    { type: "button", label: "Cook🍞", value: "cook🍞" },
-    { type: "button", label: "Guard⚔️", value: "guard⚔️" },
-    { type: "button", label: "Geologist🪵", value: "geologist🪵" },
-    { type: "button", label: "Biologist🌱", value: "biologist🌱" },
-    { type: "button", label: "Translator🤝", value: "translator🤝" },
-    { type: "button", label: "Carrier 📦", value: "carrier📦" },
-    { type: "button", label: "Medic ❤️", value: "medic❤️" },
-    { type: "button", label: "Navigator 👁️", value: "navigator👁️" },
-    { type: "button", label: "Explorer🔍", value: "explorer🔍" }
-);
+    components.push(
+      {
+        type: "message",
+        label: "Add a member to your group",
+        value: "",
+      },
+      { type: "button", label: "Native Guide🧭", value: "native-guide🧭" },
+      { type: "button", label: "Cook🍞", value: "cook🍞" },
+      { type: "button", label: "Guard⚔️", value: "guard⚔️" },
+      { type: "button", label: "Geologist🪵", value: "geologist🪵" },
+      { type: "button", label: "Biologist🌱", value: "biologist🌱" },
+      { type: "button", label: "Translator🤝", value: "translator🤝" },
+      { type: "button", label: "Carrier 📦", value: "carrier📦" },
+      { type: "button", label: "Medic ❤️", value: "medic❤️" },
+      { type: "button", label: "Navigator 👁️", value: "navigator👁️" },
+      { type: "button", label: "Explorer🔍", value: "explorer🔍" }
+    );
   } else {
     components.push({
       type: "message",
@@ -68,7 +73,8 @@ export async function showGroupCreationDialog() {
     choice !== "explorer🔍" &&
     choice !== "back"
   ) {
-    gameState.groupName = choice.charAt(0).toUpperCase() + choice.slice(1).toLowerCase();
+    gameState.groupName =
+      choice.charAt(0).toUpperCase() + choice.slice(1).toLowerCase();
     return "group-name";
   } else if (
     choice === "native-guide🧭" ||
@@ -80,8 +86,7 @@ export async function showGroupCreationDialog() {
     choice === "carrier📦" ||
     choice === "medic❤️" ||
     choice === "navigator👁️" ||
-    choice === "explorer🔍" &&
-    choice !== "back"
+    (choice === "explorer🔍" && choice !== "back")
   ) {
     gameState.group[1] = { role: choice };
     console.log(gameState.group);
