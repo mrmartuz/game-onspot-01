@@ -1,5 +1,11 @@
 import { gameState } from "../gamestate/game_variables.js";
 import { hash } from "../utils.js";
+import {
+  getCachedTile,
+  getVisitedTile,
+  getKilledTile,
+  addCachedTile,
+} from "../gamestate/gameStateSetGet.js";
 
 export function getBiome(x, y) {
   let dist = Math.sqrt(x * x + y * y);
@@ -11,20 +17,28 @@ export function getBiome(x, y) {
 export function getTile(x, y) {
   const key = `${x},${y}`;
 
-  if (gameState.killed.has(key)) {
-    let tile = gameState.visited.get(key);
-    tile.entity = "none";
-    return tile;
+  if (getKilledTile(key)) {
+    let tile = getCachedTile(key);
+    if (tile) {
+      tile.entity = "none";
+      return tile;
+    }
+    // If no cached tile, fall through to generate new one
   }
-  if (gameState.visited.has(key)) {
-    return gameState.visited.get(key);
+  if (getVisitedTile(key)) {
+    let tile = getCachedTile(key);
+    if (tile) {
+      return tile;
+    }
+    // If no cached tile, fall through to generate new one
   }
 
+  // Generate new tile
   let biome = getBiome(x, y);
   let change = gameState.changed.find((t) => t.x === x && t.y === y);
 
   let entity = "none";
-  if (!gameState.killed.has(key)) {
+  if (!getKilledTile(key)) {
     let h3 = hash(x, y, 3);
     if (h3 < 0.05) {
       const entities = [
@@ -275,18 +289,23 @@ export function getTile(x, y) {
   };
 
   // TODO refactor to save only x,y and nothing else need to make array game_variable.visited as Set
-  if (gameState.visited.has(key)) {
-    gameState.visited.set(key, tile);
+  // if (gameState.visited.has(key)) {
+  //   gameState.visited.set(key, tile);
+  // }
+  if (change) {
+    tile.location = change.type;
   }
+  if (getKilledTile(key)) {
+    tile.entity = "none";
+  }
+
+  addCachedTile(key, tile);
   return tile;
 }
 
 export function updateTile(x, y) {
   const key = `${x},${y}`;
-  if (gameState.visited.has(key)) {
-    const tile = getTile(x, y); // Regenerate tile to reflect changes
-    gameState.visited.set(key, tile);
-  }
+  addVisitedTile(key);
 }
 
 export function getEmojiForLocation(type) {

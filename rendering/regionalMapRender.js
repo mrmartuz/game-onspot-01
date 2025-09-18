@@ -6,17 +6,23 @@ import {
 } from "./tile.js";
 import { gameState } from "../gamestate/game_variables.js";
 import { hash } from "../utils.js";
+import {
+  getVisitedTile,
+  getCachedTile,
+  hasCachedTile,
+} from "../gamestate/gameStateSetGet.js";
 
 export function drawRegionalMap(ctx, offsetDeltaX, offsetDeltaY) {
   for (let vx = 0; vx < gameState.viewWidth; vx++) {
     for (let vy = 0; vy < gameState.viewHeight; vy++) {
       let tx = gameState.px - Math.floor(gameState.viewWidth / 2) + vx;
       let ty = gameState.py - Math.floor(gameState.viewHeight / 2) + vy;
-      let tile = getTile(tx, ty);
+      let key = `${tx},${ty}`;
+      let tile = hasCachedTile(key) ? getCachedTile(key) : getTile(tx, ty);
       let drawX = gameState.offsetX + offsetDeltaX + vx * gameState.tileSize;
       let drawY = gameState.offsetY + offsetDeltaY + vy * gameState.tileSize;
-      let key = `${tx},${ty}`;
-      if (!gameState.visited.has(key)) {
+
+      if (!getVisitedTile(key)) {
         ctx.fillStyle = "black";
         ctx.fillRect(drawX, drawY, gameState.tileSize, gameState.tileSize);
         continue;

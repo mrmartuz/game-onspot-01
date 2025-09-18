@@ -3,6 +3,11 @@ import { gameState } from "../gamestate/game_variables.js";
 import { getTile } from "../rendering/tile.js";
 import { getEmojiForLocation } from "../rendering/tile.js";
 import { getEmojiForEntity } from "../rendering/tile.js";
+import {
+  getVisitedTile,
+  getCachedTile,
+  hasCachedTile,
+} from "../gamestate/gameStateSetGet.js";
 
 // constants.js
 const GLOBAL_MAP_CONSTANTS = {
@@ -85,13 +90,13 @@ export function drawGlobalMap(ctx) {
   for (let tx = startX; tx <= endX; tx++) {
     for (let ty = startY; ty <= endY; ty++) {
       const key = `${tx},${ty}`;
-      if (!gameState.visited.has(key)) {
+      if (!getVisitedTile(key)) {
         ctx.fillStyle = "slategray"; // Unvisited tiles are black
         const drawX = (tx - startX) * tileSize;
         const drawY = (ty - startY) * tileSize;
         ctx.fillRect(drawX, drawY, tileSize, tileSize);
       } else {
-        const tile = getTile(tx, ty);
+        const tile = hasCachedTile(key) ? getCachedTile(key) : getTile(tx, ty);
         ctx.fillStyle = getTileColor(tile);
         const drawX = (tx - startX) * tileSize;
         const drawY = (ty - startY) * tileSize;
