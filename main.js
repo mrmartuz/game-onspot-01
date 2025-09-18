@@ -18,6 +18,11 @@ import {
   getGroupCreationDialog,
   getWorldGenerationDialog,
 } from "./interactions.js";
+import {
+  addVisitedTile,
+  addCachedTile,
+  getVisitedTile,
+} from "./gamestate/gameStateSetGet.js";
 
 // Setup
 window.addEventListener("resize", resize, { passive: true });
@@ -82,7 +87,7 @@ if (startMenu !== "load") {
 // }
 
 updateGroupBonus();
-gameState.visited.set("0,0", getTile(0, 0));
+addVisitedTile("0,0");
 revealAround();
 setupInputs();
 
@@ -93,6 +98,8 @@ setInterval(updateStatus, 1000);
 // Async post-move logic
 async function postMove() {
   let tile = getTile(gameState.px, gameState.py);
+  const key = `${gameState.px},${gameState.py}`;
+  addCachedTile(key, tile);
   await getCheckAdjacentMonstersDialog();
   await getCheckTileInteractionDialog(tile);
   let death = await checkDeath();
@@ -129,8 +136,10 @@ function loop(timestamp) {
       gameState.px += gameState.moveDx;
       gameState.py += gameState.moveDy;
       const key = `${gameState.px},${gameState.py}`;
-      if (!gameState.visited.has(key)) {
-        gameState.visited.set(key, getTile(gameState.px, gameState.py));
+      if (!getVisitedTile(key)) {
+        const tile = getTile(gameState.px, gameState.py);
+        addCachedTile(key, tile);
+        addVisitedTile(key);
       }
       revealAround();
       postMove().then(() => {

@@ -25,6 +25,7 @@ export async function loadGameDialog() {
 //TODO: check serialization for errors. bugs when importing saved game.
 
 function importSaveGame() {
+  const missingProperties = [];
   return new Promise((resolve) => {
     const input = document.createElement("input");
     input.type = "file";
@@ -44,6 +45,22 @@ function importSaveGame() {
       reader.onload = function (e) {
         try {
           const loadedData = JSON.parse(e.target.result);
+
+          console.log(loadedData);
+          console.log(
+            "cachedTiles should be empty: ",
+            loadedData.cachedTiles.size === 0 ? "true" : "false"
+          );
+          if (loadedData.visited.size === 0) {
+            console.warn("visited is empty, this is not normal");
+          } else {
+            console.log("visited is not empty, this is normal");
+          }
+          console.log(
+            "killed should be empty: ",
+            loadedData.killed.size === 0 ? "true" : "false"
+          );
+
           // Reconstruct Map and Set objects
           const restoredData = Object.keys(loadedData).reduce((obj, key) => {
             const value = loadedData[key];
@@ -58,15 +75,28 @@ function importSaveGame() {
             }
             return obj;
           }, {});
-          // Validate essential properties
-          if (
-            !restoredData.px ||
-            !restoredData.py ||
-            !restoredData.visited ||
-            !restoredData.killed
-          ) {
-            throw new Error("Invalid save file: Missing required properties");
+
+          if (restoredData.px === undefined) {
+            missingProperties.push("px");
           }
+          if (restoredData.py === undefined) {
+            missingProperties.push("py");
+          }
+          if (restoredData.visited === undefined) {
+            missingProperties.push("visited");
+          }
+          if (restoredData.killed === undefined) {
+            missingProperties.push("killed");
+          }
+          if (missingProperties.length > 0) {
+            throw new Error(
+              "Invalid save file: Missing required properties: " +
+                missingProperties.join(", ")
+            );
+          }
+
+          restoredData.cachedTiles = new Map();
+
           // Update gameState
           Object.assign(gameState, restoredData);
 
@@ -84,11 +114,31 @@ function importSaveGame() {
           //   ]);
           alert("Game loaded successfully!");
         } catch (error) {
-          console.error("Import error:", error);
-          // getShowChoiceDialog("Error loading save file: Invalid format", [
-          //   { type: "button", label: "OK", value: "ok" },
-          // ]);
-          alert("Error loading save file: Invalid format");
+          if (
+            error.message.includes(
+              "Invalid save file: Missing required properties"
+            )
+          ) {
+            alert(
+              `Error loading save file. ${
+                missingProperties.length > 0
+                  ? `\nMissing properties: ${missingProperties.join(", ")}`
+                  : "\nThere are no missing properties"
+              }`
+            );
+          } else {
+            alert("Error loading save file: Invalid format");
+          }
+          getShowChoiceDialog("Error loading save file: Invalid format", [
+            { type: "button", label: "OK", value: "ok" },
+          ]);
+          alert(
+            `Error loading save file. ${
+              missingProperties.length > 0
+                ? `\nMissing properties: ${missingProperties.join(", ")}`
+                : "\nThere are no missing properties"
+            }`
+          );
         }
         document.body.removeChild(input);
         resolve();

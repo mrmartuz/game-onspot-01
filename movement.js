@@ -1,6 +1,12 @@
 import { gameState } from "./gamestate/game_variables.js";
 import { getGroupBonus, getMaxStorage } from "./utils.js";
 import { getTile } from "./rendering/tile.js";
+import {
+  addVisitedTile,
+  getVisitedTile,
+  addCachedTile,
+  generateTile,
+} from "./gamestate/gameStateSetGet.js";
 
 export function move(dx, dy) {
   if (gameState.cooldown) return;
@@ -54,8 +60,10 @@ export function revealAround() {
         const x = gameState.px + dx;
         const y = gameState.py + dy;
         const key = `${x},${y}`;
-        if (!gameState.visited.has(key)) {
-          gameState.visited.set(key, getTile(x, y));
+        if (!getVisitedTile(key)) {
+          addVisitedTile(key);
+          const tile = generateTile(x, y);
+          addCachedTile(key, tile);
         }
       }
     }

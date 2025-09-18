@@ -26,8 +26,11 @@ export async function saveGameDialog() {
 function exportSaveGame() {
   console.log(gameState);
 
+  const saveData = { ...gameState };
+  saveData.cachedTiles = new Map();
+
   const saveGame = JSON.stringify(
-    gameState,
+    saveData,
     (key, value) => {
       if (value instanceof Map) {
         return {

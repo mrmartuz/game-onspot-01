@@ -5,8 +5,9 @@ export const gameState = {
   prevy: 0,
   name: "",
   groupName: "",
-  mapType: "global", // globla, regional, local
-  visited: new Map(),
+  mapType: "regional", // globla, regional, local
+  visited: new Set(),
+  cachedTiles: new Map(), // {x, y, tile}
   cameraX: 0,
   cameraY: 0,
   changed: [], // {x, y, type}
