@@ -5,10 +5,18 @@ import { updateStatus } from "../rendering.js";
 import { logEvent } from "../time_system.js";
 import { checkDeath } from "../utils.js";
 import { getTile } from "../rendering/tile.js";
+import { handleEnhancedCombat } from "./enhancedCombatSystem.js";
 
 export async function handleCombat(ex, ey, isOnTile = false) {
+  // Use the enhanced combat system for monsters and beasts
   let tile = getTile(ex, ey);
   let entity = tile.entity;
+
+  if (entity === "monster" || entity === "beast") {
+    return await handleEnhancedCombat(ex, ey, isOnTile);
+  }
+
+  // Fallback to simple combat for other entities
   let input = await showChoiceDialog(`Hostile ${entity} at (${ex},${ey})!`, [
     { type: "button", label: "⚔️ Attack", value: "1" },
     { type: "button", label: "🌬️ Flee", value: "2" },
