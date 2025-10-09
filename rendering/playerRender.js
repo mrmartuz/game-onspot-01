@@ -15,9 +15,17 @@ export function drawPlayer(ctx) {
     gameState.tileSize / 2;
   ctx.fillStyle = "blue";
   ctx.beginPath();
-  ctx.arc(playerX, playerY, gameState.tileSize / 3, 0, Math.PI * 2);
+  ctx.arc(
+    playerX,
+    playerY + gameState.tileSize / 20,
+    gameState.tileSize / 3,
+    0,
+    Math.PI * 2
+  );
   ctx.fill();
   let player = "🛡️";
-  ctx.font = `${gameState.tileSize}px serif`;
+  ctx.font = `${gameState.tileSize / 2}px serif`;
   ctx.fillText(player, playerX, playerY + gameState.tileSize / 10);
 }
+
+// 🔴🛡️
