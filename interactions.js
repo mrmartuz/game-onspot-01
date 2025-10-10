@@ -3,6 +3,7 @@ import {
   handleCombat,
   checkAdjacentMonsters,
 } from "./interactions/combatDialog.js";
+import { handleEnhancedCombat } from "./interactions/enhancedCombatSystem.js";
 import { checkTileInteraction } from "./interactions/tileInteraction.js";
 import { handleChoice } from "./interactions/handleChoice.js";
 import { handleAnimal } from "./interactions/handleAnimalDialog.js";
@@ -29,6 +30,10 @@ export async function getShowChoiceDialog(message, components) {
 
 export async function getHandleCombatDialog(ex, ey, isOnTile = false) {
   return handleCombat(ex, ey, isOnTile);
+}
+
+export async function getHandleEnhancedCombatDialog(ex, ey, isOnTile = false) {
+  return handleEnhancedCombat(ex, ey, isOnTile);
 }
 
 export async function getCheckAdjacentMonstersDialog() {

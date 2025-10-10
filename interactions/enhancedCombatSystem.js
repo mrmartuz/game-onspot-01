@@ -717,6 +717,11 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
   let tile = getTile(ex, ey);
   let entity = tile.entity;
 
+  // For monster caves, force entity to be "monster" to generate appropriate monsters
+  if (tile.location === "monster caves") {
+    entity = "monster";
+  }
+
   // Phase 1: Initial Detection
   const detectionBonus = calculateDetectionBonus();
   const luckRoll = Math.floor(Math.random() * 10) + 1;

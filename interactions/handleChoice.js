@@ -1,5 +1,9 @@
 import { gameState } from "../gamestate/game_variables.js";
-import { getShowChoiceDialog, getHandleAnimalDialog } from "../interactions.js";
+import {
+  getShowChoiceDialog,
+  getHandleAnimalDialog,
+  getHandleEnhancedCombatDialog,
+} from "../interactions.js";
 import { getGroupBonus } from "../utils.js";
 import { updateStatus } from "../rendering.js";
 import { logEvent } from "../time_system.js";
@@ -398,5 +402,8 @@ export async function handleChoice(choice, tile) {
     await getHandleAnimalDialog(gameState.px, gameState.py);
   } else if (choice === "8") {
     await getSaveGameDialog();
+  } else if (choice === "9") {
+    // Handle monster cave exploration - trigger enhanced combat
+    await getHandleEnhancedCombatDialog(gameState.px, gameState.py, true);
   }
 }

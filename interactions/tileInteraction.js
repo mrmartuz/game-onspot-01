@@ -6,6 +6,7 @@ import { logEvent } from "../time_system.js";
 import {
   getHandleChoiceDialog,
   getHandleCombatDialog,
+  getHandleEnhancedCombatDialog,
 } from "../interactions.js";
 
 export async function checkTileInteraction(tile) {
@@ -29,10 +30,18 @@ export async function checkTileInteraction(tile) {
       const positionKey = `${gameState.px},${gameState.py}`;
       if (gameState.discoveredLocations.includes(positionKey)) {
         // Use .includes() for array
-        await getShowChoiceDialog(
+        let choice = await getShowChoiceDialog(
           `You've already discovered this ${tile.location}! 🌟`,
-          [{ type: "button", label: "OK", value: "ok" }]
+          [
+            { type: "button", label: "Fight the monsters", value: "9" },
+            { type: "button", label: "OK", value: "ok" },
+          ]
         );
+
+        // Handle the choice if user wants to fight monsters
+        if (choice === "9") {
+          await getHandleEnhancedCombatDialog(gameState.px, gameState.py, true);
+        }
         return;
       }
       let discoveryBonus = getGroupBonus("discovery");
@@ -102,6 +111,13 @@ export async function checkTileInteraction(tile) {
     }
     if (tile.entity === "animal") {
       options.unshift({ type: "button", label: "🏹 Hunt", value: "7" });
+    }
+    if (tile.location === "monster caves") {
+      options.unshift({
+        type: "button",
+        label: "Fight the monsters!",
+        value: "9",
+      });
     }
     let msg = "";
     if (tile.location === "peaks" && tile.entity === "none") {
