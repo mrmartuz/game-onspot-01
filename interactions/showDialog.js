@@ -12,15 +12,25 @@ export async function showChoiceDialog(message, components) {
     gameDialog.appendChild(pDiv);
     // Wrap each button in its own div
     if (components && components.length > 0) {
-      components.forEach(({ type, label, value }) => {
-        let component = { type, label, value };
+      components.forEach(({ type, label, value, disabled, buttons }) => {
+        let component = { type, label, value, disabled, buttons };
         switch (component.type) {
           case "button":
             const btnDiv = document.createElement("div");
             const btn = document.createElement("button");
             btn.textContent = component.label || "Unnamed Button";
+            btn.disabled = component.disabled || false;
+
+            // Add visual styling for disabled buttons
+            if (btn.disabled) {
+              btn.style.opacity = "0.5";
+              btn.style.cursor = "not-allowed";
+            }
+
             btn.addEventListener("click", () => {
-              gameDialog.close(component.value);
+              if (!btn.disabled) {
+                gameDialog.close(component.value);
+              }
             });
             btnDiv.appendChild(btn);
             gameDialog.appendChild(btnDiv);
@@ -128,6 +138,43 @@ export async function showChoiceDialog(message, components) {
             numberInput.value = component.defaultValue || 0;
             numberDiv.appendChild(numberInput);
             gameDialog.appendChild(numberDiv);
+            break;
+          case "button_grid":
+            const gridContainer = document.createElement("div");
+            gridContainer.style.display = "grid";
+            gridContainer.style.gridTemplateColumns =
+              "repeat(auto-fit, minmax(100px, 1fr))";
+            gridContainer.style.gap = "8px";
+            gridContainer.style.marginBottom = "10px";
+
+            if (component.buttons && Array.isArray(component.buttons)) {
+              component.buttons.forEach((buttonConfig) => {
+                const btn = document.createElement("button");
+                btn.textContent = buttonConfig.label || "Unnamed Button";
+                btn.disabled = buttonConfig.disabled || false;
+
+                // Apply grid column span if specified
+                if (buttonConfig.gridColumn) {
+                  btn.style.gridColumn = `span ${buttonConfig.gridColumn}`;
+                }
+
+                // Add visual styling for disabled buttons
+                if (btn.disabled) {
+                  btn.style.opacity = "0.5";
+                  btn.style.cursor = "not-allowed";
+                }
+
+                btn.addEventListener("click", () => {
+                  if (!btn.disabled) {
+                    gameDialog.close(buttonConfig.value);
+                  }
+                });
+
+                gridContainer.appendChild(btn);
+              });
+            }
+
+            gameDialog.appendChild(gridContainer);
             break;
           default:
             console.warn(

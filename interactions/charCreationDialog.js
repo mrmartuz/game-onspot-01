@@ -28,26 +28,8 @@ export async function showCharacterGenerationDialog() {
 
   components.push({
     type: "button",
-    label: "⚖️ Point Allocation",
-    value: "point_allocation",
-  });
-
-  components.push({
-    type: "button",
-    label: "🏛️ Class Selection",
-    value: "class_selection",
-  });
-
-  components.push({
-    type: "button",
-    label: "🧬 Race Selection",
-    value: "race_selection",
-  });
-
-  components.push({
-    type: "button",
-    label: "🎯 Full Custom Creation",
-    value: "full_custom",
+    label: "🎯 Custom Creation",
+    value: "custom",
   });
 
   components.push({
@@ -63,14 +45,8 @@ export async function showCharacterGenerationDialog() {
   switch (choiceValue) {
     case "random":
       return await handleRandomGeneration();
-    case "point_allocation":
-      return await handlePointAllocation();
-    case "class_selection":
-      return await handleClassSelection();
-    case "race_selection":
-      return await handleRaceSelection();
-    case "full_custom":
-      return await handleFullCustomCreation();
+    case "custom":
+      return await handleCustomCreation();
     case "back":
       return "back";
     default:
@@ -121,287 +97,53 @@ async function handleRandomGeneration() {
   return "back";
 }
 
-async function handlePointAllocation() {
-  const message = "⚖️ POINT ALLOCATION";
-  let components = [];
+async function handleCustomCreation() {
+  // Step 1: Name and Surname
+  const nameResult = await handleNameSelection();
+  if (nameResult === "back") return "back";
 
-  components.push({
-    type: "message",
-    label: `You have ${statGeneration.pointAllocation.totalPoints} points to allocate across your stats.`,
-    value: "",
+  // Step 2: Race Selection
+  const raceResult = await handleRaceSelection();
+  if (raceResult === "back") return "back";
+
+  // Step 3: Class Selection (only common classes)
+  const classResult = await handleClassSelection();
+  if (classResult === "back") return "back";
+
+  // Step 4: Stats Allocation
+  const statsResult = await handleStatsAllocation();
+  if (statsResult === "back") return "back";
+
+  // Step 5: Create character and show preview
+  const character = characterGeneration.generateCharacter({
+    firstName: nameResult.firstName,
+    lastName: nameResult.lastName,
+    raceName: raceResult,
+    className: classResult,
+    customStats: statsResult,
+    isPlayer: true,
   });
 
-  components.push({
-    type: "message",
-    label: "Point costs escalate: 1st point = 1 cost, 2nd point = 2 cost, etc.",
-    value: "",
-  });
+  const result = await showCharacterPreview(character, "custom");
 
-  // For now, we'll use a simplified interface
-  // In a full implementation, this would be a more complex UI
-  components.push({
-    type: "button",
-    label: "🎲 Auto-Allocate Points",
-    value: "auto_allocate",
-  });
-
-  components.push({
-    type: "button",
-    label: "❌ Back",
-    value: "back",
-  });
-
-  const choice = await getShowChoiceDialog(message, components);
-
-  if (choice === "auto_allocate") {
-    // Generate random stats using point allocation system
-    const character = characterGeneration.generateCharacter({
-      usePointAllocation: true,
-    });
-    const result = await showCharacterPreview(character, "point_allocation");
-
-    // Check if character was accepted
-    if (result && result.action === "accept") {
-      return result; // Return the accepted character
-    }
-
-    return result; // Return other results (back, regenerate, etc.)
+  // Check if character was accepted
+  if (result && result.action === "accept") {
+    return result; // Return the accepted character
   }
 
-  return "back";
+  return result; // Return other results (back, regenerate, etc.)
 }
 
-async function handleClassSelection() {
-  const message = "🏛️ CLASS SELECTION";
+async function handleNameSelection() {
+  const message = "📝 NAME SELECTION";
   let components = [];
 
   components.push({
     type: "message",
-    label: "Choose a character class:",
+    label: "Enter your character's name:",
     value: "",
   });
 
-  // Group classes by rarity
-  const commonClasses = characterGeneration.getClassesByRarity("common");
-  const uncommonClasses = characterGeneration.getClassesByRarity("uncommon");
-  const rareClasses = characterGeneration.getClassesByRarity("rare");
-  const legendaryClasses = characterGeneration.getClassesByRarity("legendary");
-
-  // Add common classes
-  if (commonClasses.length > 0) {
-    components.push({
-      type: "message",
-      label: "📜 Common Classes:",
-      value: "",
-    });
-
-    commonClasses.forEach((className) => {
-      const classData = classDatabase[className];
-      components.push({
-        type: "button",
-        label: `${classData.name} - ${classData.description.substring(
-          0,
-          50
-        )}...`,
-        value: `class_${className}`,
-      });
-    });
-  }
-
-  // Add uncommon classes
-  if (uncommonClasses.length > 0) {
-    components.push({
-      type: "message",
-      label: "⭐ Uncommon Classes:",
-      value: "",
-    });
-
-    uncommonClasses.forEach((className) => {
-      const classData = classDatabase[className];
-      components.push({
-        type: "button",
-        label: `${classData.name} - ${classData.description.substring(
-          0,
-          50
-        )}...`,
-        value: `class_${className}`,
-      });
-    });
-  }
-
-  // Add rare classes
-  if (rareClasses.length > 0) {
-    components.push({
-      type: "message",
-      label: "💎 Rare Classes:",
-      value: "",
-    });
-
-    rareClasses.forEach((className) => {
-      const classData = classDatabase[className];
-      components.push({
-        type: "button",
-        label: `${classData.name} - ${classData.description.substring(
-          0,
-          50
-        )}...`,
-        value: `class_${className}`,
-      });
-    });
-  }
-
-  // Add legendary classes
-  if (legendaryClasses.length > 0) {
-    components.push({
-      type: "message",
-      label: "👑 Legendary Classes:",
-      value: "",
-    });
-
-    legendaryClasses.forEach((className) => {
-      const classData = classDatabase[className];
-      components.push({
-        type: "button",
-        label: `${classData.name} - ${classData.description.substring(
-          0,
-          50
-        )}...`,
-        value: `class_${className}`,
-      });
-    });
-  }
-
-  components.push({
-    type: "button",
-    label: "❌ Back",
-    value: "back",
-  });
-
-  const choice = await getShowChoiceDialog(message, components);
-
-  if (choice && choice.startsWith("class_")) {
-    const className = choice.replace("class_", "");
-    const character = characterGeneration.generateCharacter({ className });
-    const result = await showCharacterPreview(character, "class_selection");
-
-    // Check if character was accepted
-    if (result && result.action === "accept") {
-      return result; // Return the accepted character
-    }
-
-    return result; // Return other results (back, regenerate, etc.)
-  }
-
-  return "back";
-}
-
-async function handleRaceSelection() {
-  const message = "🧬 RACE SELECTION";
-  let components = [];
-
-  components.push({
-    type: "message",
-    label: "Choose your character's race:",
-    value: "",
-  });
-
-  // Create race options for select
-  const raceOptions = Object.keys(raceDatabase).map((raceName) => ({
-    value: raceName,
-    label: `${raceDatabase[raceName].name} (${raceDatabase[raceName].region}) - ${raceDatabase[raceName].description}`,
-  }));
-
-  components.push({
-    type: "select",
-    label: "Select Race:",
-    value: "race",
-    options: raceOptions,
-    defaultValue: "Human", // Set default selection
-  });
-
-  components.push({
-    type: "button",
-    label: "🎲 Generate Character with Selected Race",
-    value: "generate",
-  });
-
-  components.push({
-    type: "button",
-    label: "❌ Back",
-    value: "back",
-  });
-
-  const choice = await getShowChoiceDialog(message, components);
-  const choiceValue = getDialogValue(choice, "value");
-  const selectedRace = getDialogValue(choice, "race");
-
-  // Debug logging
-  console.log("Race selection dialog result:", choice);
-  console.log("Choice value:", choiceValue);
-  console.log("Selected race:", selectedRace);
-  console.log("Race key exists in choice:", "race" in choice);
-  console.log("Race value directly:", choice.race);
-
-  if (choiceValue === "generate") {
-    // Fallback to Human if no race is selected
-    const raceToUse = selectedRace || "Human";
-    console.log("Using race:", raceToUse);
-
-    const character = characterGeneration.generateCharacter({
-      raceName: raceToUse,
-    });
-    const result = await showCharacterPreview(character, "race_selection");
-
-    // Check if character was accepted
-    if (result && result.action === "accept") {
-      return result; // Return the accepted character
-    }
-
-    return result; // Return other results (back, regenerate, etc.)
-  }
-
-  return "back";
-}
-
-async function handleFullCustomCreation() {
-  const message = "🎯 FULL CUSTOM CHARACTER CREATION";
-  let components = [];
-
-  components.push({
-    type: "message",
-    label: "Create a fully customized character:",
-    value: "",
-  });
-
-  // Race selection
-  const raceOptions = Object.keys(raceDatabase).map((raceName) => ({
-    value: raceName,
-    label: `${raceDatabase[raceName].name} (${raceDatabase[raceName].region})`,
-  }));
-
-  components.push({
-    type: "select",
-    label: "Select Race:",
-    value: "race",
-    options: raceOptions,
-    defaultValue: "Human", // Set default selection
-  });
-
-  // Class selection
-  const classOptions = Object.keys(classDatabase).map((className) => ({
-    value: className,
-    label: `${classDatabase[className].name} (${classDatabase[className].rarity})`,
-  }));
-
-  components.push({
-    type: "select",
-    label: "Select Class:",
-    value: "class",
-    options: classOptions,
-    defaultValue: "fighter", // Set default selection
-  });
-
-  // Name inputs
   components.push({
     type: "input",
     label: "First Name",
@@ -416,8 +158,14 @@ async function handleFullCustomCreation() {
 
   components.push({
     type: "button",
-    label: "🎯 Create Custom Character",
-    value: "create",
+    label: "🎲 Random Names",
+    value: "random",
+  });
+
+  components.push({
+    type: "button",
+    label: "✅ Continue",
+    value: "continue",
   });
 
   components.push({
@@ -428,41 +176,292 @@ async function handleFullCustomCreation() {
 
   const choice = await getShowChoiceDialog(message, components);
   const choiceValue = getDialogValue(choice, "value");
-  const selectedRace = getDialogValue(choice, "race");
-  const selectedClass = getDialogValue(choice, "class");
   const firstName = getDialogValue(choice, "firstName");
   const lastName = getDialogValue(choice, "lastName");
 
-  if (choiceValue === "create") {
-    // Fallbacks for undefined values
-    const raceToUse = selectedRace || "Human";
-    const classToUse = selectedClass || "fighter";
-
-    console.log(
-      "Full custom creation - Race:",
-      raceToUse,
-      "Class:",
-      classToUse
-    );
-
-    const character = characterGeneration.generateCharacter({
-      raceName: raceToUse,
-      className: classToUse,
-      firstName: firstName || undefined,
-      lastName: lastName || undefined,
-      isPlayer: true,
-    });
-    const result = await showCharacterPreview(character, "full_custom");
-
-    // Check if character was accepted
-    if (result && result.action === "accept") {
-      return result; // Return the accepted character
-    }
-
-    return result; // Return other results (back, regenerate, etc.)
+  if (choiceValue === "random") {
+    return {
+      firstName: characterGeneration.generateRandomName("first"),
+      lastName: characterGeneration.generateRandomName("last"),
+    };
+  } else if (choiceValue === "continue") {
+    return {
+      firstName: firstName || characterGeneration.generateRandomName("first"),
+      lastName: lastName || characterGeneration.generateRandomName("last"),
+    };
   }
 
   return "back";
+}
+
+async function handleClassSelection() {
+  const message = "🏛️ CLASS SELECTION";
+  let components = [];
+
+  components.push({
+    type: "message",
+    label: "Choose a character class (Common classes only):",
+    value: "",
+  });
+
+  // Only show common classes
+  const commonClasses = characterGeneration.getClassesByRarity("common");
+
+  if (commonClasses.length > 0) {
+    commonClasses.forEach((className) => {
+      const classData = classDatabase[className];
+      components.push({
+        type: "button",
+        label: `${classData.name} - ${classData.description.substring(
+          0,
+          50
+        )}...`,
+        value: className,
+      });
+    });
+  }
+
+  components.push({
+    type: "button",
+    label: "❌ Back",
+    value: "back",
+  });
+
+  const choice = await getShowChoiceDialog(message, components);
+  const choiceValue = getDialogValue(choice, "value");
+
+  if (choiceValue && choiceValue !== "back") {
+    return choiceValue;
+  }
+
+  return "back";
+}
+
+async function handleRaceSelection() {
+  const message = "🧬 RACE SELECTION";
+  let components = [];
+
+  components.push({
+    type: "message",
+    label: "Choose your character's race (Basic races only):",
+    value: "",
+  });
+
+  // Only show basic races (Human, Elf, Dwarf, Orc)
+  const basicRaces = ["Human", "Elf", "Dwarf", "Orc"];
+
+  basicRaces.forEach((raceName) => {
+    const raceData = raceDatabase[raceName];
+    components.push({
+      type: "button",
+      label: `${raceData.name} (${raceData.region}) - ${raceData.description}`,
+      value: raceName,
+    });
+  });
+
+  components.push({
+    type: "button",
+    label: "❌ Back",
+    value: "back",
+  });
+
+  const choice = await getShowChoiceDialog(message, components);
+  const choiceValue = getDialogValue(choice, "value");
+
+  if (choiceValue && choiceValue !== "back") {
+    return choiceValue;
+  }
+
+  return "back";
+}
+
+async function handleStatsAllocation() {
+  return await handleStatsAllocationWithState(
+    { ...statGeneration.baseStats },
+    10
+  );
+}
+
+async function handleStatsAllocationWithState(currentStats, remainingPoints) {
+  const message = "⚖️ STATS ALLOCATION";
+  let components = [];
+
+  components.push({
+    type: "message",
+    label: `You have ${remainingPoints} points to allocate. Each point over 10 costs 2 points. Minimum stat value is 8.`,
+    value: "",
+  });
+
+  // Show current stats in compact format
+  components.push({
+    type: "message",
+    label: "Physical Stats:",
+    value: "",
+  });
+
+  // Physical stats (STR, DEX, CON) on one line
+  const physicalStats = ["STR", "DEX", "CON"];
+  const physicalStatsLine = physicalStats
+    .map((stat) => `${stat}: ${currentStats[stat]}`)
+    .join(" | ");
+  components.push({
+    type: "message",
+    label: `  ${physicalStatsLine}`,
+    value: "",
+  });
+
+  // Physical stats buttons in grid
+  const physicalButtons = [];
+  physicalStats.forEach((stat) => {
+    const canIncrease =
+      remainingPoints >=
+      getStatCost(currentStats[stat], currentStats[stat] + 1);
+    const canDecrease = currentStats[stat] > 8;
+
+    physicalButtons.push({
+      label: `+ ${stat} (${getStatCost(
+        currentStats[stat],
+        currentStats[stat] + 1
+      )})`,
+      value: `increase_${stat}`,
+      disabled: !canIncrease,
+      gridColumn: 1,
+    });
+
+    physicalButtons.push({
+      label: `- ${stat} (${Math.abs(
+        getStatCost(currentStats[stat], currentStats[stat] - 1)
+      )})`,
+      value: `decrease_${stat}`,
+      disabled: !canDecrease,
+      gridColumn: 1,
+    });
+  });
+
+  components.push({
+    type: "button_grid",
+    buttons: physicalButtons,
+  });
+
+  components.push({
+    type: "message",
+    label: "Mental Stats:",
+    value: "",
+  });
+
+  // Mental stats (INT, WIS, CHA) on one line
+  const mentalStats = ["INT", "WIS", "CHA"];
+  const mentalStatsLine = mentalStats
+    .map((stat) => `${stat}: ${currentStats[stat]}`)
+    .join(" | ");
+  components.push({
+    type: "message",
+    label: `  ${mentalStatsLine}`,
+    value: "",
+  });
+
+  // Mental stats buttons in grid
+  const mentalButtons = [];
+  mentalStats.forEach((stat) => {
+    const canIncrease =
+      remainingPoints >=
+      getStatCost(currentStats[stat], currentStats[stat] + 1);
+    const canDecrease = currentStats[stat] > 8;
+
+    mentalButtons.push({
+      label: `+ ${stat} (${getStatCost(
+        currentStats[stat],
+        currentStats[stat] + 1
+      )})`,
+      value: `increase_${stat}`,
+      disabled: !canIncrease,
+      gridColumn: 1,
+    });
+
+    mentalButtons.push({
+      label: `- ${stat} (${Math.abs(
+        getStatCost(currentStats[stat], currentStats[stat] - 1)
+      )})`,
+      value: `decrease_${stat}`,
+      disabled: !canDecrease,
+      gridColumn: 1,
+    });
+  });
+
+  components.push({
+    type: "button_grid",
+    buttons: mentalButtons,
+  });
+
+  components.push({
+    type: "message",
+    label: `Remaining Points: ${remainingPoints}`,
+    value: "",
+  });
+
+  components.push({
+    type: "button",
+    label: "🎲 Random Allocation",
+    value: "random",
+  });
+
+  components.push({
+    type: "button",
+    label: "✅ Continue",
+    value: "continue",
+  });
+
+  components.push({
+    type: "button",
+    label: "❌ Back",
+    value: "back",
+  });
+
+  const choice = await getShowChoiceDialog(message, components);
+  const choiceValue = getDialogValue(choice, "value");
+
+  if (choiceValue === "random") {
+    // Generate random stats using the point allocation system
+    return proceduralGeneration.generateRandomStats();
+  } else if (choiceValue === "continue") {
+    return currentStats;
+  } else if (choiceValue && choiceValue.startsWith("increase_")) {
+    const stat = choiceValue.replace("increase_", "");
+    const cost = getStatCost(currentStats[stat], currentStats[stat] + 1);
+    if (remainingPoints >= cost) {
+      const newStats = { ...currentStats };
+      newStats[stat]++;
+      const newRemainingPoints = remainingPoints - cost;
+      return await handleStatsAllocationWithState(newStats, newRemainingPoints);
+    }
+  } else if (choiceValue && choiceValue.startsWith("decrease_")) {
+    const stat = choiceValue.replace("decrease_", "");
+    if (currentStats[stat] > 8) {
+      const gain = Math.abs(
+        getStatCost(currentStats[stat], currentStats[stat] - 1)
+      );
+      const newStats = { ...currentStats };
+      newStats[stat]--;
+      const newRemainingPoints = remainingPoints + gain;
+      return await handleStatsAllocationWithState(newStats, newRemainingPoints);
+    }
+  }
+
+  return "back";
+}
+
+// Helper function to calculate stat cost
+function getStatCost(currentValue, desiredValue) {
+  if (desiredValue <= 10) {
+    return desiredValue - currentValue; // 1 point per stat point up to 10
+  } else {
+    // Points over 10 cost 2 each
+    if (currentValue <= 10) {
+      return 10 - currentValue + (desiredValue - 10) * 2;
+    } else {
+      return (desiredValue - currentValue) * 2;
+    }
+  }
 }
 
 async function showCharacterPreview(character, generationMethod) {
@@ -583,14 +582,8 @@ async function showCharacterPreview(character, generationMethod) {
     switch (generationMethod) {
       case "random":
         return await handleRandomGeneration();
-      case "point_allocation":
-        return await handlePointAllocation();
-      case "class_selection":
-        return await handleClassSelection();
-      case "race_selection":
-        return await handleRaceSelection();
-      case "full_custom":
-        return await handleFullCustomCreation();
+      case "custom":
+        return await handleCustomCreation();
       default:
         return "back";
     }
