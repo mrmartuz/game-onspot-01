@@ -67,6 +67,11 @@ if (startMenu !== "load") {
       location.reload();
     } else if (characterCreation === "create") {
       continue;
+    } else if (characterCreation && characterCreation.action === "accept") {
+      // Character was accepted, store it and continue
+      console.log("Character accepted:", characterCreation.character);
+      gameState.playerCharacter = characterCreation.character; // Store the player character
+      characterCreation = "create"; // Set to exit the loop
     }
   }
 

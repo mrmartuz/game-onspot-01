@@ -1,4 +1,4 @@
-import { showChoiceDialog } from "./interactions/showDialog.js";
+import { showChoiceDialog, getDialogValue } from "./interactions/showDialog.js";
 import {
   handleCombat,
   checkAdjacentMonsters,
@@ -16,7 +16,7 @@ import { showDiscoveriesDialog } from "./interactions/discoveriesDialog.js";
 import { showEventsDialog } from "./interactions/eventDialog.js";
 import { startMenu } from "./interactions/startMenu.js";
 import { titleDialog } from "./interactions/titleDialog.js";
-import { characterCreationDialog } from "./interactions/charCreationDialog.js";
+import { showCharacterGenerationDialog } from "./interactions/charCreationDialog.js";
 import { showGroupCreationDialog } from "./interactions/groupCreationDialog.js";
 import { worldGenerationDialog } from "./interactions/worldGenerationDialog.js";
 import { saveGameDialog } from "./interactions/saveGameDialog.js";
@@ -27,6 +27,8 @@ import { updateStatus } from "./rendering.js";
 export async function getShowChoiceDialog(message, components) {
   return showChoiceDialog(message, components);
 }
+
+export { getDialogValue };
 
 export async function getHandleCombatDialog(ex, ey, isOnTile = false) {
   return handleCombat(ex, ey, isOnTile);
@@ -89,7 +91,7 @@ export async function getTitleDialog() {
 }
 
 export async function getCharacterCreationDialog() {
-  return characterCreationDialog();
+  return showCharacterGenerationDialog();
 }
 
 export async function getGroupCreationDialog() {

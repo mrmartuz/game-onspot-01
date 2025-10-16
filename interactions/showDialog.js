@@ -61,13 +61,77 @@ export async function showChoiceDialog(message, components) {
           case "message":
             const msgDiv = document.createElement("div");
             const msg = document.createElement("p");
-            msg.textContent = label || "Unnamed Button";
+            msg.textContent = label || "Unnamed Message";
             msgDiv.appendChild(msg);
             gameDialog.appendChild(msgDiv);
             break;
+          case "select":
+            const selectDiv = document.createElement("div");
+            const selectLabel = document.createElement("label");
+            selectLabel.textContent = component.label || "Select Option:";
+            selectDiv.appendChild(selectLabel);
+
+            const select = document.createElement("select");
+            select.id = component.value || "select";
+
+            // Add options
+            if (component.options && Array.isArray(component.options)) {
+              component.options.forEach((option) => {
+                const optionElement = document.createElement("option");
+                optionElement.value = option.value || option;
+                optionElement.textContent = option.label || option;
+
+                // Set default selection if specified
+                if (
+                  component.defaultValue &&
+                  optionElement.value === component.defaultValue
+                ) {
+                  optionElement.selected = true;
+                }
+
+                select.appendChild(optionElement);
+              });
+            }
+
+            selectDiv.appendChild(select);
+            gameDialog.appendChild(selectDiv);
+
+            // Debug: Log select element details
+            console.log(
+              `Select created - ID: ${select.id}, Default Value: ${component.defaultValue}, Current Value: ${select.value}`
+            );
+            break;
+          case "checkbox":
+            const checkboxDiv = document.createElement("div");
+            const checkboxLabel = document.createElement("label");
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = component.value || "checkbox";
+            checkboxLabel.appendChild(checkbox);
+            checkboxLabel.appendChild(
+              document.createTextNode(" " + (component.label || "Checkbox"))
+            );
+            checkboxDiv.appendChild(checkboxLabel);
+            gameDialog.appendChild(checkboxDiv);
+            break;
+          case "number":
+            const numberDiv = document.createElement("div");
+            const numberLabel = document.createElement("label");
+            numberLabel.textContent = component.label || "Enter Number:";
+            numberDiv.appendChild(numberLabel);
+
+            const numberInput = document.createElement("input");
+            numberInput.type = "number";
+            numberInput.id = component.value || "number";
+            numberInput.min = component.min || 0;
+            numberInput.max = component.max || 100;
+            numberInput.value = component.defaultValue || 0;
+            numberDiv.appendChild(numberInput);
+            gameDialog.appendChild(numberDiv);
+            break;
           default:
             console.warn(
-              "getShowChoiceDialog: Unknown component type: " + components.type
+              "getShowChoiceDialog: Unknown component type: " + component.type
             );
             break;
         }
@@ -93,8 +157,56 @@ export async function showChoiceDialog(message, components) {
     gameDialog.showModal();
     gameDialog.addEventListener(
       "close",
-      () => resolve(gameDialog.returnValue),
+      () => {
+        // Check if there are any complex components (select, checkbox, number)
+        const selects = gameDialog.querySelectorAll("select");
+        const checkboxes = gameDialog.querySelectorAll(
+          "input[type='checkbox']"
+        );
+        const numbers = gameDialog.querySelectorAll("input[type='number']");
+
+        // If there are complex components, return an object
+        if (selects.length > 0 || checkboxes.length > 0 || numbers.length > 0) {
+          const result = { value: gameDialog.returnValue };
+
+          // Collect select values
+          selects.forEach((select) => {
+            console.log(
+              `Select element - ID: ${select.id}, Value: "${select.value}"`
+            );
+            result[select.id] = select.value;
+          });
+
+          // Collect checkbox values
+          checkboxes.forEach((checkbox) => {
+            result[checkbox.id] = checkbox.checked;
+          });
+
+          // Collect number values
+          numbers.forEach((number) => {
+            result[number.id] = parseInt(number.value) || 0;
+          });
+
+          resolve(result);
+        } else {
+          // For simple dialogs with only buttons/messages, return the value directly
+          resolve(gameDialog.returnValue);
+        }
+      },
       { once: true }
     );
   });
+}
+
+// Helper function to get values from dialog result
+export function getDialogValue(result, key) {
+  if (typeof result === "object" && result !== null) {
+    // Check if the key exists in the result object (even if it's an empty string)
+    if (key in result) {
+      return result[key];
+    }
+    // Fallback to value only if the key doesn't exist at all
+    return result.value;
+  }
+  return result;
 }

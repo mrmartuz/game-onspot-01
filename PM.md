@@ -85,13 +85,57 @@ _Estimated Time: 2-3 days_
 - Procedural character creation
 - Stat calculation with class bonuses
 - Equipment assignment
+- Race system with 11 races and regional origins
+- Malus system (3 malus points = 2 bonus points)
+- Enhanced character creation dialogs with race selection
+- Player-specific starting equipment (clothes, weapon, skill kit)
+- Skill kit system for all 48+ skills
+- Error handling and fallback systems
+- Dialog value extraction fixes
 
 **Tasks:**
 
-- [ ] Implement point allocation algorithm
-- [ ] Create stat generation with randomization
-- [ ] Integrate class bonuses into final stats
-- [ ] Add equipment assignment logic
+- [x] Implement point allocation algorithm
+- [x] Create stat generation with randomization
+- [x] Integrate class bonuses into final stats
+- [x] Add equipment assignment logic
+- [x] Implement race system with stat/skill bonuses
+- [x] Add malus system for point allocation
+- [x] Create enhanced character creation dialogs
+- [x] Implement player starting equipment system
+- [x] Add skill kit mapping for all skills
+- [x] Fix dialog value extraction issues
+- [x] Add error handling and fallback systems
+- [x] Fix character acceptance dialog flow
+
+### **1.4.1 Character Generation System Enhancements & Fixes**
+
+**Files Modified:** `interactions/characterGeneration.js`, `interactions/charCreationDialog.js`, `interactions/showDialog.js`, `interactions/equipment.js`, `main.js`
+
+**Enhancements Made:**
+
+- **Race System Implementation**: Complete 11-race system with regional origins, stat bonuses, and skill bonuses
+- **Malus System**: 3 malus points = 2 bonus points for flexible stat allocation
+- **Player Starting Equipment**: Players get clothes + weapon + 1 skill kit (NPCs get random equipment)
+- **Skill Kit System**: 48+ skill kits added to equipment system for all skills
+- **Enhanced Dialog System**: Added select, checkbox, and number input components to showDialog.js
+- **Character Creation Options**: 5 different character creation methods (random, point allocation, class selection, race selection, full custom)
+- **Default Value Support**: Select elements now support defaultValue for better UX
+
+**Bug Fixes Applied:**
+
+- **Dialog Value Extraction**: Fixed getDialogValue function to properly handle empty strings
+- **Character Acceptance Flow**: Fixed dialog restart issue when accepting characters
+- **Race Selection Error**: Fixed "Race data not found" error with proper fallback handling
+- **Select Element Defaults**: Fixed select elements not having default selections
+- **Error Handling**: Added comprehensive error handling and fallback systems
+
+**Technical Improvements:**
+
+- **Error Handling**: Added try-catch blocks and fallback mechanisms
+- **Debug Logging**: Added comprehensive debugging for troubleshooting
+- **Code Organization**: Improved function structure and error handling
+- **Integration**: Proper integration with main.js character creation loop
 
 ### **1.5 Name Generation System**
 
@@ -455,6 +499,24 @@ _Estimated Time: 1-2 days_
 - **Starting Skills:** Each class begins with specific skills at level 1-2
 - **Equipment Preferences:** Classes prefer certain equipment types
 
+### **Race System**
+
+- **11 Races** with regional origins and stat/skill bonuses:
+  - **Human** (Aurenith) - Versatile and adaptable, balanced stats with +1 LUCK
+  - **Elf** (Lyssarion) - Graceful and wise, +2 DEX/WIS, +1 INT/CHA, bonuses to archery/meditation/nature_magic
+  - **Dwarf** (Gromthar) - Strong and sturdy, +2 STR/CON, +1 INT, bonuses to blacksmithing/mining/stonework
+  - **Orc** (Vrakgul) - Powerful warriors, +2 STR, +1 CON/DEX, bonuses to intimidation/swordfighting/tactics
+  - **Goblin** (Skrixel) - Agile and cunning, +2 DEX, +1 INT/LUCK, bonuses to stealth/lockpicking/trap_disarming
+  - **Demon** (Zarthorym) - Dark magic users, +2 INT, +1 STR/CHA, bonuses to fire_magic/death_magic/intimidation
+  - **Angel** (Celvayne) - Divine beings, +2 WIS, +1 INT/CHA, bonuses to divine_magic/healing/meditation
+  - **Undead** (Nethrogar) - Death-touched, +2 CON, +1 INT/WIS, bonuses to death_magic/intimidation/stealth
+  - **Draconic** (Vyrascor) - Dragon-blooded, +2 STR, +1 CON/CHA, bonuses to fire_magic/intimidation/swordfighting
+  - **Fishman** (Thaloryn) - Aquatic beings, +2 CON, +1 DEX/WIS, bonuses to swimming/survival/healing
+  - **Birdman** (Sylvarith) - Aerial beings, +2 DEX, +1 WIS/LUCK, bonuses to scouting/navigation/acrobatics
+- **Regional Origins:** Each race hails from a specific region in the game world
+- **Stat Modifiers:** Races provide permanent stat bonuses/penalties to base character stats
+- **Skill Bonuses:** Races grant +1 bonuses to specific skills, reflecting racial aptitudes
+
 ### **Skill System**
 
 - **30+ Skills** across 4 categories:
@@ -470,6 +532,18 @@ _Estimated Time: 1-2 days_
 - **Quality:** poor, common, noble, legendary, mythic
 - **Type:** armor, weapon, tool, accessory
 - **Format:** "status,material,quality,type" (e.g., "intact,iron,noble,chainmail")
+- **Skill Kits:** 48+ skill-specific equipment items providing skill bonuses
+- **Player Starting Equipment:** clothes + weapon + 1 skill kit (based on class)
+- **NPC Equipment:** Random equipment based on class preferences
+
+### **Character Generation Features**
+
+- **Point Allocation System:** 10 points with escalating costs and malus system (3 malus = 2 bonus)
+- **Race System:** 11 races with regional origins, stat bonuses, and skill bonuses
+- **Character Creation Methods:** 5 different creation options (random, point allocation, class selection, race selection, full custom)
+- **Enhanced Dialog System:** Select, checkbox, and number input components
+- **Error Handling:** Comprehensive fallback systems and error recovery
+- **Player Character Storage:** Accepted characters stored in gameState.playerCharacter
 
 ### **Bonus Calculation System**
 
@@ -563,7 +637,7 @@ _Estimated Time: 1-2 days_
 
 ## **PROGRESS TRACKING**
 
-- [ ] Phase 1 Complete
+- [x] Phase 1 Complete
 - [ ] Phase 2 Complete
 - [ ] Phase 3 Complete
 - [ ] Phase 4 Complete
@@ -571,6 +645,45 @@ _Estimated Time: 1-2 days_
 - [ ] Phase 6 Complete
 - [ ] Project Complete
 
-**Last Updated:** [Date]
-**Current Phase:** Phase 1 - Foundation Systems
-**Overall Progress:** 0% Complete
+**Last Updated:** December 2024
+**Current Phase:** Phase 2 - Data Structure Migration
+**Overall Progress:** 17% Complete (Phase 1 of 6 phases)
+
+---
+
+## **RECENT UPDATES & FIXES**
+
+### **Character Generation System Enhancements (December 2024)**
+
+**Completed Features:**
+
+- ✅ **Race System**: 11 races with regional origins, stat bonuses, and skill bonuses
+- ✅ **Malus System**: 3 malus points = 2 bonus points for flexible stat allocation
+- ✅ **Player Starting Equipment**: Clothes + weapon + 1 skill kit system
+- ✅ **Skill Kit System**: 48+ skill-specific equipment items added to equipment.js
+- ✅ **Enhanced Dialog System**: Select, checkbox, and number input components
+- ✅ **Character Creation Methods**: 5 different creation options implemented
+- ✅ **Error Handling**: Comprehensive fallback systems and error recovery
+
+**Bug Fixes Applied:**
+
+- ✅ **Dialog Value Extraction**: Fixed getDialogValue function to handle empty strings
+- ✅ **Character Acceptance Flow**: Fixed dialog restart issue when accepting characters
+- ✅ **Race Selection Error**: Fixed "Race data not found" error with fallback handling
+- ✅ **Select Element Defaults**: Fixed select elements not having default selections
+- ✅ **Integration Issues**: Fixed main.js character creation loop integration
+
+**Files Modified:**
+
+- `interactions/characterGeneration.js` - Core character generation logic
+- `interactions/charCreationDialog.js` - Enhanced character creation dialogs
+- `interactions/showDialog.js` - Enhanced dialog system with new components
+- `interactions/equipment.js` - Added skill kit system
+- `main.js` - Fixed character creation loop integration
+
+**Technical Improvements:**
+
+- Enhanced error handling with try-catch blocks and fallback mechanisms
+- Comprehensive debug logging for troubleshooting
+- Improved code organization and function structure
+- Better integration between dialog system and character generation
