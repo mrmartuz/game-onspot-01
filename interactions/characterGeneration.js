@@ -19,6 +19,7 @@ export const raceDatabase = {
   Human: {
     name: "Human",
     region: "Aurenith",
+    rarity: "common",
     description: "Versatile and adaptable, humans excel in all areas",
     statBonuses: { STR: 0, DEX: 0, CON: 0, INT: 0, WIS: 0, CHA: 0, LUCK: 1 },
     skillBonuses: {},
@@ -30,6 +31,7 @@ export const raceDatabase = {
   Elf: {
     name: "Elf",
     region: "Lyssarion",
+    rarity: "common",
     description: "Graceful and wise, elves have enhanced dexterity and wisdom",
     statBonuses: { STR: -1, DEX: 2, CON: -1, INT: 1, WIS: 2, CHA: 1, LUCK: 0 },
     skillBonuses: { archery: 1, meditation: 1, nature_magic: 1 },
@@ -41,6 +43,7 @@ export const raceDatabase = {
   Dwarf: {
     name: "Dwarf",
     region: "Gromthar",
+    rarity: "common",
     description: "Sturdy and strong, dwarves excel in physical attributes",
     statBonuses: { STR: 2, DEX: -1, CON: 2, INT: 0, WIS: 0, CHA: -1, LUCK: 0 },
     skillBonuses: { blacksmithing: 1, mining: 1, stonework: 1 },
@@ -52,6 +55,7 @@ export const raceDatabase = {
   Orc: {
     name: "Orc",
     region: "Vrakgul",
+    rarity: "common",
     description: "Powerful warriors with great strength and constitution",
     statBonuses: { STR: 3, DEX: 0, CON: 2, INT: -2, WIS: -1, CHA: -1, LUCK: 0 },
     skillBonuses: { intimidation: 2, unarmed: 1, survival: 1 },
@@ -63,6 +67,7 @@ export const raceDatabase = {
   Goblin: {
     name: "Goblin",
     region: "Skrixel",
+    rarity: "common",
     description: "Small but cunning, goblins are agile and lucky",
     statBonuses: { STR: -2, DEX: 2, CON: -1, INT: 1, WIS: 0, CHA: 0, LUCK: 2 },
     skillBonuses: { stealth: 1, lockpicking: 1, bartering: 1 },
@@ -74,28 +79,65 @@ export const raceDatabase = {
   Demon: {
     name: "Demon",
     region: "Zarthorym",
-    description: "Dark beings with enhanced magical abilities",
-    statBonuses: { STR: 1, DEX: 0, CON: 1, INT: 2, WIS: 0, CHA: 1, LUCK: -1 },
-    skillBonuses: { fire_magic: 2, intimidation: 1, death_magic: 1 },
+    rarity: "legendary",
+    description:
+      "Dark beings directly chosen by the gods to serve as their champions on earth to sway the balance of power.",
+    statBonuses: {
+      STR: 10,
+      DEX: 10,
+      CON: 10,
+      INT: 10,
+      WIS: 10,
+      CHA: 10,
+      LUCK: 10,
+    },
+    skillBonuses: { fire_magic: 13, intimidation: 13, death_magic: 13 },
     genderBonuses: {
-      male: { STR: 1, INT: 1, WIS: -1 },
-      female: { INT: 1, CHA: 1, CON: -1 },
+      male: { STR: 13, DEX: 13, CON: 13, WIS: 13, INT: 13, CHA: 13, LUCK: 13 },
+      female: {
+        STR: 13,
+        DEX: 13,
+        CON: 13,
+        WIS: 13,
+        INT: 13,
+        CHA: 13,
+        LUCK: 13,
+      },
     },
   },
   Angel: {
     name: "Angel",
     region: "Celvayne",
-    description: "Divine beings with enhanced wisdom and charisma",
-    statBonuses: { STR: 0, DEX: 1, CON: 0, INT: 1, WIS: 2, CHA: 2, LUCK: 1 },
-    skillBonuses: { divine_magic: 2, healing: 1, persuasion: 1 },
+    rarity: "legendary",
+    description:
+      "Angelic figures directly chosen by the gods to serve as their champions on earth to defend life.",
+    statBonuses: {
+      STR: 10,
+      DEX: 10,
+      CON: 10,
+      INT: 10,
+      WIS: 10,
+      CHA: 10,
+      LUCK: 10,
+    },
+    skillBonuses: { divine_magic: 13, healing: 13, persuasion: 13 },
     genderBonuses: {
-      male: { WIS: 1, INT: 1, STR: -1 },
-      female: { WIS: 1, CHA: 1, CON: -1 },
+      male: { STR: 12, DEX: 16, CON: 14, WIS: 14, INT: 14, CHA: 16, LUCK: 16 },
+      female: {
+        STR: 12,
+        DEX: 16,
+        CON: 14,
+        WIS: 14,
+        INT: 14,
+        CHA: 16,
+        LUCK: 16,
+      },
     },
   },
   Undead: {
     name: "Undead",
     region: "Nethrogar",
+    rarity: "rare",
     description: "Undead beings with enhanced constitution and dark magic",
     statBonuses: { STR: 0, DEX: -1, CON: 3, INT: 1, WIS: 0, CHA: -2, LUCK: -1 },
     skillBonuses: { death_magic: 2, intimidation: 1, survival: 1 },
@@ -107,6 +149,7 @@ export const raceDatabase = {
   Draconic: {
     name: "Draconic",
     region: "Vyrascor",
+    rarity: "rare",
     description:
       "Dragon-blooded beings with enhanced physical and magical abilities",
     statBonuses: { STR: 2, DEX: 0, CON: 2, INT: 1, WIS: 1, CHA: 1, LUCK: 0 },
@@ -119,6 +162,7 @@ export const raceDatabase = {
   Fishman: {
     name: "Fishman",
     region: "Thaloryn",
+    rarity: "uncommon",
     description: "Aquatic beings with enhanced swimming and water magic",
     statBonuses: { STR: 0, DEX: 1, CON: 1, INT: 0, WIS: 1, CHA: 0, LUCK: 0 },
     skillBonuses: { swimming: 2, nature_magic: 1, survival: 1 },
@@ -130,6 +174,7 @@ export const raceDatabase = {
   Birdman: {
     name: "Birdman",
     region: "Sylvarith",
+    rarity: "uncommon",
     description: "Avian beings with enhanced dexterity and flight abilities",
     statBonuses: { STR: -1, DEX: 3, CON: 0, INT: 0, WIS: 1, CHA: 0, LUCK: 1 },
     skillBonuses: { acrobatics: 2, scouting: 1, archery: 1 },
@@ -1979,14 +2024,14 @@ export const proceduralGeneration = {
     return stats;
   },
 
-  // Generate random class based on rarity
+  // Generate random class based on rarity with very low probability for uncommon/rare
   generateRandomClass: function () {
     const classes = Object.keys(classDatabase);
     const rarityWeights = {
-      common: 0.5, // 50% chance
-      uncommon: 0.3, // 30% chance
-      rare: 0.15, // 15% chance
-      legendary: 0.05, // 5% chance
+      common: 0.938, // 93.8% chance for common classes
+      uncommon: 0.05, // 5% chance for uncommon classes (very low)
+      rare: 0.01, // 1% chance for rare classes (very rare)
+      legendary: 0.005, // 0.2% chance for legendary classes (extremely rare)
     };
 
     const random = Math.random();
@@ -2138,8 +2183,8 @@ export const equipmentAssignment = {
     const qualityWeights = [0.1, 0.6, 0.2, 0.08, 0.02]; // Weighted toward common
     const randomQuality = this.weightedRandom(qualities, qualityWeights);
 
-    // Format: "status,material,quality,itemType"
-    return `${randomStatus.name.toLowerCase()},${randomMaterial},${randomQuality},${itemType}`;
+    // Format: "status material rarity [itemType]"
+    return `${randomStatus.name.toLowerCase()} ${randomMaterial} ${randomQuality} [${itemType}]`;
   },
 
   // Weighted random selection
@@ -2384,10 +2429,48 @@ export const characterGeneration = {
     return skillKits[skillName] || "general_tools";
   },
 
-  // Generate random race
+  // Generate random race based on rarity weights
   generateRandomRace: function () {
     const races = Object.keys(raceDatabase);
-    return races[Math.floor(Math.random() * races.length)];
+    const rarityWeights = {
+      common: 0.948, // 94.8% chance for common races
+      uncommon: 0.05, // 5% chance for uncommon races
+      rare: 0.0017, // 0.17% chance for rare races (very rare)
+      legendary: 0.0003, // 0.03% chance for legendary races (extremely rare)
+    };
+
+    const random = Math.random();
+    let targetRarity = "common";
+    let cumulative = 0;
+
+    for (const [rarity, weight] of Object.entries(rarityWeights)) {
+      cumulative += weight;
+      if (random <= cumulative) {
+        targetRarity = rarity;
+        break;
+      }
+    }
+
+    // Filter races by target rarity
+    const racesOfRarity = races.filter(
+      (raceName) => raceDatabase[raceName].rarity === targetRarity
+    );
+
+    if (racesOfRarity.length === 0) {
+      // Fallback to common races if none found
+      return races.filter(
+        (raceName) => raceDatabase[raceName].rarity === "common"
+      )[
+        Math.floor(
+          Math.random() *
+            races.filter(
+              (raceName) => raceDatabase[raceName].rarity === "common"
+            ).length
+        )
+      ];
+    }
+
+    return racesOfRarity[Math.floor(Math.random() * racesOfRarity.length)];
   },
 
   // Generate random names (race and gender specific)

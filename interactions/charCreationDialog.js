@@ -859,75 +859,53 @@ function getStatCost(currentValue, desiredValue) {
 }
 
 async function showCharacterPreview(character, generationMethod) {
-  const message = "👤 CHARACTER PREVIEW";
+  const message = `👤 ${character.firstName.toUpperCase()} ${character.lastName.toUpperCase()}`;
   let components = [];
 
-  // Character basic info
+  // Character basic info - First line: gender, race name (explanation race)
+  const raceData = raceDatabase[character.race];
   components.push({
     type: "message",
-    label: `Name: ${character.firstName} ${character.lastName}`,
+    label: `${character.gender} ${
+      raceData.region
+    } (${raceData.name.toLowerCase()})`,
     value: "",
   });
 
+  // Second line: Class name and level
+  const classData = classDatabase[character.class];
   components.push({
     type: "message",
-    label: `Gender: ${
-      character.gender.charAt(0).toUpperCase() + character.gender.slice(1)
-    }`,
+    label: `${classData.name} lvl.${character.level}`,
     value: "",
   });
 
-  components.push({
-    type: "message",
-    label: `Race: ${raceDatabase[character.race].name} (${
-      raceDatabase[character.race].region
-    })`,
-    value: "",
-  });
-
-  components.push({
-    type: "message",
-    label: `Class: ${classDatabase[character.class].name} (${
-      classDatabase[character.class].rarity
-    })`,
-    value: "",
-  });
-
-  components.push({
-    type: "message",
-    label: `Level: ${character.level}`,
-    value: "",
-  });
-
-  // Stats display
+  // Third line: Stats header
   components.push({
     type: "message",
     label: "📊 Stats:",
     value: "",
   });
 
-  // Group stats into two lines
-  const stats = Object.entries(character.stats);
-  const firstLineStats = stats.slice(0, Math.ceil(stats.length / 2));
-  const secondLineStats = stats.slice(Math.ceil(stats.length / 2));
-
-  // First line of stats
-  const firstLine = firstLineStats
-    .map(([stat, value]) => `${stat}: ${value}`)
+  // Fourth line: Physical stats (STR, DEX, CON)
+  const physicalStats = ["STR", "DEX", "CON"];
+  const physicalLine = physicalStats
+    .map((stat) => `${stat}:${character.stats[stat]}`)
     .join(" | ");
   components.push({
     type: "message",
-    label: `  ${firstLine}`,
+    label: physicalLine,
     value: "",
   });
 
-  // Second line of stats
-  const secondLine = secondLineStats
-    .map(([stat, value]) => `${stat}: ${value}`)
+  // Fifth line: Mental stats (INT, WIS, CHA, LUCK)
+  const mentalStats = ["INT", "WIS", "CHA", "LUCK"];
+  const mentalLine = mentalStats
+    .map((stat) => `${stat}:${character.stats[stat]}`)
     .join(" | ");
   components.push({
     type: "message",
-    label: `  ${secondLine}`,
+    label: mentalLine,
     value: "",
   });
 
@@ -939,13 +917,19 @@ async function showCharacterPreview(character, generationMethod) {
       value: "",
     });
 
-    Object.entries(character.skills).forEach(([skill, level]) => {
+    // Group skills into lines of 2 skills each
+    const skillEntries = Object.entries(character.skills);
+    for (let i = 0; i < skillEntries.length; i += 2) {
+      const skillLine = skillEntries
+        .slice(i, i + 2)
+        .map(([skill, level]) => `${skill}: ${level}`)
+        .join(" | ");
       components.push({
         type: "message",
-        label: `  ${skill}: ${level}`,
+        label: skillLine,
         value: "",
       });
-    });
+    }
   }
 
   // Equipment display
@@ -959,7 +943,7 @@ async function showCharacterPreview(character, generationMethod) {
     if (item) {
       components.push({
         type: "message",
-        label: `  ${slot}: ${item}`,
+        label: `${slot}: ${item}`,
         value: "",
       });
     }

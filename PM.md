@@ -151,16 +151,49 @@ _Estimated Time: 2-3 days_
 
 **Tasks:**
 
-- [ ] Add gender field to character data structure
-- [ ] Create race-gender bonus system (male: 1-2 bonus + 1 malus, female: 2-3 bonus + 1 malus)
-- [ ] Implement gender-specific stat bonuses for all 11 races
-- [ ] Create first name lists (30+ names per race-gender combination)
-- [ ] Create last name lists (40+ names per race)
-- [ ] Update character generation functions to include gender
-- [ ] Add gender selection step in character creation dialog
-- [ ] Update character preview to display gender
-- [ ] Implement 70/30 male/female random distribution
-- [ ] Update character creation flow: Race → Gender → Name → Surname → Class → Stats
+- [x] Add gender field to character data structure
+- [x] Create race-gender bonus system (male: 1-2 bonus + 1 malus, female: 2-3 bonus + 1 malus)
+- [x] Implement gender-specific stat bonuses for all 11 races
+- [x] Create first name lists (30+ names per race-gender combination)
+- [x] Create last name lists (40+ names per race)
+- [x] Update character generation functions to include gender
+- [x] Add gender selection step in character creation dialog
+- [x] Update character preview to display gender
+- [x] Implement 70/30 male/female random distribution
+- [x] Update character creation flow: Race → Gender → Name → Surname → Class → Stats
+
+### **1.5.1 Equipment System Refactoring**
+
+**Files:** `interactions/equipment.js`, `interactions/characterGeneration.js`
+**Dependencies:** Equipment System
+**Deliverables:**
+
+- Refactor equipment display format to: `status material rarity [type]`
+- Update equipment generation to use new format
+- Implement proper equipment parsing and display
+
+**Tasks:**
+
+- [ ] Refactor equipment format from "status,material,quality,type" to "status material rarity [type]"
+- [ ] Update equipment generation functions to use new format
+- [ ] Update equipment display in character preview
+- [ ] Implement equipment parsing for new format
+- [ ] Update equipment database structure if needed
+
+**Questions to ask about each equipment part:**
+
+- **Status**: What are the different status levels? (e.g., breached, damaged, worn, intact, pristine)
+- **Material**: What materials should be available? (e.g., cloth, leather, oak, iron, steel, mithril)
+- **Rarity**: What rarity levels should exist? (e.g., poor, common, noble, legendary, mythic)
+- **Type**: What equipment types and specific items should be available? (e.g., [commoner-clothes], [crossbow], [survival-gear])
+
+**Example Format:**
+
+```
+armor: breached cloth poor [commoner-clothes]
+weapon: balanced oak noble [crossbow]
+tool: damaged wooden common [survival-gear]
+```
 
 ---
 
