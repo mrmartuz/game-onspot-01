@@ -25,9 +25,12 @@ export const classDatabase = {
       tactics: 1.0,
     },
     equipmentPreferences: {
-      armor: ["chainmail", "plate"],
-      weapon: ["longsword", "battleaxe", "spear"],
-      tool: ["backpack", "rope"],
+      clothes: ["commoner-clothes", "work-clothes"],
+      armor: ["chainmail-armor", "plate-armor"],
+      weapon: ["sword", "axe", "mace"],
+      shield: ["shield", "buckler"],
+      back: ["greatsword", "spear", "backpack"],
+      tool: ["rope", "general-tools"],
     },
   },
 
@@ -53,8 +56,10 @@ export const classDatabase = {
       survival: 1.0,
     },
     equipmentPreferences: {
-      armor: ["leather", "studded"],
-      weapon: ["longbow", "shortbow", "crossbow"],
+      clothes: ["traveler-clothes", "work-clothes"],
+      armor: ["leather-armor", "studded-armor"],
+      weapon: ["shortsword", "dagger"],
+      back: ["longbow", "shortbow", "backpack"],
       tool: ["quiver", "arrows"],
     },
   },

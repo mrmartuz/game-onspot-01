@@ -883,7 +883,7 @@ async function showCharacterPreview(character, generationMethod) {
   // Third line: Stats header
   components.push({
     type: "message",
-    label: "📊 Stats:",
+    label: "::::::STATS::::::",
     value: "",
   });
 
@@ -913,7 +913,7 @@ async function showCharacterPreview(character, generationMethod) {
   if (Object.keys(character.skills).length > 0) {
     components.push({
       type: "message",
-      label: "🎯 Starting Skills:",
+      label: ":::::STARTING SKILLS:::::",
       value: "",
     });
 
@@ -935,15 +935,32 @@ async function showCharacterPreview(character, generationMethod) {
   // Equipment display
   components.push({
     type: "message",
-    label: "⚔️ Starting Equipment:",
+    label: ":::::STARTING EQUIPMENT:::::",
     value: "",
   });
 
-  Object.entries(character.equipment).forEach(([slot, item]) => {
+  // Define equipment slot labels and order
+  const equipmentSlots = [
+    { key: "clothes", label: "👕 Clothes" },
+    { key: "armor", label: "🛡️ Armor" },
+    { key: "weapon", label: "⚔️ Weapon" },
+    { key: "secondHand", label: "🛡️ Second Hand" },
+    { key: "back", label: "🎒 Back" },
+    { key: "tool", label: "🔧 Tool" },
+  ];
+
+  equipmentSlots.forEach(({ key, label }) => {
+    const item = character.equipment[key];
     if (item) {
       components.push({
         type: "message",
-        label: `${slot}: ${item}`,
+        label: `${label}: ${item}`,
+        value: "",
+      });
+    } else {
+      components.push({
+        type: "message",
+        label: `${label}: (empty)`,
         value: "",
       });
     }

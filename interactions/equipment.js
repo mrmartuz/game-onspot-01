@@ -1,5 +1,6 @@
 // Equipment system for enhanced character progression
-// Equipment has status/material/quality/type structure with durability and skill bonuses
+// Equipment has status/material/rarity/type structure with durability and skill bonuses
+// Format: "status material rarity [type]"
 
 // Equipment status levels by item type
 export const equipmentStatus = {
@@ -221,43 +222,48 @@ export const equipmentStatus = {
   },
 };
 
-// Material types with properties
+// Material types with properties and equipment type restrictions
 export const equipmentMaterials = {
-  pine_wood: {
-    name: "Pine Wood",
+  // Clothes materials
+  cotton: {
+    name: "Cotton",
     rarity: "common",
     durability: 30,
     weight: 1,
     cost: 1,
-    description: "Pine wood, light but not very durable",
-    color: "#8B4513",
+    description: "Soft cotton fabric, comfortable and breathable",
+    color: "#F5F5DC",
+    allowedTypes: ["clothes"],
   },
-  oak_wood: {
-    name: "Oak Wood",
-    rarity: "common",
-    durability: 30,
-    weight: 1,
-    cost: 1,
-    description: "Oak wood, light but not very durable",
-    color: "#8B4513",
+  silk: {
+    name: "Silk",
+    rarity: "uncommon",
+    durability: 40,
+    weight: 0.8,
+    cost: 8,
+    description: "Luxurious silk fabric, smooth and elegant",
+    color: "#FFB6C1",
+    allowedTypes: ["clothes"],
   },
-  birch_wood: {
-    name: "Birch Wood",
+  wool: {
+    name: "Wool",
     rarity: "common",
-    durability: 30,
-    weight: 1,
-    cost: 1,
-    description: "Birch wood, light but not very durable",
-    color: "#8B4513",
+    durability: 45,
+    weight: 1.2,
+    cost: 2,
+    description: "Warm wool fabric, good insulation",
+    color: "#DEB887",
+    allowedTypes: ["clothes", "container"],
   },
-  cloth: {
-    name: "Cloth",
+  padded: {
+    name: "Padded",
     rarity: "common",
-    durability: 30,
-    weight: 1,
-    cost: 1,
-    description: "Cloth, light but not very durable",
-    color: "#8B4513",
+    durability: 35,
+    weight: 1.5,
+    cost: 3,
+    description: "Padded fabric with extra protection",
+    color: "#D2B48C",
+    allowedTypes: ["clothes", "armor"],
   },
   leather: {
     name: "Leather",
@@ -267,6 +273,49 @@ export const equipmentMaterials = {
     cost: 2,
     description: "Animal hide, flexible and moderately durable",
     color: "#A0522D",
+    allowedTypes: ["clothes", "armor", "tool", "container"],
+  },
+  fur: {
+    name: "Fur",
+    rarity: "uncommon",
+    durability: 40,
+    weight: 1.8,
+    cost: 5,
+    description: "Animal fur, warm and insulating",
+    color: "#8B4513",
+    allowedTypes: ["clothes", "armor"],
+  },
+  gilded: {
+    name: "Gilded",
+    rarity: "rare",
+    durability: 45,
+    weight: 1.3,
+    cost: 15,
+    description: "Fabric with gold thread accents",
+    color: "#FFD700",
+    allowedTypes: ["clothes"],
+  },
+
+  // Armor materials
+  bone: {
+    name: "Bone",
+    rarity: "common",
+    durability: 35,
+    weight: 1.5,
+    cost: 2,
+    description: "Hardened bone, lightweight protection",
+    color: "#F5F5DC",
+    allowedTypes: ["armor", "weapon1h", "weapon2h", "ranged", "shield"],
+  },
+  bronze: {
+    name: "Bronze",
+    rarity: "common",
+    durability: 60,
+    weight: 4,
+    cost: 4,
+    description: "Bronze alloy, good balance of strength and weight",
+    color: "#CD7F32",
+    allowedTypes: ["armor", "weapon1h", "weapon2h", "ranged", "shield"],
   },
   iron: {
     name: "Iron",
@@ -276,6 +325,14 @@ export const equipmentMaterials = {
     cost: 5,
     description: "Common metal, sturdy and reliable",
     color: "#696969",
+    allowedTypes: [
+      "armor",
+      "weapon1h",
+      "weapon2h",
+      "ranged",
+      "shields",
+      "tools",
+    ],
   },
   steel: {
     name: "Steel",
@@ -285,42 +342,162 @@ export const equipmentMaterials = {
     cost: 10,
     description: "Refined iron alloy, stronger and more durable",
     color: "#708090",
+    allowedTypes: [
+      "armor",
+      "weapon1h",
+      "weapon2h",
+      "ranged",
+      "shields",
+      "tools",
+    ],
   },
-  silver: {
-    name: "Silver",
+  aurene: {
+    name: "Aurene",
     rarity: "rare",
-    durability: 60,
+    durability: 80,
+    weight: 3,
+    cost: 30,
+    description: "Rare golden metal, magical properties",
+    color: "#FFD700",
+    allowedTypes: ["armor", "weapon1h", "weapon2h", "ranged", "shield"],
+  },
+  obsura: {
+    name: "Obsura",
+    rarity: "rare",
+    durability: 90,
     weight: 4,
-    cost: 25,
-    description: "Precious metal with magical properties",
-    color: "#C0C0C0",
+    cost: 35,
+    description: "Dark silver metal, mysterious properties",
+    color: "#2F4F4F",
+    allowedTypes: ["armor", "weapon1h", "weapon2h", "ranged", "shield"],
   },
-  gold: {
-    name: "Gold",
-    rarity: "rare",
+
+  // Weapon materials
+  wood: {
+    name: "Wood",
+    rarity: "common",
+    durability: 30,
+    weight: 1,
+    cost: 1,
+    description: "General wood, light but not very durable",
+    color: "#8B4513",
+    allowedTypes: ["weapon1h", "weapon2h", "ranged", "shield", "tool"],
+  },
+  oak: {
+    name: "Oak",
+    rarity: "common",
+    durability: 40,
+    weight: 1.2,
+    cost: 1.5,
+    description: "Oak wood, strong and durable",
+    color: "#8B4513",
+    allowedTypes: ["weapon1h", "weapon2h", "ranged", "shield", "tool"],
+  },
+  pine: {
+    name: "Pine",
+    rarity: "common",
+    durability: 25,
+    weight: 0.8,
+    cost: 1,
+    description: "Pine wood, light but not very durable",
+    color: "#8B4513",
+    allowedTypes: ["weapon1h", "weapon2h", "ranged", "shield", "tool"],
+  },
+  birch: {
+    name: "Birch",
+    rarity: "common",
+    durability: 35,
+    weight: 1,
+    cost: 1.2,
+    description: "Birch wood, flexible and light",
+    color: "#8B4513",
+    allowedTypes: ["weapon1h", "weapon2h", "ranged", "shield", "tool"],
+  },
+  maple: {
+    name: "Maple",
+    rarity: "uncommon",
+    durability: 45,
+    weight: 1.1,
+    cost: 2,
+    description: "Maple wood, excellent balance and strength",
+    color: "#8B4513",
+    allowedTypes: ["weapon1h", "weapon2h", "ranged", "shield", "tool"],
+  },
+
+  // Container materials
+  canvas: {
+    name: "Canvas",
+    rarity: "common",
+    durability: 40,
+    weight: 1.5,
+    cost: 2,
+    description: "Heavy canvas fabric, durable for containers",
+    color: "#D2B48C",
+    allowedTypes: ["container"],
+  },
+  hemp: {
+    name: "Hemp",
+    rarity: "common",
+    durability: 35,
+    weight: 1.2,
+    cost: 1.5,
+    description: "Hemp fiber, strong and flexible",
+    color: "#D2B48C",
+    allowedTypes: ["container"],
+  },
+  // Tool materials
+  copper: {
+    name: "Copper",
+    rarity: "common",
     durability: 50,
     weight: 3,
-    cost: 50,
-    description: "Rare precious metal, highly valued",
-    color: "#FFD700",
+    cost: 3,
+    description: "Soft metal, good for tools and utensils",
+    color: "#B87333",
+    allowedTypes: ["tool"],
   },
-  mithril: {
-    name: "Mithril",
-    rarity: "legendary",
-    durability: 95,
-    weight: 2,
-    cost: 200,
-    description: "Legendary metal, incredibly strong yet light",
-    color: "#E6E6FA",
+  brass: {
+    name: "Brass",
+    rarity: "common",
+    durability: 55,
+    weight: 3.5,
+    cost: 4,
+    description: "Copper-zinc alloy, durable and corrosion-resistant",
+    color: "#B87333",
+    allowedTypes: ["tool"],
+  },
+  tin: {
+    name: "Tin",
+    rarity: "common",
+    durability: 40,
+    weight: 2.5,
+    cost: 2,
+    description: "Soft metal, easy to work with",
+    color: "#C0C0C0",
+    allowedTypes: ["tool"],
   },
 };
 
-// Quality levels
-export const equipmentQuality = {
+// Rarity levels
+export const equipmentRarity = {
+  scrap: {
+    name: "Scrap",
+    rarity: "common",
+    multiplier: 0.3,
+    description: "Broken and barely functional",
+    color: "#8B4513",
+  },
+  improvised: {
+    name: "Improvised",
+    rarity: "common",
+    multiplier: 0.5,
+    description: "Crudely made, basic functionality",
+    color: "#A0522D",
+  },
   poor: {
     name: "Poor",
     rarity: "common",
-    multiplier: 0.5,
+    multiplier: 0.7,
     description: "Low quality, basic functionality",
     color: "#8B4513",
   },
@@ -331,10 +508,17 @@ export const equipmentQuality = {
     description: "Standard quality, reliable performance",
     color: "#808080",
   },
+  fine: {
+    name: "Fine",
+    rarity: "uncommon",
+    multiplier: 1.3,
+    description: "Well-crafted, good quality",
+    color: "#32CD32",
+  },
   noble: {
     name: "Noble",
     rarity: "uncommon",
-    multiplier: 1.5,
+    multiplier: 1.6,
     description: "High quality, superior craftsmanship",
     color: "#4169E1",
   },
@@ -356,6 +540,26 @@ export const equipmentQuality = {
 
 // Equipment types and slots
 export const equipmentTypes = {
+  clothes: {
+    name: "Clothes",
+    slot: "clothes",
+    statusType: "clothes",
+    description: "Everyday clothing and garments",
+    skillBonuses: {
+      persuasion: 0.5,
+      performance: 0.5,
+    },
+    items: [
+      "commoner-clothes",
+      "noble-clothes",
+      "traveler-clothes",
+      "merchant-clothes",
+      "scholar-robes",
+      "peasant-garb",
+      "court-attire",
+      "work-clothes",
+    ],
+  },
   armor: {
     name: "Armor",
     slot: "armor",
@@ -370,56 +574,119 @@ export const equipmentTypes = {
       "plate-armor",
       "leather-armor",
       "studded-armor",
-      "robes",
-      "vest",
-      "common-clothes",
-      "noble-clothes",
+      "scale-armor",
+      "ring-mail",
+      "splint-mail",
+      "brigandine",
     ],
   },
-  weapon: {
-    name: "Weapon",
+  weapon1h: {
+    name: "One-Handed Weapon",
     slot: "weapon",
     statusType: "weapons",
-    description: "Weapons for combat",
+    description: "One-handed weapons for combat",
     skillBonuses: {
       swordfighting: 1,
-      archery: 1,
-      polearms: 1,
       unarmed: 0.5,
     },
     items: [
-      "longsword",
-      "battleaxe",
+      "sword",
+      "dagger",
+      "mace",
+      "axe",
+      "club",
+      "rapier",
+      "scimitar",
+      "shortsword",
+      "warhammer",
+      "flail",
+    ],
+  },
+  weapon2h: {
+    name: "Two-Handed Weapon",
+    slot: "back",
+    statusType: "weapons",
+    description: "Two-handed weapons for combat",
+    skillBonuses: {
+      swordfighting: 1.5,
+      polearms: 1,
+    },
+    items: [
+      "greatsword",
+      "greataxe",
       "spear",
+      "halberd",
+      "poleaxe",
+      "staff",
+      "quarterstaff",
+      "scythe",
+      "maul",
+      "battleaxe",
+    ],
+  },
+  ranged: {
+    name: "Ranged Weapon",
+    slot: "back",
+    statusType: "weapons",
+    description: "Ranged weapons for combat",
+    skillBonuses: {
+      archery: 1.5,
+      tracking: 0.5,
+    },
+    items: [
       "longbow",
       "shortbow",
       "crossbow",
-      "greatsword",
-      "greataxe",
-      "club",
-      "quarterstaff",
-      "nunchaku",
-      "sai",
-      "mace",
-      "warhammer",
-      "flail",
-      "staff",
-      "hammer",
-      "wand",
-      "scythe",
-      "ice_blade",
-      "fists",
-      "bow",
-      "sword",
-      "crossbow",
-      "warhammer",
-      "staff",
       "sling",
-      "hammer",
-      "holy_sword",
-      "staff",
-      "ice_blade",
+      "javelin",
+      "throwing-axe",
+      "throwing-knife",
     ],
+  },
+  shield: {
+    name: "Shield",
+    slot: "secondHand",
+    statusType: "armor",
+    description: "Protective shields",
+    skillBonuses: {
+      shieldwork: 2,
+      tactics: 0.5,
+    },
+    items: ["buckler", "shield", "tower-shield", "kite-shield", "round-shield"],
+  },
+  container: {
+    name: "Container",
+    slot: "back",
+    statusType: "general",
+    description: "Storage containers and packs",
+    skillBonuses: {
+      survival: 0.5,
+      bartering: 0.5,
+    },
+    items: [
+      "coin-purse",
+      "belt-pouch",
+      "satchel",
+      "sack",
+      "knapsack",
+      "backpack",
+      "haversack",
+      "rucksack",
+      "traveler-pack",
+      "wayfarer-chest",
+    ],
+    containerSlots: {
+      "coin-purse": 1,
+      "belt-pouch": 2,
+      satchel: 3,
+      sack: 4,
+      knapsack: 5,
+      backpack: 6,
+      haversack: 7,
+      rucksack: 8,
+      "traveler-pack": 10,
+      "wayfarer-chest": 12,
+    },
   },
   tool: {
     name: "Tool",
@@ -437,83 +704,82 @@ export const equipmentTypes = {
       stonework: 1,
     },
     items: [
-      "backpack",
       "rope",
       "quiver",
       "arrows",
-      "grappling",
-      "prayer_beads",
+      "grappling-hook",
+      "prayer-beads",
       "incense",
-      "holy_symbol",
-      "prayer_book",
+      "holy-symbol",
+      "prayer-book",
       "crystals",
-      "mining_pick",
-      "phoenix_feathers",
-      "fire_crystals",
+      "mining-pick",
+      "phoenix-feathers",
+      "fire-crystals",
       "skull",
-      "bone_chalk",
-      "ice_crystals",
-      "frost_gem",
-      "training_weights",
-      "meditation_mat",
-      "tracking_kit",
-      "survival_gear",
+      "bone-chalk",
+      "ice-crystals",
+      "frost-gem",
+      "training-weights",
+      "meditation-mat",
+      "tracking-kit",
+      "survival-gear",
       "map",
       "compass",
       "journal",
-      "blessed_water",
-      "alchemy_kit",
-      "potion_belt",
-      "herb_pouch",
-      "gardening_tools",
-      "tracking_kit",
+      "blessed-water",
+      "alchemy-kit",
+      "potion-belt",
+      "herb-pouch",
+      "gardening-tools",
       "traps",
       "lockpicks",
       "torch",
-      "smithing_tools",
-      "workshop_kit",
+      "smithing-tools",
+      "workshop-kit",
+      "whetstone",
       // Skill Kits
-      "sword_kit",
-      "archery_kit",
-      "polearm_kit",
-      "shield_kit",
-      "tactics_manual",
-      "intimidation_tools",
-      "leatherworking_tools",
-      "tailoring_kit",
-      "cooking_kit",
-      "stonework_tools",
-      "stealth_kit",
-      "merchant_kit",
-      "healing_kit",
-      "acrobatics_gear",
-      "nature_totem",
-      "earth_stones",
-      "general_tools",
+      "sword-kit",
+      "archery-kit",
+      "polearm-kit",
+      "shield-kit",
+      "tactics-manual",
+      "intimidation-tools",
+      "leatherworking-tools",
+      "tailoring-kit",
+      "cooking-kit",
+      "stonework-tools",
+      "stealth-kit",
+      "merchant-kit",
+      "healing-kit",
+      "acrobatics-gear",
+      "nature-totem",
+      "earth-stones",
+      "general-tools",
       // Exploration Skill Kits
-      "navigation_kit",
-      "cartography_kit",
-      "climbing_gear",
-      "swimming_gear",
-      "scouting_kit",
+      "navigation-kit",
+      "cartography-kit",
+      "climbing-gear",
+      "swimming-gear",
+      "scouting-kit",
       // Social Skill Kits
-      "diplomacy_kit",
-      "animal_handling_kit",
-      "trap_disarming_kit",
-      "lore_books",
-      "investigation_kit",
-      "insight_tools",
-      "performance_kit",
-      "deception_tools",
-      "sleight_of_hand_kit",
+      "diplomacy-kit",
+      "animal-handling-kit",
+      "trap-disarming-kit",
+      "lore-books",
+      "investigation-kit",
+      "insight-tools",
+      "performance-kit",
+      "deception-tools",
+      "sleight-of-hand-kit",
       // Crafting Skill Kits
-      "jewelcrafting_tools",
-      "enchanting_kit",
-      "carpentry_tools",
-      "scribing_kit",
-      "persuasion_tools",
+      "jewelcrafting-tools",
+      "enchanting-kit",
+      "carpentry-tools",
+      "scribing-kit",
+      "persuasion-tools",
       // Magic Skill Kits
-      "ice_crystals",
+      "ice-crystals",
     ],
   },
   accessory: {
@@ -1261,8 +1527,8 @@ export function getEquipmentMaterial(materialName) {
   return equipmentMaterials[materialName] || null;
 }
 
-export function getEquipmentQuality(qualityName) {
-  return equipmentQuality[qualityName] || null;
+export function getEquipmentRarity(rarityName) {
+  return equipmentRarity[rarityName] || null;
 }
 
 export function getEquipmentType(typeName) {
@@ -1271,22 +1537,25 @@ export function getEquipmentType(typeName) {
 
 // Equipment parsing and creation functions
 export function parseEquipmentString(equipmentString) {
-  const parts = equipmentString.split(",");
-  if (parts.length !== 4) return null;
+  // Format: "status material rarity [type]"
+  const bracketMatch = equipmentString.match(
+    /^(.+?)\s+(.+?)\s+(.+?)\s+\[(.+?)\]$/
+  );
+  if (!bracketMatch) return null;
 
-  const [status, material, quality, type] = parts;
+  const [, status, material, rarity, type] = bracketMatch;
 
   return {
     status: status.trim(),
     material: material.trim(),
-    quality: quality.trim(),
+    rarity: rarity.trim(),
     type: type.trim(),
     fullString: equipmentString,
   };
 }
 
-export function createEquipmentString(status, material, quality, type) {
-  return `${status},${material},${quality},${type}`;
+export function createEquipmentString(status, material, rarity, type) {
+  return `${status} ${material} ${rarity} [${type}]`;
 }
 
 export function generateRandomEquipment(equipmentType, rarity = "common") {
@@ -1303,28 +1572,28 @@ export function generateRandomEquipment(equipmentType, rarity = "common") {
   const randomStatus =
     availableStatuses[Math.floor(Math.random() * availableStatuses.length)];
 
-  // Get random material based on rarity
+  // Get random material based on equipment type restrictions
   const materials = Object.keys(equipmentMaterials);
-  const rarityMaterials = materials.filter(
-    (m) => equipmentMaterials[m].rarity === rarity
+  const allowedMaterials = materials.filter((m) =>
+    equipmentMaterials[m].allowedTypes?.includes(equipmentType)
   );
   const randomMaterial =
-    rarityMaterials[Math.floor(Math.random() * rarityMaterials.length)] ||
+    allowedMaterials[Math.floor(Math.random() * allowedMaterials.length)] ||
     materials[0];
 
-  // Get random quality based on rarity
-  const qualities = Object.keys(equipmentQuality);
-  const rarityQualities = qualities.filter(
-    (q) => equipmentQuality[q].rarity === rarity
+  // Get random rarity based on rarity parameter
+  const rarities = Object.keys(equipmentRarity);
+  const rarityMaterials = rarities.filter(
+    (r) => equipmentRarity[r].rarity === rarity
   );
-  const randomQuality =
-    rarityQualities[Math.floor(Math.random() * rarityQualities.length)] ||
+  const randomRarity =
+    rarityMaterials[Math.floor(Math.random() * rarityMaterials.length)] ||
     "common";
 
   return createEquipmentString(
     randomStatus.name,
     randomMaterial,
-    randomQuality,
+    randomRarity,
     randomItem
   );
 }
@@ -1336,18 +1605,18 @@ export function calculateEquipmentDurability(equipmentString) {
 
   const item = getEquipmentByName(parsed.type);
   const material = getEquipmentMaterial(parsed.material);
-  const quality = getEquipmentQuality(parsed.quality);
+  const rarity = getEquipmentRarity(parsed.rarity);
   const status = getEquipmentStatus(equipmentTypes[item?.type]?.statusType, 0);
 
-  if (!item || !material || !quality || !status) return 0;
+  if (!item || !material || !rarity || !status) return 0;
 
   const baseDurability = item.baseDurability;
   const materialMultiplier = material.durability / 100;
-  const qualityMultiplier = quality.multiplier;
+  const rarityMultiplier = rarity.multiplier;
   const statusMultiplier = status.durability / 100;
 
   return Math.floor(
-    baseDurability * materialMultiplier * qualityMultiplier * statusMultiplier
+    baseDurability * materialMultiplier * rarityMultiplier * statusMultiplier
   );
 }
 
@@ -1373,7 +1642,7 @@ export function degradeEquipment(equipmentString, amount = 1) {
   return createEquipmentString(
     newStatus.name,
     parsed.material,
-    parsed.quality,
+    parsed.rarity,
     parsed.type
   );
 }
@@ -1400,7 +1669,7 @@ export function repairEquipment(equipmentString, repairLevel = 1) {
   return createEquipmentString(
     newStatus.name,
     parsed.material,
-    parsed.quality,
+    parsed.rarity,
     parsed.type
   );
 }
@@ -1411,14 +1680,14 @@ export function calculateEquipmentSkillBonus(equipmentString, skillName) {
   if (!parsed) return 0;
 
   const item = getEquipmentByName(parsed.type);
-  const quality = getEquipmentQuality(parsed.quality);
+  const rarity = getEquipmentRarity(parsed.rarity);
 
-  if (!item || !quality) return 0;
+  if (!item || !rarity) return 0;
 
   const baseBonus = item.skillBonuses[skillName] || 0;
-  const qualityMultiplier = quality.multiplier;
+  const rarityMultiplier = rarity.multiplier;
 
-  return Math.floor(baseBonus * qualityMultiplier);
+  return Math.floor(baseBonus * rarityMultiplier);
 }
 
 export function calculateTotalEquipmentBonuses(characterEquipment, skillName) {
@@ -1491,18 +1760,18 @@ export function calculateEquipmentValue(equipmentString) {
 
   const item = getEquipmentByName(parsed.type);
   const material = getEquipmentMaterial(parsed.material);
-  const quality = getEquipmentQuality(parsed.quality);
+  const rarity = getEquipmentRarity(parsed.rarity);
   const status = getEquipmentStatus(equipmentTypes[item?.type]?.statusType, 0);
 
-  if (!item || !material || !quality || !status) return 0;
+  if (!item || !material || !rarity || !status) return 0;
 
   const baseValue = item.baseCost;
   const materialMultiplier = material.cost;
-  const qualityMultiplier = quality.multiplier;
+  const rarityMultiplier = rarity.multiplier;
   const statusMultiplier = status.durability / 100;
 
   return Math.floor(
-    baseValue * materialMultiplier * qualityMultiplier * statusMultiplier
+    baseValue * materialMultiplier * rarityMultiplier * statusMultiplier
   );
 }
 
@@ -1520,4 +1789,56 @@ export function calculateEquipmentWeight(equipmentString) {
   const materialMultiplier = material.weight / 5; // Normalize to base weight
 
   return Math.floor(baseWeight * materialMultiplier);
+}
+
+// Container system functions
+export function getContainerSlots(containerType) {
+  const containerData = equipmentTypes.container;
+  if (!containerData || !containerData.containerSlots) return 0;
+
+  return containerData.containerSlots[containerType] || 0;
+}
+
+export function isMaterialAllowedForType(materialName, equipmentType) {
+  const material = getEquipmentMaterial(materialName);
+  if (!material || !material.allowedTypes) return false;
+
+  return material.allowedTypes.includes(equipmentType);
+}
+
+export function getValidMaterialsForType(equipmentType) {
+  const materials = Object.keys(equipmentMaterials);
+  return materials.filter((material) =>
+    isMaterialAllowedForType(material, equipmentType)
+  );
+}
+
+// Equipment slot management
+export const equipmentSlots = {
+  clothes: "clothes",
+  armor: "armor",
+  weapon: "weapon",
+  secondHand: "secondHand",
+  back: "back",
+  tool: "tool",
+  accessory: "accessory",
+};
+
+export function getEquipmentSlotForType(equipmentType) {
+  const typeData = equipmentTypes[equipmentType];
+  return typeData ? typeData.slot : null;
+}
+
+export function canEquipInSlot(equipmentString, slot) {
+  const parsed = parseEquipmentString(equipmentString);
+  if (!parsed) return false;
+
+  // Find which equipment type this item belongs to
+  for (const [typeName, typeData] of Object.entries(equipmentTypes)) {
+    if (typeData.items.includes(parsed.type)) {
+      return typeData.slot === slot;
+    }
+  }
+
+  return false;
 }
