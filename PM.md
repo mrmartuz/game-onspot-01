@@ -137,23 +137,30 @@ _Estimated Time: 2-3 days_
 - **Code Organization**: Improved function structure and error handling
 - **Integration**: Proper integration with main.js character creation loop
 
-### **1.5 Name Generation System**
+### **1.5 Gender and Name Generation System**
 
-**File:** `interactions/nameGeneration.js`
-**Dependencies:** None
+**Files:** `interactions/characterGeneration.js`, `interactions/charCreationDialog.js`
+**Dependencies:** Race System
 **Deliverables:**
 
-- First name database
-- Last name database
-- Name generation functions
-- Cultural/regional name variations
+- Gender system with race-specific stat bonuses
+- Race-gender specific name databases
+- Gender selection in character creation flow
+- Updated character data structure with gender field
+- 70/30 male/female random distribution
 
 **Tasks:**
 
-- [ ] Create first name lists (100+ names)
-- [ ] Create last name lists (100+ names)
-- [ ] Implement name generation algorithm
-- [ ] Add cultural variations
+- [ ] Add gender field to character data structure
+- [ ] Create race-gender bonus system (male: 1-2 bonus + 1 malus, female: 2-3 bonus + 1 malus)
+- [ ] Implement gender-specific stat bonuses for all 11 races
+- [ ] Create first name lists (30+ names per race-gender combination)
+- [ ] Create last name lists (40+ names per race)
+- [ ] Update character generation functions to include gender
+- [ ] Add gender selection step in character creation dialog
+- [ ] Update character preview to display gender
+- [ ] Implement 70/30 male/female random distribution
+- [ ] Update character creation flow: Race → Gender → Name → Surname → Class → Stats
 
 ---
 
@@ -472,6 +479,8 @@ _Estimated Time: 1-2 days_
   id: "char_001",
   firstName: "Marcus",
   lastName: "Ironhand",
+  gender: "male",
+  race: "Human",
   class: "fighter",
   classLevel: 2,
   stats: {
