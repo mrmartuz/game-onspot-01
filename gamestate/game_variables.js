@@ -25,7 +25,11 @@ export const gameState = {
   building_mats: 0,
   wood: 5,
   carts: 0,
-  group: [],
+
+  // Character System - Phase 2.1 Migration
+  playerCharacter: null, // Full character object for the player (separate from group)
+  group: [], // Array of full character objects for NPC companions only
+
   groupBonus: {
     navigation: 0,
     discovery: 0,
@@ -55,6 +59,12 @@ export const gameState = {
   offsetY: 0,
   last_consume_time: Date.now(),
 };
+
+// Character ID generation system - Phase 2.1 Migration
+export function generateCharacterId() {
+  // Timestamp-based IDs allow for future smart systems (sorting by creation time, tracking character age, etc.)
+  return `char_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+}
 
 // Time system constants (unchanged, as they're immutable)
 export const game_start_real = Date.now();

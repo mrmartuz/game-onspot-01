@@ -8,8 +8,6 @@ import { getGroupBonus } from "../utils.js";
 import { updateStatus } from "../rendering.js";
 import { logEvent } from "../time_system.js";
 import { getMaxStorage } from "../utils.js";
-import { getEnhancedBonusForRole } from "../utils.js";
-import { getBonusForRole } from "../utils.js";
 import { updateGroupBonus } from "../utils.js";
 import { getSaveGameDialog } from "../interactions.js";
 
@@ -210,14 +208,10 @@ export async function handleChoice(choice, tile) {
         let actualCost = Math.floor(baseCost * (1 - hireDiscount));
 
         // 15% chance for enhanced personal bonus
-        let hasEnhancedBonus = Math.random() < 0.15;
+        // Phase 2.1 Migration: Enhanced bonus system removed - now using character generation
+        let hasEnhancedBonus = false; // Disabled for migration
         let enhancedBonus = null;
         let upgradeCost = 0;
-
-        if (hasEnhancedBonus) {
-          enhancedBonus = getEnhancedBonusForRole(r);
-          upgradeCost = Math.floor(baseCost * 0.8); // 80% of base cost for upgrade
-        }
 
         let label = `${i + 1}: ${r} for ${actualCost}g`;
         if (hasEnhancedBonus) {
@@ -289,80 +283,22 @@ export async function handleChoice(choice, tile) {
           }
 
           if (upgradeChoice === "enhanced") {
-            actualCost += hire.upgradeCost;
-            if (gameState.gold >= actualCost) {
-              let finalBonus = { ...getBonusForRole(role) };
-              finalBonus[hire.enhancedBonus.type] =
-                (finalBonus[hire.enhancedBonus.type] || 0) +
-                hire.enhancedBonus.value;
-
-              gameState.group.push({
-                role,
-                speciality: hire.enhancedBonus.description,
-                bonus: finalBonus,
-              });
-              gameState.gold -= actualCost;
-              updateGroupBonus();
-
-              let discountText =
-                hireDiscount > 0
-                  ? ` (${Math.floor(hireDiscount * 100)}% discount applied)`
-                  : "";
-              await getShowChoiceDialog(
-                `🌟 Hired Enhanced ${role}! 👏\nEnhanced Bonus: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type}\nSpeciality: ${hire.enhancedBonus.description}${discountText}`,
-                [{ type: "button", label: "OK", value: "ok" }]
-              );
-              logEvent(
-                `🌟 Hired Enhanced ${role} for ${actualCost}g${discountText} (Enhanced: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type} - ${hire.enhancedBonus.description})`
-              );
-            } else {
-              await getShowChoiceDialog(
-                "Not enough gold for enhanced hire! ⚠️",
-                [{ type: "button", label: "OK", value: "ok" }]
-              );
-              continue;
-            }
+            // Phase 2.1 Migration: Enhanced hiring disabled - use character generation instead
+            console.log("Enhanced hiring disabled during Phase 2.1 migration");
+            continue;
           } else {
-            // Basic hire
-            if (gameState.gold >= actualCost) {
-              gameState.group.push({ role, bonus: getBonusForRole(role) });
-              gameState.gold -= actualCost;
-              updateGroupBonus();
-
-              let discountText =
-                hireDiscount > 0
-                  ? ` (${Math.floor(hireDiscount * 100)}% discount applied)`
-                  : "";
-              await getShowChoiceDialog(`Hired ${role}! 👏${discountText}`, [
-                { type: "button", label: "OK", value: "ok" },
-              ]);
-              logEvent(`🧍🏻 Hired ${role} for ${actualCost}g${discountText}`);
-            } else {
-              await getShowChoiceDialog("Not enough gold! ⚠️", [
-                { type: "button", label: "OK", value: "ok" },
-              ]);
-            }
+            // Basic hire - Phase 2.1 Migration: Disabled old role-based hiring
+            console.log(
+              "Old role-based hiring disabled during Phase 2.1 migration"
+            );
+            continue;
           }
         } else {
-          // Regular hire without enhanced bonus
-          if (gameState.gold >= actualCost) {
-            gameState.group.push({ role, bonus: getBonusForRole(role) });
-            gameState.gold -= actualCost;
-            updateGroupBonus();
-
-            let discountText =
-              hireDiscount > 0
-                ? ` (${Math.floor(hireDiscount * 100)}% discount applied)`
-                : "";
-            await getShowChoiceDialog(`Hired ${role}! 👏${discountText}`, [
-              { type: "button", label: "OK", value: "ok" },
-            ]);
-            logEvent(`🧍🏻 Hired ${role} for ${actualCost}g${discountText}`);
-          } else {
-            await getShowChoiceDialog("Not enough gold! ⚠️", [
-              { type: "button", label: "OK", value: "ok" },
-            ]);
-          }
+          // Regular hire without enhanced bonus - Phase 2.1 Migration: Disabled old role-based hiring
+          console.log(
+            "Old role-based hiring disabled during Phase 2.1 migration"
+          );
+          continue;
         }
       }
     }

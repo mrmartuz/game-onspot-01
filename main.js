@@ -1,7 +1,7 @@
 import { resize, draw, updateStatus, canvas, ctx } from "./rendering.js";
 import { revealAround } from "./movement.js";
 import { gameState } from "./gamestate/game_variables.js";
-import { updateGroupBonus, ensureGroupBonuses, checkDeath } from "./utils.js";
+import { updateGroupBonus, checkDeath } from "./utils.js";
 import { getTile } from "./rendering/tile.js";
 import { getLoadGameDialog } from "./interactions.js";
 import {

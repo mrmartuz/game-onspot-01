@@ -1,61 +1,121 @@
 import { gameState } from "../gamestate/game_variables.js";
 import { getGroupBonus } from "../utils.js";
-import { getEnhancedBonusForRole } from "../utils.js";
 import { getShowChoiceDialog } from "../interactions.js";
 
 export async function showHealthGroupDialog() {
   let message = "";
+
+  // Calculate total group size (player + NPCs)
+  const totalGroupSize =
+    (gameState.playerCharacter ? 1 : 0) + gameState.group.length;
+
   message += `🛡️📍The ${gameState.groupName} ${
-    gameState.group.length < 3
+    totalGroupSize < 3
       ? "duo"
-      : gameState.group.length < 5
+      : totalGroupSize < 5
       ? "group"
-      : gameState.group.length < 7
+      : totalGroupSize < 7
       ? "party"
-      : gameState.group.length < 9
+      : totalGroupSize < 9
       ? "clan"
       : "tribe"
   }`;
   message += `📍🛡️\n`;
 
-  let emoji = {
-    "native-guide": "🧭",
-    cook: "🍞",
-    guard: "⚔️",
-    geologist: "🪵",
-    biologist: "🌱",
-    translator: "🤝",
-    carrier: "📦",
-    medic: "❤️",
-    navigator: "👁️",
+  // Class emoji mapping for display
+  let classEmoji = {
+    fighter: "⚔️",
+    archer: "🏹",
+    brute: "💪",
+    monk: "🧘",
+    cleric: "⛪",
+    geomancer: "🌍",
+    pyromancer: "🔥",
+    necromancer: "💀",
+    articaster: "❄️",
+    martial_artist: "🥋",
+    ranger: "🌲",
     explorer: "🔍",
+    paladin: "🛡️",
+    alchemist: "🧪",
+    herbalist: "🌿",
+    hunter: "🎯",
+    dungeondiver: "🗝️",
+    craftsman: "🔨",
   };
 
   // Debug: Log the current state
+  console.log("Current gameState.playerCharacter:", gameState.playerCharacter);
   console.log("Current gameState.group:", gameState.group);
   console.log("Current gameState.groupBonus:", gameState.groupBonus);
 
-  // Player character (first character) details
-  const player = gameState.group[0] || { role: "Explorer", bonus: {} };
-  const playerBonus = player.bonus || {};
+  // Player character details
+  if (gameState.playerCharacter) {
+    const player = gameState.playerCharacter;
+    const emoji = classEmoji[player.class] || "👤";
 
-  let playerStats =
-    `👤 **Player Character**\n` +
-    `Name: ${gameState.name}\n` +
-    `Role: ${player.role}\n` +
-    `Health: ${Math.floor(gameState.health)}/100 ❤️‍🩹\n`;
+    let playerStats = `👤 **Player Character**\n`;
+    playerStats += `Name: ${player.firstName} ${player.lastName}\n`;
+    playerStats += `Race: ${player.race} | Class: ${player.class} ${emoji}\n`;
+    playerStats += `Level: ${player.level || 1} | Health: ${
+      player.health?.current || 0
+    }/${player.health?.max || 0} ❤️‍🩹\n`;
 
-  // Add bonus details
-  if (Object.keys(playerBonus).length > 0) {
-    playerStats += `Individual Bonuses:\n`;
-    Object.entries(playerBonus).forEach(([bonus, value]) => {
-      playerStats += `  ${bonus}: +${value.toFixed(1)}\n`;
-    });
+    // Display stats
+    if (player.stats) {
+      playerStats += `Stats: STR:${player.stats.STR} DEX:${player.stats.DEX} CON:${player.stats.CON} INT:${player.stats.INT} WIS:${player.stats.WIS} CHA:${player.stats.CHA} LUCK:${player.stats.LUCK}\n`;
+    }
+
+    // Display top skills
+    if (player.skills) {
+      const topSkills = Object.entries(player.skills)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([skill, level]) => `${skill}:${level.toFixed(1)}`)
+        .join(", ");
+      if (topSkills) {
+        playerStats += `Top Skills: ${topSkills}\n`;
+      }
+    }
+
+    message += playerStats + "\n";
+  } else {
+    message += `👤 **Player Character**\n`;
+    message += `Name: ${gameState.name}\n`;
+    message += `Health: ${Math.floor(gameState.health)}/100 ❤️‍🩹\n\n`;
   }
 
-  message += playerStats;
+  // Group members (NPCs) details
+  if (gameState.group.length > 0) {
+    message += `👥 **Group Members (${gameState.group.length}):**\n`;
 
-  message += `\n📊 **Total Active Bonuses:**\n`;
+    gameState.group.forEach((member, index) => {
+      const emoji = classEmoji[member.class] || "👤";
+      message += `${index + 1}. ${member.firstName} ${member.lastName} - ${
+        member.race
+      } ${member.class} ${emoji}\n`;
+      message += `   Level: ${member.level || 1} | Health: ${
+        member.health?.current || 0
+      }/${member.health?.max || 0}\n`;
+
+      // Display top skills
+      if (member.skills) {
+        const topSkills = Object.entries(member.skills)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 2)
+          .map(([skill, level]) => `${skill}:${level.toFixed(1)}`)
+          .join(", ");
+        if (topSkills) {
+          message += `   Skills: ${topSkills}\n`;
+        }
+      }
+      message += "\n";
+    });
+  } else {
+    message += `👥 **Group Members:** None\n\n`;
+  }
+
+  message += `📊 **Total Active Bonuses:**\n`;
 
   // Show combined bonuses (individual + group) for each type
   const bonusTypes = [
@@ -76,13 +136,6 @@ export async function showHealthGroupDialog() {
     if (totalBonus > 0) {
       let emoji = "";
       let description = "";
-
-      // Debug: Show individual vs group breakdown
-      const individualBonus = gameState.group.reduce((total, g) => {
-        const memberBonus = g.bonus || {};
-        return total + (memberBonus[bonusType] || 0);
-      }, 0);
-      const groupBonus = gameState.groupBonus[bonusType] || 0;
 
       switch (bonusType) {
         case "navigation":
@@ -133,52 +186,37 @@ export async function showHealthGroupDialog() {
     }
   });
 
-  // Other party members
-  let otherMembers = "";
-  if (gameState.group.length > 1) {
-    otherMembers = `\n👥 **Other Party Members:**\n`;
-    for (let i = 1; i < gameState.group.length; i++) {
-      const member = gameState.group[i];
-      console.log(member);
-      const memberBonus = member.bonus || {};
-      const occupation = member.speciality
-        ? member.speciality.toLowerCase()
-        : member.role.toLowerCase();
-      otherMembers += `\n${i}. ${occupation}${
-        member.speciality ? emoji[member.role.replace(/[^\w-]/g, "")] : ""
-      }:`;
-      if (Object.keys(memberBonus).length > 0) {
-        Object.entries(memberBonus).forEach(([bonus, value]) => {
-          otherMembers += ` ${bonus}+${value.toFixed(1)}`;
-        });
-      }
-    }
-  } else {
-    otherMembers = `👥 **No other party members**`;
-  }
+  message += `\n📦 **Storage:** ${getMaxStorage()} units\n`;
+  message += `💰 **Gold:** ${gameState.gold}\n`;
+  message += `🍞 **Food:** ${gameState.food}\n`;
+  message += `💧 **Water:** ${gameState.water}\n`;
 
-  message += otherMembers;
-
-  const choice = await getShowChoiceDialog(message, [
+  const components = [
+    { type: "message", label: message, value: "" },
     {
       type: "button",
       label: "Detailed Breakdown",
       value: "detailed-breakdown",
     },
     { type: "button", label: "❌ Close", value: "close" },
-  ]);
+  ];
+
+  const choice = await getShowChoiceDialog("Group Status", components);
 
   if (choice === "detailed-breakdown") {
     return showDetailedBreakdownDialog();
   }
+
+  return choice;
 }
 
 export async function showDetailedBreakdownDialog() {
   let message = "";
-  message += `\n📋 How Bonuses Work:\n`;
-  message += `• Individual bonuses come from each character's role\n`;
-  message += `• Group bonuses are additional bonuses from role combinations\n`;
-  message += `• Total = Individual + Group bonuses\n\n`;
+  message += `\n📋 How Bonuses Work (Phase 2.1):\n`;
+  message += `• Individual bonuses come from character skills and stats\n`;
+  message += `• Group bonuses are additional bonuses from class synergies\n`;
+  message += `• Total = Skill-based bonuses + Group synergy bonuses\n\n`;
+
   let bonusTypes = [
     "navigation",
     "discovery",
@@ -191,6 +229,7 @@ export async function showDetailedBreakdownDialog() {
     "health",
     "view",
   ];
+
   let emoji = {
     navigation: "🧭",
     discovery: "🔍",
@@ -203,40 +242,200 @@ export async function showDetailedBreakdownDialog() {
     health: "❤️",
     view: "👁️",
   };
+
   if (bonusTypes.every((type) => getGroupBonus(type) === 0)) {
-    message += `No active bonuses. Hire more specialized roles to unlock bonuses!\n`;
+    message += `No active bonuses. Create characters with diverse skills to unlock bonuses!\n`;
   }
 
   // Show detailed breakdown for active bonuses
   const activeBonusTypes = bonusTypes.filter((type) => getGroupBonus(type) > 0);
   if (activeBonusTypes.length > 0) {
     activeBonusTypes.forEach((bonusType) => {
-      const individualBonus = gameState.group.reduce((total, g) => {
-        const memberBonus = g.bonus || {};
-        return total + (memberBonus[bonusType] || 0);
-      }, 0);
+      const skillBonus = getSkillBasedBonus(bonusType);
       const groupBonus = gameState.groupBonus[bonusType] || 0;
       const totalBonus = getGroupBonus(bonusType);
 
       message += `${emoji[bonusType]} ${
         bonusType.charAt(0).toUpperCase() + bonusType.slice(1)
       }: `;
-      message += `${individualBonus.toFixed(1)} (individual) + `;
-      message += `${groupBonus.toFixed(1)} (group) = `;
+      message += `${skillBonus.toFixed(1)} (skills) + `;
+      message += `${groupBonus.toFixed(1)} (synergy) = `;
       message += `+${totalBonus.toFixed(1)} (total)\n`;
-    });
-  }
-  let enhancedBonuses = getEnhancedBonusForRole(gameState.group[0].role);
-  if (enhancedBonuses.length > 0) {
-    message += `\nEnhanced Bonuses:\n`;
-    enhancedBonuses.forEach((bonus) => {
-      message += `${emoji[bonus.type]} ${
-        bonus.type.charAt(0).toUpperCase() + bonus.type.slice(1)
-      }: +${bonus.value} ${bonus.description}\n`;
     });
   }
 
   return getShowChoiceDialog(message, [
     { type: "button", label: "❌ Close", value: "close" },
   ]);
+}
+
+// Helper function to calculate skill-based bonuses (similar to getGroupBonus but without groupBonus)
+function getSkillBasedBonus(type) {
+  const allCharacters = [];
+
+  if (gameState.playerCharacter) {
+    allCharacters.push(gameState.playerCharacter);
+  }
+
+  allCharacters.push(...gameState.group);
+
+  if (allCharacters.length === 0) {
+    return 0;
+  }
+
+  let skillBonus = 0;
+
+  switch (type) {
+    case "navigation":
+      skillBonus = Math.max(
+        ...allCharacters.map(
+          (char) =>
+            (char.skills?.navigation || 0) + (char.skills?.cartography || 0)
+        )
+      );
+      break;
+
+    case "discovery":
+      skillBonus = Math.max(
+        ...allCharacters.map(
+          (char) =>
+            (char.skills?.investigation || 0) +
+            (char.skills?.lore_knowledge || 0) +
+            (char.skills?.arcana || 0)
+        )
+      );
+      break;
+
+    case "combat":
+      skillBonus = allCharacters.reduce((total, char) => {
+        const combatSkills = [
+          "swordfighting",
+          "archery",
+          "polearms",
+          "unarmed",
+          "shieldwork",
+          "tactics",
+          "intimidation",
+          "divine_magic",
+          "fire_magic",
+          "ice_magic",
+          "earth_magic",
+          "death_magic",
+          "nature_magic",
+        ];
+        return (
+          total +
+          combatSkills.reduce(
+            (skillTotal, skill) => skillTotal + (char.skills?.[skill] || 0),
+            0
+          )
+        );
+      }, 0);
+      break;
+
+    case "food":
+      skillBonus = allCharacters.reduce(
+        (total, char) =>
+          total +
+          (char.skills?.cooking || 0) +
+          (char.skills?.survival || 0) +
+          (char.skills?.herbalism || 0),
+        0
+      );
+      break;
+
+    case "resource":
+      skillBonus = allCharacters.reduce((total, char) => {
+        const craftingSkills = [
+          "blacksmithing",
+          "alchemy",
+          "leatherworking",
+          "tailoring",
+          "cooking",
+          "jewelcrafting",
+          "enchanting",
+          "herbalism",
+          "carpentry",
+          "scribing",
+        ];
+        return (
+          total +
+          craftingSkills.reduce(
+            (skillTotal, skill) => skillTotal + (char.skills?.[skill] || 0),
+            0
+          )
+        );
+      }, 0);
+      break;
+
+    case "plant":
+      skillBonus = Math.max(
+        ...allCharacters.map(
+          (char) => (char.skills?.herbalism || 0) + (char.skills?.survival || 0)
+        )
+      );
+      break;
+
+    case "interact":
+      skillBonus = Math.max(
+        ...allCharacters.map(
+          (char) =>
+            (char.skills?.diplomacy || 0) +
+            (char.skills?.persuasion || 0) +
+            (char.skills?.bartering || 0)
+        )
+      );
+      break;
+
+    case "carry":
+      skillBonus = allCharacters.reduce(
+        (total, char) => total + Math.floor((char.stats?.STR || 8) / 10),
+        0
+      );
+      break;
+
+    case "health":
+      skillBonus = Math.max(
+        ...allCharacters.map(
+          (char) => (char.skills?.healing || 0) + (char.skills?.herbalism || 0)
+        )
+      );
+      break;
+
+    case "view":
+      skillBonus = Math.max(
+        ...allCharacters.map(
+          (char) => (char.skills?.scouting || 0) + (char.skills?.tracking || 0)
+        )
+      );
+      break;
+
+    default:
+      skillBonus = 0;
+  }
+
+  return skillBonus;
+}
+
+// Helper function to get max storage (imported from utils.js)
+function getMaxStorage() {
+  const allCharacters = [];
+
+  if (gameState.playerCharacter) {
+    allCharacters.push(gameState.playerCharacter);
+  }
+
+  allCharacters.push(...gameState.group);
+
+  let baseStorage = allCharacters.reduce(
+    (total, char) => total + (char.stats?.STR || 8) * 2,
+    0
+  );
+
+  baseStorage += 200 * gameState.carts;
+
+  let carryBonus = gameState.groupBonus.carry || 0;
+  let bonusStorage = Math.floor(carryBonus);
+
+  return baseStorage + bonusStorage;
 }

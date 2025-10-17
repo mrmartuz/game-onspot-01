@@ -549,18 +549,77 @@ function getCreatureRarityColor(rarity) {
   }
 }
 
-// Ally generation
+// Ally generation - Phase 2.1 Migration
 function generateAllies() {
   const allies = [];
 
-  // Include all group members (including player as first ally)
-  gameState.group.forEach((member, index) => {
-    if (index === 0) {
-      // Player character gets better stats
-      allies.push(new Ally(gameState.name || "Player", "player", 12));
-    } else {
-      allies.push(new Ally(member.role, member.role, 8));
-    }
+  // Include player character if it exists
+  if (gameState.playerCharacter) {
+    const player = gameState.playerCharacter;
+    // Calculate combat power from STR + combat skills
+    const combatSkills = [
+      "swordfighting",
+      "archery",
+      "polearms",
+      "unarmed",
+      "shieldwork",
+      "tactics",
+      "intimidation",
+      "divine_magic",
+      "fire_magic",
+      "ice_magic",
+      "earth_magic",
+      "death_magic",
+      "nature_magic",
+    ];
+    const combatPower =
+      (player.stats?.STR || 8) +
+      combatSkills.reduce(
+        (total, skill) => total + (player.skills?.[skill] || 0),
+        0
+      );
+
+    allies.push(
+      new Ally(
+        `${player.firstName} ${player.lastName}` || gameState.name || "Player",
+        player.class || "player",
+        Math.max(8, Math.floor(combatPower / 2))
+      )
+    );
+  }
+
+  // Include all group members (NPCs)
+  gameState.group.forEach((member) => {
+    // Calculate combat power from STR + combat skills
+    const combatSkills = [
+      "swordfighting",
+      "archery",
+      "polearms",
+      "unarmed",
+      "shieldwork",
+      "tactics",
+      "intimidation",
+      "divine_magic",
+      "fire_magic",
+      "ice_magic",
+      "earth_magic",
+      "death_magic",
+      "nature_magic",
+    ];
+    const combatPower =
+      (member.stats?.STR || 8) +
+      combatSkills.reduce(
+        (total, skill) => total + (member.skills?.[skill] || 0),
+        0
+      );
+
+    allies.push(
+      new Ally(
+        `${member.firstName} ${member.lastName}` || member.class || "Unknown",
+        member.class || "unknown",
+        Math.max(6, Math.floor(combatPower / 2))
+      )
+    );
   });
 
   return allies;
