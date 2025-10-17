@@ -732,6 +732,20 @@ export const equipmentTypes = {
       "potion-belt",
       "herb-pouch",
       "gardening-tools",
+      "herbalist-kit",
+      "blacksmithing-kit",
+      "alchemy-kit",
+      "leatherworking-kit",
+      "tailoring-kit",
+      "carpentry-kit",
+      "trader-kit",
+      "dungeondiver-kit",
+      "explorer-kit",
+      "geomancer-kit",
+      "pyromancer-kit",
+      "articaster-kit",
+      "necromancer-kit",
+      "meditation-kit",
       "traps",
       "lockpicks",
       "torch",
@@ -1467,6 +1481,217 @@ export const equipmentDatabase = {
     },
     materials: ["cloth", "leather"],
     description: "Tools and materials for convincing others",
+  },
+
+  // COMPREHENSIVE CLASS KITS
+  herbalist_kit: {
+    name: "Herbalist Kit",
+    type: "tool",
+    baseDurability: 90,
+    baseWeight: 8,
+    baseCost: 45,
+    skillBonuses: {
+      herbalism: 3,
+      healing: 2,
+      nature_magic: 1,
+      survival: 1,
+    },
+    materials: ["leather", "cloth", "wood", "iron"],
+    description:
+      "A comprehensive kit containing basket, scythe, leather gloves, herb bags, drying racks, mortar and pestle, and field guides for safe herb harvesting",
+  },
+  blacksmithing_kit: {
+    name: "Blacksmithing Kit",
+    type: "tool",
+    baseDurability: 95,
+    baseWeight: 15,
+    baseCost: 70,
+    skillBonuses: {
+      blacksmithing: 4,
+      mining: 1,
+    },
+    materials: ["iron", "steel", "leather"],
+    description:
+      "A complete forge kit with tongs, hammer, flint and steel, bellows, anvil tools, quenching tank, and metalworking implements",
+  },
+  alchemy_kit: {
+    name: "Alchemy Kit",
+    type: "tool",
+    baseDurability: 85,
+    baseWeight: 6,
+    baseCost: 55,
+    skillBonuses: {
+      alchemy: 4,
+      investigation: 1,
+    },
+    materials: ["glass", "silver", "crystal", "leather"],
+    description:
+      "A complete alchemical laboratory with alembic, mortar and pestle, phials, retort, distillation apparatus, and chemical components",
+  },
+  leatherworking_kit: {
+    name: "Leatherworking Kit",
+    type: "tool",
+    baseDurability: 80,
+    baseWeight: 5,
+    baseCost: 35,
+    skillBonuses: {
+      leatherworking: 4,
+      tailoring: 1,
+    },
+    materials: ["leather", "iron", "wood"],
+    description:
+      "A leatherworker's toolkit with awls, needles, thread, cutting knives, leather stamps, and tanning tools",
+  },
+  tailoring_kit: {
+    name: "Tailoring Kit",
+    type: "tool",
+    baseDurability: 75,
+    baseWeight: 3,
+    baseCost: 30,
+    skillBonuses: {
+      tailoring: 4,
+      leatherworking: 1,
+    },
+    materials: ["cloth", "thread", "wood", "iron"],
+    description:
+      "A tailor's complete kit with needles, thread, scissors, measuring tools, patterns, and fabric samples",
+  },
+  carpentry_kit: {
+    name: "Carpentry Kit",
+    type: "tool",
+    baseDurability: 90,
+    baseWeight: 8,
+    baseCost: 40,
+    skillBonuses: {
+      carpentry: 4,
+      stonework: 1,
+    },
+    materials: ["wood", "iron", "steel"],
+    description:
+      "A carpenter's toolkit with saws, chisels, planes, measuring tools, clamps, and woodworking implements",
+  },
+  trader_kit: {
+    name: "Trader Kit",
+    type: "tool",
+    baseDurability: 85,
+    baseWeight: 4,
+    baseCost: 50,
+    skillBonuses: {
+      bartering: 4,
+      investigation: 2,
+      persuasion: 1,
+    },
+    materials: ["wood", "iron", "glass", "leather"],
+    description:
+      "A merchant's kit with precision weights, measurement tools, inspection glasses, scales, coin scales, and appraisal tools",
+  },
+  dungeondiver_kit: {
+    name: "Dungeondiver Kit",
+    type: "tool",
+    baseDurability: 80,
+    baseWeight: 7,
+    baseCost: 45,
+    skillBonuses: {
+      lockpicking: 4,
+      trap_disarming: 3,
+      investigation: 2,
+      survival: 1,
+    },
+    materials: ["iron", "steel", "leather", "wood"],
+    description:
+      "A professional adventurer's kit with lockpicks, trap disarming tools, rope, grappling hook, torch, investigation tools, and survival gear",
+  },
+  explorer_kit: {
+    name: "Explorer Kit",
+    type: "tool",
+    baseDurability: 85,
+    baseWeight: 6,
+    baseCost: 35,
+    skillBonuses: {
+      navigation: 3,
+      survival: 2,
+      investigation: 2,
+      lore_knowledge: 1,
+    },
+    materials: ["leather", "cloth", "wood", "iron"],
+    description:
+      "An adventurer's kit with maps, compass, journal, rope, grappling hook, torch, lockpicks, and investigation tools",
+  },
+  geomancer_kit: {
+    name: "Geomancer Kit",
+    type: "tool",
+    baseDurability: 90,
+    baseWeight: 8,
+    baseCost: 60,
+    skillBonuses: {
+      earth_magic: 4,
+      mining: 2,
+      stonework: 1,
+    },
+    materials: ["stone", "crystal", "iron", "leather"],
+    description:
+      "A geomancer's toolkit with earth stones, crystal formations, geological hammer, stone chisels, mineral samples, and the Tome of Stonebinding",
+  },
+  pyromancer_kit: {
+    name: "Pyromancer Kit",
+    type: "tool",
+    baseDurability: 85,
+    baseWeight: 5,
+    baseCost: 65,
+    skillBonuses: {
+      fire_magic: 4,
+      alchemy: 2,
+      intimidation: 1,
+    },
+    materials: ["crystal", "phoenix_feathers", "cloth", "leather"],
+    description:
+      "A pyromancer's kit with reagents pouch, phoenix feathers, fire crystals, spellbook 'Tome of the Primal Flame', sulfur, charcoal, and flame-resistant gloves",
+  },
+  articaster_kit: {
+    name: "Articaster Kit",
+    type: "tool",
+    baseDurability: 80,
+    baseWeight: 4,
+    baseCost: 55,
+    skillBonuses: {
+      ice_magic: 4,
+      meditation: 2,
+      survival: 1,
+    },
+    materials: ["crystal", "frost_gem", "cloth", "leather"],
+    description:
+      "An articaster's kit with ice crystals, frost gems, frozen reagents, spellbook 'Tome of Eternal Winter', snow quartz, and cold-resistant containers",
+  },
+  necromancer_kit: {
+    name: "Necromancer Kit",
+    type: "tool",
+    baseDurability: 75,
+    baseWeight: 6,
+    baseCost: 70,
+    skillBonuses: {
+      death_magic: 4,
+      lore_knowledge: 2,
+      investigation: 1,
+    },
+    materials: ["bone", "skull", "cloth", "leather"],
+    description:
+      "A necromancer's kit with bone chalk, skull focus, death reagents, spellbook 'Tome of the Grave', grave dust, black candles, and bone-carved tools",
+  },
+  meditation_kit: {
+    name: "Meditation Kit",
+    type: "tool",
+    baseDurability: 85,
+    baseWeight: 3,
+    baseCost: 25,
+    skillBonuses: {
+      meditation: 3,
+      healing: 2,
+      divine_magic: 1,
+      nature_magic: 1,
+    },
+    materials: ["cloth", "leather", "wood", "crystal"],
+    description:
+      "A spiritual kit containing prayer beads, incense, meditation mat, candles, holy symbols, and sacred texts",
   },
 };
 

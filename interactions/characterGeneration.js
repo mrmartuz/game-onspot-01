@@ -2197,24 +2197,39 @@ export const equipmentAssignment = {
     if (martialClasses.includes(className)) {
       // Martial classes get whetstone
       equipment.tool = this.generateEquipmentItem("tool", "whetstone");
-    } else if (
-      crafterClasses.includes(className) ||
-      explorerClasses.includes(className) ||
-      mageClasses.includes(className)
-    ) {
-      // Crafters, explorers, and mages always get their class kit
-      if (
-        classData.equipmentPreferences.tool &&
-        classData.equipmentPreferences.tool.length > 0
-      ) {
-        const toolType =
-          classData.equipmentPreferences.tool[
-            Math.floor(
-              Math.random() * classData.equipmentPreferences.tool.length
-            )
-          ];
-        equipment.tool = this.generateEquipmentItem("tool", toolType);
+    } else if (crafterClasses.includes(className)) {
+      // Crafter classes get specialized kits based on their primary skill
+      if (className === "herbalist") {
+        equipment.tool = this.generateEquipmentItem("tool", "herbalist-kit");
+      } else if (className === "craftsman") {
+        equipment.tool = this.generateEquipmentItem(
+          "tool",
+          "blacksmithing-kit"
+        );
+      } else if (className === "alchemist") {
+        equipment.tool = this.generateEquipmentItem("tool", "alchemy-kit");
       }
+    } else if (explorerClasses.includes(className)) {
+      // Explorer classes get specialized kits
+      if (className === "dungeondiver") {
+        equipment.tool = this.generateEquipmentItem("tool", "dungeondiver-kit");
+      } else {
+        equipment.tool = this.generateEquipmentItem("tool", "explorer-kit");
+      }
+    } else if (mageClasses.includes(className)) {
+      // Mage classes get specialized kits based on their school
+      if (className === "geomancer") {
+        equipment.tool = this.generateEquipmentItem("tool", "geomancer-kit");
+      } else if (className === "pyromancer") {
+        equipment.tool = this.generateEquipmentItem("tool", "pyromancer-kit");
+      } else if (className === "articaster") {
+        equipment.tool = this.generateEquipmentItem("tool", "articaster-kit");
+      } else if (className === "necromancer") {
+        equipment.tool = this.generateEquipmentItem("tool", "necromancer-kit");
+      }
+    } else if (className === "monk" || className === "cleric") {
+      // Monks and clerics get meditation kit
+      equipment.tool = this.generateEquipmentItem("tool", "meditation-kit");
     } else if (
       classData.equipmentPreferences.tool &&
       classData.equipmentPreferences.tool.length > 0
