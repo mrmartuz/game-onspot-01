@@ -171,29 +171,68 @@ _Estimated Time: 2-3 days_
 - Refactor equipment display format to: `status material rarity [type]`
 - Update equipment generation to use new format
 - Implement proper equipment parsing and display
+- Create specialized class kits for realistic starting equipment
+- Implement starting equipment rules for different class types
 
 **Tasks:**
 
-- [ ] Refactor equipment format from "status,material,quality,type" to "status material rarity [type]"
-- [ ] Update equipment generation functions to use new format
-- [ ] Update equipment display in character preview
-- [ ] Implement equipment parsing for new format
-- [ ] Update equipment database structure if needed
+- [x] Refactor equipment format from "status,material,quality,type" to "status material rarity [type]"
+- [x] Update equipment generation functions to use new format
+- [x] Update equipment display in character preview
+- [x] Implement equipment parsing for new format
+- [x] Update equipment database structure if needed
+- [x] Add whetstone to tool items for martial classes
+- [x] Create comprehensive herbalist kit with harvesting tools
+- [x] Create specialized blacksmithing kit with forge tools
+- [x] Create specialized alchemy kit with laboratory equipment
+- [x] Create specialized leatherworking kit with crafting tools
+- [x] Create specialized tailoring kit with sewing tools
+- [x] Create specialized carpentry kit with woodworking tools
+- [x] Create trader kit with weights and measurement tools
+- [x] Create dungeondiver kit with lockpicking and trap tools
+- [x] Create specialized geomancer kit with earth magic components
+- [x] Create specialized pyromancer kit with fire magic components
+- [x] Create specialized articaster kit with ice magic components
+- [x] Create specialized necromancer kit with death magic components
+- [x] Create meditation kit for monks and clerics
+- [x] Implement starting equipment rules (all characters get clothes, only martial classes get armor)
+- [x] Update character generation to use specialized kits based on class
+- [x] Ensure crafters, explorers, and mages always get appropriate class kits
+- [x] Give martial classes whetstone as their tool
 
-**Questions to ask about each equipment part:**
-
-- **Status**: What are the different status levels? (e.g., breached, damaged, worn, intact, pristine)
-- **Material**: What materials should be available? (e.g., cloth, leather, oak, iron, steel, mithril)
-- **Rarity**: What rarity levels should exist? (e.g., poor, common, noble, legendary, mythic)
-- **Type**: What equipment types and specific items should be available? (e.g., [commoner-clothes], [crossbow], [survival-gear])
-
-**Example Format:**
+**Equipment Format Implemented:**
 
 ```
-armor: breached cloth poor [commoner-clothes]
-weapon: balanced oak noble [crossbow]
-tool: damaged wooden common [survival-gear]
+armor: intact iron common [chainmail-armor]
+weapon: pristine steel noble [longsword]
+tool: worn leather poor [herbalist-kit]
 ```
+
+**Specialized Class Kits Created:**
+
+- **Herbalist Kit**: Basket, scythe, gloves, herb bags, drying racks, mortar and pestle, field guides
+- **Blacksmithing Kit**: Tongs, hammer, flint and steel, bellows, anvil tools, quenching tank
+- **Alchemy Kit**: Alembic, mortar and pestle, phials, retort, distillation apparatus, chemical components
+- **Leatherworking Kit**: Awls, needles, thread, cutting knives, leather stamps, tanning tools
+- **Tailoring Kit**: Needles, thread, scissors, measuring tools, patterns, fabric samples
+- **Carpentry Kit**: Saws, chisels, planes, measuring tools, clamps, woodworking implements
+- **Trader Kit**: Precision weights, measurement tools, inspection glasses, scales, coin scales
+- **Dungeondiver Kit**: Lockpicks, trap disarming tools, rope, grappling hook, torch, investigation tools
+- **Geomancer Kit**: Earth stones, crystal formations, geological hammer, Tome of Stonebinding
+- **Pyromancer Kit**: Phoenix feathers, fire crystals, Tome of the Primal Flame, sulfur, charcoal
+- **Articaster Kit**: Ice crystals, frost gems, Tome of Eternal Winter, snow quartz
+- **Necromancer Kit**: Bone chalk, skull focus, Tome of the Grave, grave dust, black candles
+- **Meditation Kit**: Prayer beads, incense, meditation mat, candles, holy symbols, sacred texts
+
+**Starting Equipment Rules Implemented:**
+
+- ✅ All characters always start with clothes (guaranteed)
+- ✅ Only martial classes get basic armor (fighter, archer, brute, martial_artist, paladin, cleric, ranger, hunter, dungeondiver)
+- ✅ Crafters get specialized crafting kits (herbalist → herbalist kit, craftsman → blacksmithing kit, alchemist → alchemy kit)
+- ✅ Explorers get explorer kit (explorer, ranger, hunter) or dungeondiver kit (dungeondiver)
+- ✅ Mages get specialized magic school kits (geomancer → geomancer kit, pyromancer → pyromancer kit, etc.)
+- ✅ Monks and clerics get meditation kit
+- ✅ Martial classes get whetstone as their tool
 
 ---
 
@@ -689,7 +728,7 @@ _Estimated Time: 1-2 days_
 
 **Last Updated:** December 2024
 **Current Phase:** Phase 2 - Data Structure Migration
-**Overall Progress:** 17% Complete (Phase 1 of 6 phases)
+**Overall Progress:** 17% Complete (Phase 1 of 6 phases - Equipment System Refactoring Complete)
 
 ---
 
@@ -729,3 +768,41 @@ _Estimated Time: 1-2 days_
 - Comprehensive debug logging for troubleshooting
 - Improved code organization and function structure
 - Better integration between dialog system and character generation
+
+### **Equipment System Refactoring (December 2024)**
+
+**Completed Features:**
+
+- ✅ **Equipment Format Refactoring**: Updated from "status,material,quality,type" to "status material rarity [type]" format
+- ✅ **Specialized Class Kits**: Created 13 specialized equipment kits for different class types
+- ✅ **Starting Equipment Rules**: Implemented realistic starting equipment based on class specialization
+- ✅ **Magic School Kits**: Created unique kits for each magic school (geomancer, pyromancer, articaster, necromancer)
+- ✅ **Crafting Specialization**: Separated broad crafting into specialized kits (blacksmithing, alchemy, leatherworking, tailoring, carpentry)
+- ✅ **Professional Kits**: Added trader kit for bartering and dungeondiver kit for lockpicking/trap disarming
+
+**Equipment Kits Created:**
+
+- **Crafting Kits**: Herbalist, Blacksmithing, Alchemy, Leatherworking, Tailoring, Carpentry
+- **Professional Kits**: Trader, Dungeondiver, Meditation
+- **Magic School Kits**: Geomancer, Pyromancer, Articaster, Necromancer
+- **Exploration Kits**: Explorer (for general exploration classes)
+
+**Starting Equipment Rules:**
+
+- All characters guaranteed to start with clothes
+- Only martial classes receive armor (9 martial classes identified)
+- Each class type gets appropriate specialized kit
+- Martial classes receive whetstone as tool
+- Focused skill bonuses (+4 to primary skill instead of spread across multiple skills)
+
+**Files Modified:**
+
+- `interactions/equipment.js` - Added 13 specialized kits with unique components and skill bonuses
+- `interactions/characterGeneration.js` - Updated equipment generation logic for class-specific kits
+
+**Technical Improvements:**
+
+- Realistic equipment components for each profession
+- Thematic spellbooks for each magic school
+- Appropriate skill bonuses focused on primary class abilities
+- Balanced pricing based on kit complexity and materials
