@@ -134,7 +134,7 @@ function calculateDetectionBonus() {
     const tracking = member.skills?.tracking || 0;
     const investigation = member.skills?.investigation || 0;
     const navigation = member.skills?.navigation || 0;
-    
+
     // Each skill level adds detection bonus (0.1 per level)
     detectionBonus += Math.floor(scouting * 0.1);
     detectionBonus += Math.floor(tracking * 0.1);
@@ -188,12 +188,12 @@ function calculateStealthModifier() {
     const stealth = member.skills?.stealth || 0;
     const scouting = member.skills?.scouting || 0;
     const acrobatics = member.skills?.acrobatics || 0;
-    
+
     // Stealth skills provide positive modifier
     stealthModifier += Math.floor(stealth * 0.1);
     stealthModifier += Math.floor(scouting * 0.05);
     stealthModifier += Math.floor(acrobatics * 0.05);
-    
+
     // Heavy armor or equipment might reduce stealth
     const armor = member.equipment?.armor || "";
     if (armor.includes("plate") || armor.includes("chainmail")) {
@@ -211,7 +211,7 @@ function calculateClassCombatBonus() {
   gameState.group.forEach((member) => {
     const className = member.class;
     const classData = getClassByName(className);
-    
+
     if (classData) {
       // Add bonuses based on class rarity and combat focus
       switch (classData.rarity) {
@@ -231,9 +231,19 @@ function calculateClassCombatBonus() {
           classBonus += 3.0; // Massive bonus for mythic classes
           break;
       }
-      
+
       // Additional bonuses for combat-focused classes
-      const combatClasses = ["fighter", "archer", "brute", "monk", "cleric", "paladin", "martial_artist", "ranger", "dungeondiver"];
+      const combatClasses = [
+        "fighter",
+        "archer",
+        "brute",
+        "monk",
+        "cleric",
+        "paladin",
+        "martial_artist",
+        "ranger",
+        "dungeondiver",
+      ];
       if (combatClasses.includes(className)) {
         classBonus += 0.5; // Extra bonus for combat classes
       }
@@ -912,9 +922,11 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
     const tracking = member.skills?.tracking || 0;
     const investigation = member.skills?.investigation || 0;
     const navigation = member.skills?.navigation || 0;
-    
+
     // Consider someone a scout if they have relevant skills at level 2 or higher
-    return scouting >= 2 || tracking >= 2 || investigation >= 2 || navigation >= 2;
+    return (
+      scouting >= 2 || tracking >= 2 || investigation >= 2 || navigation >= 2
+    );
   });
 
   let enemyDescription = "";
@@ -1092,7 +1104,8 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
           }
 
           // Player attempts to flee
-          const combatBonus = getGroupBonus("combat") + calculateClassCombatBonus();
+          const combatBonus =
+            getGroupBonus("combat") + calculateClassCombatBonus();
           const fleeChance = 0.6 + combatBonus * 0.1;
           const fleeRoll = Math.random();
           console.log(
@@ -1269,7 +1282,8 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
           }
 
           // Player attempts to flee
-          const combatBonus = getGroupBonus("combat") + calculateClassCombatBonus();
+          const combatBonus =
+            getGroupBonus("combat") + calculateClassCombatBonus();
           const fleeChance = 0.6 + combatBonus * 0.1;
           const fleeRoll = Math.random();
           console.log(
