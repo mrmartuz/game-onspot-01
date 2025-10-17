@@ -5,6 +5,7 @@ import { updateStatus } from "../rendering.js";
 import { logEvent } from "../time_system.js";
 import { getTile } from "../rendering/tile.js";
 import { checkDeath } from "../utils.js";
+import { getClassByName } from "./combat/classes.js";
 
 // Combat entity classes
 class CombatEntity {
@@ -128,24 +129,17 @@ function calculateDetectionBonus() {
   let detectionBonus = 0;
 
   gameState.group.forEach((member) => {
-    const cleanRole = member.role.replace(/[^\w-]/g, "");
-    switch (cleanRole) {
-      case "native-guide":
-        detectionBonus += 3; // High detection
-        break;
-      case "guard":
-        detectionBonus += 2; // Medium detection
-        break;
-      case "biologist":
-        detectionBonus += 2; // Medium detection
-        break;
-      case "explorer":
-        detectionBonus += 3; // High detection
-        break;
-      case "navigator":
-        detectionBonus += 2; // Medium detection
-        break;
-    }
+    // Use skills instead of roles for detection bonus
+    const scouting = member.skills?.scouting || 0;
+    const tracking = member.skills?.tracking || 0;
+    const investigation = member.skills?.investigation || 0;
+    const navigation = member.skills?.navigation || 0;
+    
+    // Each skill level adds detection bonus (0.1 per level)
+    detectionBonus += Math.floor(scouting * 0.1);
+    detectionBonus += Math.floor(tracking * 0.1);
+    detectionBonus += Math.floor(investigation * 0.1);
+    detectionBonus += Math.floor(navigation * 0.1);
   });
 
   return detectionBonus;
@@ -190,23 +184,63 @@ function calculateStealthModifier() {
   let stealthModifier = 0;
 
   gameState.group.forEach((member) => {
-    const cleanRole = member.role.replace(/[^\w-]/g, "");
-    switch (cleanRole) {
-      case "carrier":
-      case "medic":
-      case "cook":
-      case "biologist":
-      case "geologist":
-        stealthModifier -= 1; // Noisy members
-        break;
-      case "native-guide":
-      case "explorer":
-        stealthModifier += 1; // Stealthy members
-        break;
+    // Use skills instead of roles for stealth modifier
+    const stealth = member.skills?.stealth || 0;
+    const scouting = member.skills?.scouting || 0;
+    const acrobatics = member.skills?.acrobatics || 0;
+    
+    // Stealth skills provide positive modifier
+    stealthModifier += Math.floor(stealth * 0.1);
+    stealthModifier += Math.floor(scouting * 0.05);
+    stealthModifier += Math.floor(acrobatics * 0.05);
+    
+    // Heavy armor or equipment might reduce stealth
+    const armor = member.equipment?.armor || "";
+    if (armor.includes("plate") || armor.includes("chainmail")) {
+      stealthModifier -= 1; // Heavy armor is noisy
     }
   });
 
   return stealthModifier;
+}
+
+// Class-based combat bonuses
+function calculateClassCombatBonus() {
+  let classBonus = 0;
+
+  gameState.group.forEach((member) => {
+    const className = member.class;
+    const classData = getClassByName(className);
+    
+    if (classData) {
+      // Add bonuses based on class rarity and combat focus
+      switch (classData.rarity) {
+        case "common":
+          classBonus += 0.5; // Small bonus for common classes
+          break;
+        case "uncommon":
+          classBonus += 1.0; // Medium bonus for uncommon classes
+          break;
+        case "rare":
+          classBonus += 1.5; // Large bonus for rare classes
+          break;
+        case "legendary":
+          classBonus += 2.0; // Very large bonus for legendary classes
+          break;
+        case "mythic":
+          classBonus += 3.0; // Massive bonus for mythic classes
+          break;
+      }
+      
+      // Additional bonuses for combat-focused classes
+      const combatClasses = ["fighter", "archer", "brute", "monk", "cleric", "paladin", "martial_artist", "ranger", "dungeondiver"];
+      if (combatClasses.includes(className)) {
+        classBonus += 0.5; // Extra bonus for combat classes
+      }
+    }
+  });
+
+  return Math.floor(classBonus);
 }
 
 // Initiative system
@@ -873,10 +907,14 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
   // Determine enemy visibility based on group composition
   const outnumbered = allies.length < monsters.length;
   const hasScouts = gameState.group.some((member) => {
-    const cleanRole = member.role.replace(/[^\w-]/g, "");
-    return ["explorer", "biologist", "native-guide", "navigator"].includes(
-      cleanRole
-    );
+    // Use skills instead of roles to determine if group has scouts
+    const scouting = member.skills?.scouting || 0;
+    const tracking = member.skills?.tracking || 0;
+    const investigation = member.skills?.investigation || 0;
+    const navigation = member.skills?.navigation || 0;
+    
+    // Consider someone a scout if they have relevant skills at level 2 or higher
+    return scouting >= 2 || tracking >= 2 || investigation >= 2 || navigation >= 2;
   });
 
   let enemyDescription = "";
@@ -1054,7 +1092,8 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
           }
 
           // Player attempts to flee
-          const fleeChance = 0.6 + getGroupBonus("combat") * 0.1;
+          const combatBonus = getGroupBonus("combat") + calculateClassCombatBonus();
+          const fleeChance = 0.6 + combatBonus * 0.1;
           const fleeRoll = Math.random();
           console.log(
             `Round ${turnCount} - Flee chance: ${fleeChance.toFixed(
@@ -1230,7 +1269,8 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
           }
 
           // Player attempts to flee
-          const fleeChance = 0.6 + getGroupBonus("combat") * 0.1;
+          const combatBonus = getGroupBonus("combat") + calculateClassCombatBonus();
+          const fleeChance = 0.6 + combatBonus * 0.1;
           const fleeRoll = Math.random();
           console.log(
             `Round ${turnCount} - Flee chance: ${fleeChance.toFixed(

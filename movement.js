@@ -7,6 +7,7 @@ import {
   addCachedTile,
   generateTile,
 } from "./gamestate/gameStateSetGet.js";
+import { getNavigationBonus } from "./interactions/skills.js";
 
 export function move(dx, dy) {
   if (gameState.cooldown) return;
@@ -18,23 +19,48 @@ export function move(dx, dy) {
   let tile = getTile(tx, ty);
   let navigationBonus = getGroupBonus("navigation");
 
-  // Apply terrain-specific navigation bonuses
-  gameState.group.forEach((g) => {
-    const cleanRole = g.role.replace(/[^\w-]/g, "");
-    if (
-      cleanRole === "navigator" &&
-      tile.terrain === "dirt" &&
-      tile.flora < 6
-    ) {
-      navigationBonus += 0.2;
-    } else if (cleanRole === "native-guide" && tile.flora >= 6) {
-      navigationBonus += 0.2;
-    } else if (
-      cleanRole === "explorer" &&
-      tile.location !== "none" &&
-      tile.flora < 3
-    ) {
-      navigationBonus += 0.2;
+  // Apply skill-based navigation bonuses from all group members
+  gameState.group.forEach((member) => {
+    if (member.skills) {
+      const memberNavigationBonus = getNavigationBonus(member.skills);
+      navigationBonus += memberNavigationBonus;
+    }
+  });
+
+  // Apply terrain-specific bonuses based on character skills
+  gameState.group.forEach((member) => {
+    if (member.skills) {
+      // Navigation skill helps on all terrain
+      if (member.skills.navigation && member.skills.navigation > 0) {
+        navigationBonus += member.skills.navigation * 0.01; // 1% per skill level
+      }
+
+      // Cartography helps with complex terrain
+      if (
+        member.skills.cartography &&
+        member.skills.cartography > 0 &&
+        tile.inclination > 3
+      ) {
+        navigationBonus += member.skills.cartography * 0.015; // 1.5% per skill level on steep terrain
+      }
+
+      // Survival helps in harsh environments
+      if (
+        member.skills.survival &&
+        member.skills.survival > 0 &&
+        tile.flora > 5
+      ) {
+        navigationBonus += member.skills.survival * 0.01; // 1% per skill level in dense flora
+      }
+
+      // Climbing helps with elevation changes
+      if (
+        member.skills.climbing &&
+        member.skills.climbing > 0 &&
+        tile.inclination > 2
+      ) {
+        navigationBonus += member.skills.climbing * 0.02; // 2% per skill level on slopes
+      }
     }
   });
 

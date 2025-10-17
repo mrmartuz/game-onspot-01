@@ -10,6 +10,7 @@ import { logEvent } from "../time_system.js";
 import { getMaxStorage } from "../utils.js";
 import { updateGroupBonus } from "../utils.js";
 import { getSaveGameDialog } from "../interactions.js";
+import { recruitmentDialog } from "./recruitmentDialog.js";
 
 export async function handleChoice(choice, tile) {
   if (choice === "close") {
@@ -167,140 +168,39 @@ export async function handleChoice(choice, tile) {
       }
     }
   } else if (choice === "4") {
-    // Hire
-    // Apply interact bonus for hiring discounts
-    let number_of_hires = 0;
-    let interactBonus = getGroupBonus("interact");
-    let hireDiscount = Math.min(0.4, interactBonus * 0.6); // Up to 40% discount on hiring
-    if (
-      tile.entity === "caravan" ||
-      tile.entity === "group" ||
-      ["outpost", "farm"].includes(tile.location)
-    ) {
-      number_of_hires = Math.floor(Math.random() * 2) + 2;
-    } else if (
-      tile.entity === "army" ||
-      ["hamlet", "village", "city"].includes(tile.location)
-    ) {
-      number_of_hires = Math.floor(Math.random() * 4) + 3;
-    } else {
-      number_of_hires = Math.floor(Math.random() * 2) + 1;
+    // Recruitment Board
+    const result = await recruitmentDialog.showRecruitmentDialog(
+      tile.location,
+      gameState.px,
+      gameState.py
+    );
+
+    if (result === "recruitment_successful") {
+      logEvent(`🧍🏻 Recruited character from ${tile.location}`);
+      updateGroupBonus(); // Update group bonuses after recruitment
+    } else if (result === "refresh") {
+      // Refresh characters and show dialog again
+      const refreshResult = await recruitmentDialog.showRecruitmentDialog(
+        tile.location,
+        gameState.px,
+        gameState.py
+      );
+      if (refreshResult === "recruitment_successful") {
+        logEvent(`🧍🏻 Recruited character from ${tile.location}`);
+        updateGroupBonus();
+      }
     }
-    let hiring = true;
-    while (hiring) {
-      const roles = [
-        "native-guide🧭",
-        "cook🍞",
-        "guard⚔️",
-        "geologist🪵",
-        "biologist🌱",
-        "translator🤝",
-        "carrier📦",
-        "medic❤️",
-        "navigator👁️",
-        "explorer🔍",
-      ];
-      let hires = [];
-      for (let i = 0; i < number_of_hires; i++) {
-        let type = "button";
-        let r = roles[Math.floor(Math.random() * roles.length)];
-        let baseCost = 50 + Math.floor(Math.random() * 50);
-        let actualCost = Math.floor(baseCost * (1 - hireDiscount));
+  } else if (choice === "recruit_special") {
+    // Special location recruitment
+    const result = await recruitmentDialog.showSpecialLocationRecruitmentDialog(
+      tile.location,
+      gameState.px,
+      gameState.py
+    );
 
-        // 15% chance for enhanced personal bonus
-        // Phase 2.1 Migration: Enhanced bonus system removed - now using character generation
-        let hasEnhancedBonus = false; // Disabled for migration
-        let enhancedBonus = null;
-        let upgradeCost = 0;
-
-        let label = `${i + 1}: ${r} for ${actualCost}g`;
-        if (hasEnhancedBonus) {
-          label += ` ⭐ (Enhanced: +${enhancedBonus.value} ${enhancedBonus.type})`;
-        }
-
-        hires.push({
-          type: type,
-          label: label,
-          value: (i + 1).toString(),
-          baseCost,
-          actualCost,
-          hasEnhancedBonus,
-          enhancedBonus,
-          upgradeCost,
-        });
-      }
-      hires.push({ type: "button", label: "❌ Close", value: "close" });
-
-      let c = await getShowChoiceDialog("Hire options:", hires);
-      if (c === "close") {
-        hiring = false;
-        continue;
-      }
-
-      if (
-        c &&
-        c !== "close" &&
-        !isNaN(parseInt(c)) &&
-        parseInt(c) >= 1 &&
-        parseInt(c) <= number_of_hires
-      ) {
-        let idx = parseInt(c) - 1;
-        let hire = hires[idx];
-        let role = hire.label.split(": ")[1].split(" for ")[0];
-        let baseCost = hire.baseCost;
-        let actualCost = hire.actualCost;
-
-        if (hire.hasEnhancedBonus) {
-          // Show upgrade choice dialog
-          let upgradeChoice = await getShowChoiceDialog(
-            `🌟 **Enhanced Character Available!** 🌟\n\n` +
-              `Role: ${role}\n` +
-              `Enhanced Bonus: +${hire.enhancedBonus.value} ${hire.enhancedBonus.type}\n` +
-              `Speciality: ${hire.enhancedBonus.description}\n\n` +
-              `**Options:**\n` +
-              `1. Hire Basic: ${actualCost}g\n` +
-              `2. Hire Enhanced: ${actualCost + hire.upgradeCost}g (+${
-                hire.upgradeCost
-              }g upgrade)\n` +
-              `3. Cancel`,
-            [
-              {
-                type: "button",
-                label: `Basic Hire (${actualCost}g)`,
-                value: "basic",
-              },
-              {
-                type: "button",
-                label: `Enhanced Hire (${actualCost + hire.upgradeCost}g)`,
-                value: "enhanced",
-              },
-              { type: "button", label: "❌ Cancel", value: "cancel" },
-            ]
-          );
-
-          if (upgradeChoice === "cancel") {
-            continue;
-          }
-
-          if (upgradeChoice === "enhanced") {
-            // Phase 2.1 Migration: Enhanced hiring disabled - use character generation instead
-            console.log("Enhanced hiring disabled during Phase 2.1 migration");
-            continue;
-          } else {
-            // Basic hire - Phase 2.1 Migration: Disabled old role-based hiring
-            console.log(
-              "Old role-based hiring disabled during Phase 2.1 migration"
-            );
-            continue;
-          }
-        } else {
-          // Regular hire without enhanced bonus - Phase 2.1 Migration: Disabled old role-based hiring
-          console.log(
-            "Old role-based hiring disabled during Phase 2.1 migration"
-          );
-          continue;
-        }
-      }
+    if (result === "recruitment_successful") {
+      logEvent(`🧍🏻 Recruited character from ${tile.location}`);
+      updateGroupBonus();
     }
   } else if (choice === "5") {
     // Sell discoveries

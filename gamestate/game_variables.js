@@ -30,6 +30,10 @@ export const gameState = {
   playerCharacter: null, // Full character object for the player (separate from group)
   group: [], // Array of full character objects for NPC companions only
 
+  // NPC Character Storage System - Phase 3.1.8 Persistent Character Storage
+  npcCharacters: [], // Array of NPC character objects with position and persistence data
+  // Structure: [{ character: {...}, position: {x, y, locationType}, migrationCount: 0, isPersistent: false }]
+
   groupBonus: {
     navigation: 0,
     discovery: 0,

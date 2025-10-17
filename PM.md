@@ -298,22 +298,108 @@ _Estimated Time: 1-2 days_
 
 _Estimated Time: 2-3 days_
 
-### **3.1 Group Creation Dialog Update**
+### **3.1 Recruitment System Implementation**
 
-**File:** `interactions/groupCreationDialog.js`
-**Dependencies:** Character Generation, Classes
+**File:** `interactions/recruitmentSystem.js` (new)
+**Dependencies:** Character Generation, Classes, Time System
 **Deliverables:**
 
-- Character selection interface
-- Class preview system
-- Stat preview before recruitment
+- Location-based character recruitment system
+- Character description system based on highest/lowest stats
+- Time-based character availability with refresh mechanics
+- Recruitment cost system with gold and item requirements
+- Level-based recruitment restrictions
+
+**Major Tasks:**
+
+- [x] **3.1.1 Character Description System**
+
+  - [x] Create stat description mappings for >12, >16, <8 thresholds
+  - [x] Implement character description generation: "You find yourself in front of a [highest_stat_desc] [race] [gender], he/she is a [second-highest_stat_desc] [class]. His/her expertise lies in [skill1] and [skill2]. He/she wears [armor/cloth] and brandishes [1h weapon/2h weapon]"
+  - [x] Add race, gender, class, and level information to descriptions
+  - [x] Create description templates and formatting system
+  - [x] Show 2 highest skills with descriptions (good >4, expert >7, master >10)
+
+- [x] **3.1.2 Location-Based Character Generation**
+
+  - [x] Define location types and their associated class probabilities
+  - [x] Implement context-based character generation (Army/Military, Villages/Farms, Cities, Traders, Religious, Wilderness)
+  - [x] Add rarity restrictions (common/uncommon only for now)
+  - [x] Create outlier character generation (rare classes in unexpected locations)
+  - [x] Add special location recruitment (5% chance for most locations, 1% for peaks)
+  - [x] Implement special location character generation (common/uncommon medium level, rare low level)
+
+- [x] **3.1.3 Time-Based Character Availability System**
+
+  - [x] Implement character ID timestamp parsing for availability tracking
+  - [x] Create location-specific refresh timers (Cities: 1 week 30%, 2 weeks 40%, 3 weeks 50%, etc. up to 90%)
+  - [x] Add probability-based character departure system with escalating percentages
+  - [x] Implement character migration to other locations (keep same stats and name, update timestamp)
+  - [x] Create character removal system for expired recruits
+  - [x] Add special location character migration (100% departure after 1 week)
+
+- [x] **3.1.4 Recruitment Cost System**
+  - [x] Define base gold costs (Level 1: 50g, Level 2: 120g, Level 3: 250g, etc.)
+  - [x] Implement cost multipliers (Uncommon: 2x, Rare: 4x with special items)
+  - [x] Add item requirements for rare classes (tomes for mages, relics for paladins)
+  - [x] Create level-based cost scaling system
+  - [x] Implement payment tracking and character loyalty system
+
+**Minor Tasks:**
+
+- [ ] **3.1.5 Recruitment Interface**
+
+  - [x] Create recruitment board dialog with 4 character slots (all visible at once)
+  - [x] Implement character preview cards with name, sex, class, description
+  - [x] Add recruitment buttons with cost display (only one recruitment allowed)
+  - [x] Create character selection and payment confirmation
+  - [x] Add "refresh" option for new character generation
+  - [x] Integrate recruitment board with location interactions (visible when arriving at locations with recruits)
+  - [x] Add special location recruitment as first button in location dialog
+
+- [ ] **3.1.6 Level Restriction System**
+
+  - [x] Implement player character level-based recruitment restrictions
+  - [x] Add error message for over-level recruitment attempts ("You are not so strong/smart/important to work with me")
+  - [x] Create level validation system
+  - [x] Add level display in character previews
+
+- [x] **3.1.7 Integration with Existing Systems**
+
+  - [x] Replace current group creation dialog with recruitment system
+  - [x] Update gameState.group structure to use new character objects
+  - [x] Integrate with existing character generation system
+  - [x] Update group bonus calculations for new character format
+  - [x] Remove backward compatibility with old role-based system
+
+- [x] **3.1.8 Persistent Character Storage System**
+  - [x] Implement NPC character storage in gameState.npcCharacters array
+  - [x] Add deterministic character generation using hash() and game date
+  - [x] Implement character persistence with position tracking (x, y, locationType)
+  - [x] Add character migration system with improvement rolls
+  - [x] Implement persistent character system (migrated >1 times become permanent)
+  - [x] Add location-specific character counts (camp: 1-2, farm: 2-3, outpost: 2-3, hamlet: 3-4, village: 4-5, city: 4-6)
+  - [x] Implement character refresh logic based on creation date and refresh intervals
+  - [x] Add character migration probability system (cities: 50%, others: 30%)
+  - [x] Implement character improvement during migration (20% level gain, 15% stat improvement, 10% skill improvement)
+  - [x] Add save/load system integration with character cleanup
+
+### **3.2 Group Creation Dialog Replacement**
+
+**File:** `interactions/groupCreationDialog.js`
+**Dependencies:** Recruitment System
+**Deliverables:**
+
+- Complete replacement of role-based system
+- Integration with new recruitment system
+- Updated group management interface
 
 **Tasks:**
 
-- [ ] Replace role buttons with class selection
-- [ ] Add character preview (stats, skills, equipment)
-- [ ] Implement character generation in dialog
-- [ ] Add character customization options
+- [ ] Replace role buttons with recruitment system integration
+- [ ] Update group display to show character objects instead of roles
+- [ ] Add character management options (view stats, equipment, history)
+- [ ] Implement group size management and cost tracking
 
 ### **3.2 Health Group Dialog Update**
 
@@ -548,7 +634,7 @@ _Estimated Time: 1-2 days_
 
 ```javascript
 {
-  id: "char_001",
+  id: "char_1703123456789_123", // Timestamp-based ID for availability tracking
   firstName: "Marcus",
   lastName: "Ironhand",
   gender: "male",
@@ -565,12 +651,250 @@ _Estimated Time: 1-2 days_
   },
   health: { current: 45, max: 50 },
   equipment: {
-    armor: "intact,iron,noble,chainmail",
-    weapon: "intact,steel,common,longsword",
-    tool: "worn,leather,poor,backpack"
+    armor: "intact iron noble [chainmail-armor]",
+    weapon: "intact steel common [longsword]",
+    tool: "worn leather poor [backpack]"
   },
-  history: "Marcus joined the group after proving his worth in the tavern brawl..."
+  history: "Marcus joined the group after proving his worth in the tavern brawl...",
+  recruitmentCost: { gold: 50, items: [] },
+  locationAvailability: {
+    locationType: "city",
+    availableUntil: "2024-12-15T00:00:00Z",
+    refreshDate: "2024-12-01T00:00:00Z"
+  }
 }
+```
+
+### **NPC Character Storage Data Structure**
+
+```javascript
+// gameState.npcCharacters array structure
+[
+  {
+    character: {
+      // Full character object as defined above
+      id: "char_1703123456789_123",
+      firstName: "Marcus",
+      lastName: "Ironhand",
+      // ... all character properties
+    },
+    position: {
+      x: 15, // Map X coordinate
+      y: 23, // Map Y coordinate
+      locationType: "city", // Location type (city, village, etc.)
+    },
+    migrationCount: 0, // Number of times character has migrated
+    isPersistent: false, // Whether character is permanent (migrated >1 times)
+  },
+];
+```
+
+### **Character Migration Data Structure**
+
+```javascript
+// Character improvement during migration
+{
+  levelGain: {
+    probability: 0.2,          // 20% chance
+    amount: 1                  // Gain 1 level
+  },
+  statImprovement: {
+    probability: 0.15,         // 15% chance
+    amount: 1,                 // Improve random stat by 1
+    stats: ["STR", "DEX", "CON", "INT", "WIS", "CHA"] // Excludes LUCK
+  },
+  skillImprovement: {
+    probability: 0.1,         // 10% chance
+    amount: 0.5                // Improve random skill by 0.5
+  }
+}
+```
+
+### **Recruitment System Data Structure**
+
+```javascript
+// Location-based character availability
+const locationCharacterAvailability = {
+  city: {
+    refreshInterval: 14, // days
+    classProbabilities: {
+      alchemist: 0.15,
+      craftsman: 0.15,
+      explorer: 0.12,
+      dungeondiver: 0.12,
+      hunter: 0.1,
+      herbalist: 0.1,
+      cleric: 0.08,
+      monk: 0.08,
+      paladin: 0.05, // rare
+      pyromancer: 0.03, // rare
+      articaster: 0.02, // rare
+    },
+  },
+  village: {
+    refreshInterval: 90, // days
+    classProbabilities: {
+      herbalist: 0.2,
+      craftsman: 0.18,
+      hunter: 0.15,
+      ranger: 0.15,
+      fighter: 0.12,
+      dungeondiver: 0.1,
+      brute: 0.1,
+    },
+  },
+  army: {
+    refreshInterval: 90, // days
+    classProbabilities: {
+      fighter: 0.25,
+      archer: 0.2,
+      brute: 0.15,
+      paladin: 0.12,
+      martial_artist: 0.1,
+      pyromancer: 0.08, // rare combat mage
+      articaster: 0.05, // rare combat mage
+      cleric: 0.05,
+    },
+  },
+  // Special locations with rare recruitment opportunities
+  waterfalls: {
+    refreshInterval: 180, // days
+    recruitmentChance: 0.05, // 5% chance to find recruitable character
+    classProbabilities: {
+      ranger: 0.4,
+      explorer: 0.3,
+      herbalist: 0.2,
+      monk: 0.1,
+    },
+  },
+  volcano: {
+    refreshInterval: 180, // days
+    recruitmentChance: 0.05, // 5% chance to find recruitable character
+    classProbabilities: {
+      pyromancer: 0.5,
+      fighter: 0.3,
+      explorer: 0.2,
+    },
+  },
+  canyon: {
+    refreshInterval: 180, // days
+    recruitmentChance: 0.05, // 5% chance to find recruitable character
+    classProbabilities: {
+      ranger: 0.4,
+      hunter: 0.3,
+      explorer: 0.2,
+      dungeondiver: 0.1,
+    },
+  },
+  geyser: {
+    refreshInterval: 180, // days
+    recruitmentChance: 0.05, // 5% chance to find recruitable character
+    classProbabilities: {
+      herbalist: 0.4,
+      alchemist: 0.3,
+      explorer: 0.2,
+      monk: 0.1,
+    },
+  },
+  "monster caves": {
+    refreshInterval: 180, // days
+    recruitmentChance: 0.05, // 5% chance to find recruitable character
+    classProbabilities: {
+      dungeondiver: 0.4,
+      fighter: 0.3,
+      necromancer: 0.2,
+      brute: 0.1,
+    },
+  },
+  cave: {
+    refreshInterval: 180, // days
+    recruitmentChance: 0.05, // 5% chance to find recruitable character
+    classProbabilities: {
+      dungeondiver: 0.4,
+      explorer: 0.3,
+      fighter: 0.2,
+      necromancer: 0.1,
+    },
+  },
+  ruin: {
+    refreshInterval: 180, // days
+    recruitmentChance: 0.05, // 5% chance to find recruitable character
+    classProbabilities: {
+      explorer: 0.4,
+      dungeondiver: 0.3,
+      necromancer: 0.2,
+      alchemist: 0.1,
+    },
+  },
+};
+
+// Character description system
+const statDescriptions = {
+  high: {
+    12: {
+      STR: ["Strong", "Muscular", "Brawny"],
+      DEX: ["Agile", "Nimble", "Deft"],
+      CON: ["Hardy", "Sturdy", "Resilient"],
+      INT: ["Clever", "Sharp", "Astute"],
+      WIS: ["Wise", "Prudent", "Insightful"],
+      CHA: ["Charismatic", "Charming", "Eloquent"],
+    },
+    16: {
+      STR: ["Massive", "Titanic", "Herculean"],
+      DEX: ["Swift", "Blinding", "Feline"],
+      CON: ["Ironclad", "Unbreakable", "Enduring"],
+      INT: ["Genius", "Brilliant", "Visionary"],
+      WIS: ["Sage", "Prophetic", "Enlightened"],
+      CHA: ["Magnetic", "Radiant", "Commanding"],
+    },
+  },
+  low: {
+    8: {
+      STR: ["Weak", "Frail", "Feeble"],
+      DEX: ["Clumsy", "Slow", "Awkward"],
+      CON: ["Fragile", "Delicate", "Vulnerable"],
+      INT: ["Dull", "Simple", "Naive"],
+      WIS: ["Foolish", "Reckless", "Unwise"],
+      CHA: ["Uncharismatic", "Repulsive", "Offensive"],
+    },
+  },
+};
+
+// Skill description thresholds
+const skillDescriptions = {
+  good: 4, // Skill > 4: "good [skillname]"
+  expert: 7, // Skill > 7: "expert [skillname]"
+  master: 10, // Skill > 10: "master [skillname]"
+};
+
+// Character description template
+const characterDescriptionTemplate =
+  "You find yourself in front of a [highest_stat_desc] [race] [gender], he/she is a [second_highest_stat_desc] [class]. His/her expertise lies in [skill1] and [skill2]. He/she wears [armor/cloth] and brandishes [1h_weapon/2h_weapon]";
+
+// Recruitment cost system
+const recruitmentCosts = {
+  baseCosts: {
+    1: 50, // Level 1: 50 gold
+    2: 120, // Level 2: 120 gold
+    3: 250, // Level 3: 250 gold
+    4: 500, // Level 4: 500 gold
+    5: 1000, // Level 5: 1000 gold
+  },
+  rarityMultipliers: {
+    common: 1.0,
+    uncommon: 2.0,
+    rare: 4.0,
+    legendary: 8.0,
+  },
+  rareItemRequirements: {
+    pyromancer: ["tome_of_fire", "phoenix_feather"],
+    articaster: ["tome_of_ice", "frost_crystal"],
+    geomancer: ["tome_of_earth", "earth_stone"],
+    necromancer: ["tome_of_death", "skull_focus"],
+    paladin: ["holy_relic", "divine_blessing"],
+    cleric: ["sacred_symbol", "holy_water"],
+  },
+};
 ```
 
 ### **Class System**
@@ -612,10 +936,67 @@ _Estimated Time: 1-2 days_
 - **Material:** cloth, leather, iron, steel, silver, gold, mithril
 - **Quality:** poor, common, noble, legendary, mythic
 - **Type:** armor, weapon, tool, accessory
-- **Format:** "status,material,quality,type" (e.g., "intact,iron,noble,chainmail")
+- **Format:** "status material rarity [type]" (e.g., "intact iron noble [chainmail-armor]")
 - **Skill Kits:** 48+ skill-specific equipment items providing skill bonuses
 - **Player Starting Equipment:** clothes + weapon + 1 skill kit (based on class)
 - **NPC Equipment:** Random equipment based on class preferences
+
+### **Recruitment System**
+
+- **Location Types:** city, village, army, trader, religious, wilderness, waterfalls, volcano, canyon, geyser, peaks, monster caves, cave, ruin
+- **Character Availability:** Time-based with location-specific refresh intervals (Cities: 1 week 30%, 2 weeks 40%, 3 weeks 50%, etc. up to 90%)
+- **Character Descriptions:** "You find yourself in front of a [highest_stat_desc] [race] [gender], he/she is a [second_highest_stat_desc] [class]. His/her expertise lies in [skill1] and [skill2]. He/she wears [armor/cloth] and brandishes [1h_weapon/2h_weapon]"
+- **Skill Descriptions:** Show 2 highest skills with descriptions (good >4, expert >7, master >10)
+- **Recruitment Costs:** Level-based gold costs (Level 1: 50g, Level 2: 120g, Level 3: 250g) with rarity multipliers (Uncommon: 2x, Rare: 4x with special items)
+- **Level Restrictions:** Players can only recruit characters of equal or lower level (based on player character level)
+- **Character Migration:** Expired characters keep same stats and name, update timestamp when moving to other locations
+- **Recruitment Interface:** Show all 4 characters at once, allow only one recruitment per visit
+- **Special Locations:** Rare recruitment opportunities (5% chance for most locations, 1% for peaks) with location-flavored classes
+- **Special Location Migration:** Characters in special locations depart 100% after 1 week
+- **Integration:** Recruitment board visible when arriving at locations with recruits, special location recruitment as first button in location dialog
+
+### **Persistent Character Storage System**
+
+- **Storage Structure:** `gameState.npcCharacters` array containing objects with character data, position, migration count, and persistence status
+- **Deterministic Generation:** Characters generated using `hash(x, y, gameDate)` for consistent results across game sessions
+- **Position Tracking:** Each character stored with `{x, y, locationType}` coordinates for location-based retrieval
+- **Character Counts by Location:**
+  - **Camp (⛺):** 1-2 characters (hunters, rangers, fighters, dungeondivers)
+  - **Farm (🏡):** 2-3 characters (herbalists, craftsmen, hunters, rangers)
+  - **Outpost (🏕️):** 2-3 characters (fighters, archers, hunters, rangers, dungeondivers)
+  - **Hamlet (🏠):** 3-4 characters (herbalists, craftsmen, hunters, rangers, fighters, dungeondivers)
+  - **Village (🏘️):** 4-5 characters (herbalists, craftsmen, hunters, rangers, fighters, dungeondivers, brutes)
+  - **City (🏰):** 4-6 characters (alchemists, craftsmen, explorers, dungeondivers, hunters, herbalists, clerics, monks, paladins, pyromancers, articasters)
+- **Character Migration System:**
+  - **Migration Probability:** Cities 50%, other locations 30%
+  - **Migration Destinations:** Characters migrate to other regular locations (not special locations)
+  - **Character Improvement During Migration:**
+    - 20% chance to gain 1 level
+    - 15% chance to improve random stat by 1
+    - 10% chance to improve random skill by 0.5
+- **Persistent Character System:**
+  - Characters that migrate more than once become permanent NPCs
+  - Permanent characters are never deleted (except death)
+  - Permanent characters occasionally appear in recruitment boards
+  - Migration count tracked in `npcData.migrationCount`
+  - Persistence status tracked in `npcData.isPersistent`
+- **Character Refresh Logic:**
+  - Refresh triggered when player accesses recruitment board
+  - Characters checked against creation date from character ID timestamp
+  - Characters older than refresh interval roll for migration/vanishing
+  - Refresh intervals: Cities 14 days, Villages/Hamlets 90 days, Special locations 180 days
+- **Save/Load Integration:**
+  - Characters cleaned up before saving (remove expired non-persistent characters)
+  - Persistent characters always saved regardless of age
+  - Character cleanup happens automatically during save process
+- **Character Lifecycle:**
+  1. **Generation:** Deterministic character created based on location and game date
+  2. **Storage:** Character stored with position and metadata
+  3. **Availability:** Character available for recruitment until refresh interval
+  4. **Migration/Vanishing:** Character either migrates to new location or vanishes
+  5. **Improvement:** Migrating characters may gain levels, stats, or skills
+  6. **Persistence:** Characters migrating multiple times become permanent
+  7. **Cleanup:** Non-persistent expired characters removed during save
 
 ### **Character Generation Features**
 
@@ -703,11 +1084,11 @@ _Estimated Time: 1-2 days_
 
 ### **New Files to Create:**
 
-- `interactions/combat/classes.js` - Class definitions
-- `interactions/skills.js` - Skill system
-- `interactions/equipment.js` - Equipment database
-- `interactions/characterGeneration.js` - Character creation logic
-- `interactions/nameGeneration.js` - Name generation
+- `interactions/combat/classes.js` - Class definitions ✅ **COMPLETED**
+- `interactions/skills.js` - Skill system ✅ **COMPLETED**
+- `interactions/equipment.js` - Equipment database ✅ **COMPLETED**
+- `interactions/characterGeneration.js` - Character creation logic ✅ **COMPLETED**
+- `interactions/recruitmentSystem.js` - Location-based recruitment system
 - `interactions/characterManagementDialog.js` - Character management UI
 - `interactions/skillProgression.js` - Skill progression system
 - `interactions/classLeveling.js` - Class leveling system
@@ -718,19 +1099,24 @@ _Estimated Time: 1-2 days_
 
 ## **PROGRESS TRACKING**
 
-- ✅ Phase 1 Complete
+- ✅ Phase 1 Complete (Foundation Systems)
 - ✅ Phase 2 Complete (Data Structure Migration)
   - ✅ Phase 2.1 Complete (GameState Structure Update)
   - ✅ Phase 2.2 Complete (Bonus Calculation System)
   - ✅ Phase 2.3 Complete (Skill-Bonus Mapping)
-- [ ] Phase 3 Complete
-- [ ] Phase 4 Complete
-- [ ] Phase 5 Complete
-- [ ] Phase 6 Complete
+- [ ] Phase 3 Complete (UI/UX Updates)
+  - [x] Phase 3.1 Complete (Recruitment System Implementation)
+  - [x] Phase 3.2 Complete (Group Creation Dialog Replacement)
+  - [x] Phase 3.3 Complete (Health Group Dialog Update)
+  - [x] Phase 3.4 Complete (Character Management Interface)
+  - [x] Phase 3.5 Complete (Inventory Dialog Update)
+- [ ] Phase 4 Complete (Gameplay Integration)
+- [ ] Phase 5 Complete (Advanced Features)
+- [ ] Phase 6 Complete (Testing & Polish)
 - [ ] Project Complete
 
 **Last Updated:** December 2024
-**Current Phase:** Phase 3 - UI/UX Updates
+**Current Phase:** Phase 3 - UI/UX Updates (Recruitment System Implementation)
 **Overall Progress:** 33% Complete (Phase 1 + Phase 2 Complete)
 
 ---
@@ -771,6 +1157,45 @@ _Estimated Time: 1-2 days_
 - Comprehensive debug logging for troubleshooting
 - Improved code organization and function structure
 - Better integration between dialog system and character generation
+
+### **Recruitment System Implementation Plan (December 2024)**
+
+**System Overview:**
+
+The recruitment system will completely replace the current role-based group creation system with a location-based character recruitment system. Players will be able to recruit characters from different locations based on context-appropriate classes, with time-based availability and cost requirements.
+
+**Key Features:**
+
+- **Location-Based Recruitment:** Different location types (cities, villages, armies, special locations) will have different character pools
+- **Time-Based Availability:** Characters will be available for limited time periods with escalating departure probabilities
+- **Character Descriptions:** Dynamic descriptions based on 2 highest stats, 1 lowest stat, 2 highest skills, and 1 lowest skill
+- **Cost System:** Level-based gold costs with rarity multipliers and special item requirements for rare classes
+- **Level Restrictions:** Players can only recruit characters of equal or lower level (based on player character level)
+- **Character Migration:** Expired characters keep same stats and name, update timestamp when moving to other locations
+- **Recruitment Interface:** Show all 4 characters at once, allow only one recruitment per visit
+
+**Implementation Priority:**
+
+1. **Phase 3.1.1:** Character Description System (Highest Priority)
+2. **Phase 3.1.2:** Location-Based Character Generation
+3. **Phase 3.1.3:** Time-Based Character Availability System
+4. **Phase 3.1.4:** Recruitment Cost System
+5. **Phase 3.1.5:** Recruitment Interface
+6. **Phase 3.1.6:** Level Restriction System
+7. **Phase 3.1.7:** Integration with Existing Systems
+
+**Files to Create:**
+
+- `interactions/recruitmentSystem.js` - Core recruitment system logic
+- `interactions/recruitmentDialog.js` - Recruitment board interface
+- `interactions/characterPreviewDialog.js` - Character preview and details
+
+**Files to Modify:**
+
+- `interactions/groupCreationDialog.js` - Replace with recruitment system integration
+- `gamestate/game_variables.js` - Add recruitment-related game state
+- `time_system.js` - Add character availability tracking
+- `interactions/tileInteraction.js` - Add recruitment location interactions
 
 ### **Equipment System Refactoring (December 2024)**
 

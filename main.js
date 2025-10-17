@@ -18,6 +18,7 @@ import {
   getGroupCreationDialog,
   getWorldGenerationDialog,
 } from "./interactions.js";
+import { showCompanionChoiceDialog } from "./interactions/companionChoiceDialog.js";
 import {
   addVisitedTile,
   addCachedTile,
@@ -72,6 +73,24 @@ if (startMenu !== "load") {
       console.log("Character accepted:", characterCreation.character);
       gameState.playerCharacter = characterCreation.character; // Store the player character
       characterCreation = "create"; // Set to exit the loop
+    }
+  }
+
+  // Companion Choice Dialog
+  let companionChoice;
+  while (companionChoice !== "continue") {
+    companionChoice = await showCompanionChoiceDialog(
+      gameState.playerCharacter
+    );
+    if (companionChoice === "back") {
+      location.reload();
+    } else if (
+      companionChoice &&
+      (companionChoice.action === "alone" ||
+        companionChoice.action === "companion_selected")
+    ) {
+      console.log("Companion choice result:", companionChoice);
+      companionChoice = "continue"; // Set to exit the loop
     }
   }
 

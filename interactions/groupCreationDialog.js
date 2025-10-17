@@ -5,6 +5,7 @@ export async function showGroupCreationDialog() {
   let groupName = gameState.groupName || "";
   const message = "GROUP CREATION";
   let components = [];
+
   if (groupName) {
     components.push({
       type: "message",
@@ -23,74 +24,46 @@ export async function showGroupCreationDialog() {
       value: "group-name",
     });
   }
-  if (gameState.group.length === 1) {
-    components.push(
-      {
-        type: "message",
-        label: "Add a member to your group",
-        value: "",
-      },
-      { type: "button", label: "Native Guide🧭", value: "native-guide🧭" },
-      { type: "button", label: "Cook🍞", value: "cook🍞" },
-      { type: "button", label: "Guard⚔️", value: "guard⚔️" },
-      { type: "button", label: "Geologist🪵", value: "geologist🪵" },
-      { type: "button", label: "Biologist🌱", value: "biologist🌱" },
-      { type: "button", label: "Translator🤝", value: "translator🤝" },
-      { type: "button", label: "Carrier 📦", value: "carrier📦" },
-      { type: "button", label: "Medic ❤️", value: "medic❤️" },
-      { type: "button", label: "Navigator 👁️", value: "navigator👁️" },
-      { type: "button", label: "Explorer🔍", value: "explorer🔍" }
-    );
+
+  // Show current group members
+  if (gameState.group.length > 1) {
+    const memberNames = gameState.group
+      .slice(1)
+      .map((member) => {
+        if (member.firstName && member.lastName) {
+          return `${member.firstName} ${member.lastName} (${member.class})`;
+        } else if (member.role) {
+          return member.role;
+        }
+        return "Unknown";
+      })
+      .join(", ");
+
+    components.push({
+      type: "message",
+      label: `Your group ${groupName} is formed by you and ${memberNames}`,
+    });
   } else {
     components.push({
       type: "message",
-      label: `Your group ${groupName} is formed by you and ${gameState.group
-        .slice(1)
-        .map((member) => member.role)
-        .join(", ")}`,
+      label: `Your group ${groupName} consists of just you.`,
     });
   }
+
   components.push({ type: "button", label: "Create", value: "create" });
   components.push({
     type: "button",
     label: "❌ Back to start menu ❌",
     value: "back",
   });
+
   const choice = await getShowChoiceDialog(message, components);
   console.log(choice);
-  if (
-    choice !== "create" &&
-    choice !== "group-name" &&
-    choice !== "native-guide🧭" &&
-    choice !== "cook🍞" &&
-    choice !== "guard⚔️" &&
-    choice !== "geologist🪵" &&
-    choice !== "biologist🌱" &&
-    choice !== "translator🤝" &&
-    choice !== "carrier📦" &&
-    choice !== "medic❤️" &&
-    choice !== "navigator👁️" &&
-    choice !== "explorer🔍" &&
-    choice !== "back"
-  ) {
+
+  if (choice !== "create" && choice !== "group-name" && choice !== "back") {
     gameState.groupName =
       choice.charAt(0).toUpperCase() + choice.slice(1).toLowerCase();
     return "group-name";
-  } else if (
-    choice === "native-guide🧭" ||
-    choice === "cook🍞" ||
-    choice === "guard⚔️" ||
-    choice === "geologist🪵" ||
-    choice === "biologist🌱" ||
-    choice === "translator🤝" ||
-    choice === "carrier📦" ||
-    choice === "medic❤️" ||
-    choice === "navigator👁️" ||
-    (choice === "explorer🔍" && choice !== "back")
-  ) {
-    gameState.group[1] = { role: choice };
-    console.log(gameState.group);
-    return "group";
   } else if (choice === "create") {
     return choice;
   } else if (choice === "back") {
