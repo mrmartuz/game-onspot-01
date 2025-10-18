@@ -277,12 +277,236 @@ export async function showSpecialLocationRecruitmentDialog(locationType, x, y) {
   return "left_without_recruiting";
 }
 
+// Show entity recruitment dialog (for npc, group, army, trader, caravan)
+export async function showEntityRecruitmentDialog(entityType, x, y) {
+  const characters = recruitmentSystem.generateEntityCharacters(
+    entityType,
+    x,
+    y
+  );
+
+  if (characters.length === 0) {
+    const message = `${entityType.toUpperCase()} ENCOUNTER`;
+    const components = [
+      {
+        type: "message",
+        label: `You encounter a ${entityType} but find no one willing to join.`,
+        value: "no_recruit",
+      },
+      {
+        type: "button",
+        label: "❌ Back",
+        value: "back",
+      },
+    ];
+
+    await getShowChoiceDialog(message, components);
+    return "no_recruitment_available";
+  }
+
+  const message = `${entityType.toUpperCase()} ENCOUNTER`;
+  const components = [];
+
+  // Add character previews
+  characters.forEach((character, index) => {
+    const canRecruit = recruitmentSystem.canPlayerRecruitCharacter(character);
+    const cost = recruitmentSystem.calculateRecruitmentCost(character);
+
+    if (canRecruit) {
+      const description =
+        recruitmentSystem.generateCharacterDescription(character);
+      const costText =
+        cost.items.length > 0
+          ? `${cost.gold} gold + ${cost.items.join(", ")}`
+          : `${cost.gold} gold`;
+
+      components.push({
+        type: "message",
+        label: `${character.firstName} ${character.lastName} (${character.gender} ${character.race} ${character.class} Lv.${character.level})`,
+        value: `char_${index}`,
+      });
+
+      components.push({
+        type: "message",
+        label: description,
+        value: `desc_${index}`,
+      });
+
+      components.push({
+        type: "message",
+        label: `Cost: ${costText}`,
+        value: `cost_${index}`,
+      });
+
+      components.push({
+        type: "button",
+        label: `Recruit ${character.firstName}`,
+        value: `recruit_${index}`,
+      });
+
+      components.push({
+        type: "message",
+        label: "---",
+        value: `separator_${index}`,
+      });
+    } else {
+      const errorMessage =
+        recruitmentSystem.getRecruitmentErrorMessage(character);
+      components.push({
+        type: "message",
+        label: `${character.firstName} ${character.lastName} - ${errorMessage}`,
+        value: `unavailable_${index}`,
+      });
+    }
+  });
+
+  // Add back button
+  components.push({
+    type: "button",
+    label: "❌ Back",
+    value: "back",
+  });
+
+  const choice = await getShowChoiceDialog(message, components);
+
+  // Handle recruitment choice
+  if (choice.startsWith("recruit_")) {
+    const charIndex = parseInt(choice.split("_")[1]);
+    const character = characters[charIndex];
+
+    if (character && recruitmentSystem.canPlayerRecruitCharacter(character)) {
+      return await handleRecruitmentConfirmation(character);
+    }
+  }
+
+  return choice;
+}
+
+// Show wounded character rescue dialog (for monster/beast)
+export async function showWoundedCharacterDialog(entityType, x, y) {
+  const character = recruitmentSystem.checkEntityRecruitment(entityType, x, y);
+
+  if (!character) {
+    const message = `${entityType.toUpperCase()} ENCOUNTER`;
+    const components = [
+      {
+        type: "message",
+        label: `You encounter a ${entityType} but find no wounded person to help.`,
+        value: "no_wounded",
+      },
+      {
+        type: "button",
+        label: "❌ Back",
+        value: "back",
+      },
+    ];
+
+    await getShowChoiceDialog(message, components);
+    return "no_wounded_character";
+  }
+
+  const { food, water } = character.rescueData.cost;
+  const canAfford = recruitmentSystem.canPlayerAffordRescue(character);
+
+  const message = `WOUNDED ${character.race.toUpperCase()} DISCOVERED`;
+  const components = [
+    {
+      type: "message",
+      label: `You found a wounded ${character.gender} ${character.race}!`,
+      value: "discovery_title",
+    },
+    {
+      type: "message",
+      label: recruitmentSystem.generateCharacterDescription(character),
+      value: "discovery_desc",
+    },
+    {
+      type: "message",
+      label: `They need ${food} food and ${water} water to recover.`,
+      value: "rescue_cost",
+    },
+    {
+      type: "message",
+      label: canAfford
+        ? `You have enough resources to help.`
+        : `You need more resources to help.`,
+      value: "resource_status",
+    },
+  ];
+
+  if (canAfford) {
+    components.push({
+      type: "button",
+      label: "🩹 Help them",
+      value: "help",
+    });
+  }
+
+  components.push({
+    type: "button",
+    label: "❌ Leave them",
+    value: "leave",
+  });
+
+  const choice = await getShowChoiceDialog(message, components);
+
+  if (choice === "help") {
+    return await handleRescueAttempt(character);
+  }
+
+  return "left_wounded_character";
+}
+
+// Handle rescue attempt
+async function handleRescueAttempt(character) {
+  const result = recruitmentSystem.processRescueAttempt(character);
+
+  const message = result.success ? "RESCUE SUCCESSFUL" : "RESCUE FAILED";
+  const components = [
+    {
+      type: "message",
+      label: result.message,
+      value: "result_message",
+    },
+  ];
+
+  if (result.success && result.joined) {
+    // Character joined the group
+    gameState.group.push(character);
+    components.push({
+      type: "message",
+      label: `Remaining resources: ${gameState.food} food, ${gameState.water} water`,
+      value: "remaining_resources",
+    });
+  } else if (result.success && !result.joined) {
+    // Character was helped but didn't join
+    components.push({
+      type: "message",
+      label: `Remaining resources: ${gameState.food} food, ${gameState.water} water`,
+      value: "remaining_resources",
+    });
+  }
+
+  components.push({
+    type: "button",
+    label: "✅ Continue",
+    value: "continue",
+  });
+
+  await getShowChoiceDialog(message, components);
+
+  return result.success ? "rescue_successful" : "rescue_failed";
+}
+
 // Main recruitment dialog object
 export const recruitmentDialog = {
   showRecruitmentDialog,
   showSpecialLocationRecruitmentDialog,
   handleRecruitmentConfirmation,
   processRecruitment,
+  showEntityRecruitmentDialog,
+  showWoundedCharacterDialog,
+  handleRescueAttempt,
 };
 
 export default recruitmentDialog;

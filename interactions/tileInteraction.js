@@ -38,8 +38,61 @@ async function showMinimalMenuAfterRecruitment(tile) {
 }
 
 export async function checkTileInteraction(tile) {
+  // Handle entity-based recruitment for monster/beast (wounded character rescue)
   if (["monster", "beast"].includes(tile.entity)) {
-    await getHandleCombatDialog(gameState.px, gameState.py, true);
+    // Check if there's a wounded character to rescue
+    const woundedCharacter = recruitmentSystem.checkEntityRecruitment(
+      tile.entity,
+      gameState.px,
+      gameState.py
+    );
+
+    if (woundedCharacter) {
+      const result = await recruitmentDialog.showWoundedCharacterDialog(
+        tile.entity,
+        gameState.px,
+        gameState.py
+      );
+
+      if (result === "rescue_successful") {
+        logEvent(`🩹 Rescued and recruited character from ${tile.entity}`);
+      } else if (result === "left_wounded_character") {
+        logEvent(`😔 Left wounded character at ${tile.entity}`);
+      }
+
+      // After rescue attempt, show combat option
+      const combatChoice = await getShowChoiceDialog(`At ${tile.entity}`, [
+        { type: "button", label: "⚔️ Fight", value: "fight" },
+        { type: "button", label: "🚶 Leave", value: "leave" },
+      ]);
+
+      if (combatChoice === "fight") {
+        await getHandleEnhancedCombatDialog(gameState.px, gameState.py, true);
+      }
+      return;
+    } else {
+      // No wounded character, proceed to combat
+      await getHandleCombatDialog(gameState.px, gameState.py, true);
+      return;
+    }
+  }
+
+  // Handle entity-based recruitment for other entities
+  if (["npc", "group", "army", "trader", "caravan"].includes(tile.entity)) {
+    const result = await recruitmentDialog.showEntityRecruitmentDialog(
+      tile.entity,
+      gameState.px,
+      gameState.py
+    );
+
+    if (result === "recruitment_successful") {
+      logEvent(`🧍🏻 Recruited character from ${tile.entity}`);
+    } else if (result === "no_recruitment_available") {
+      logEvent(`👥 No one willing to join from ${tile.entity}`);
+    }
+
+    // Show minimal menu after recruitment attempt
+    await showMinimalMenuAfterRecruitment(tile);
     return;
   }
 
@@ -107,12 +160,6 @@ export async function checkTileInteraction(tile) {
 
         // If no character available, show regular discovery message
         let components = [];
-        components.push({
-          type: "message",
-          label: `You've already discovered this ${tile.location}! 🌟`,
-          value: "",
-        });
-
         // Show combat option for locations with monsters
         if (tile.location === "monster caves" || tile.entity === "monster") {
           components.push({
@@ -135,20 +182,8 @@ export async function checkTileInteraction(tile) {
         }
         return;
       }
-      let discoveryBonus = getGroupBonus("discovery");
-      let basePoints = 10;
-      let bonusPoints = Math.floor(
-        Math.random() * (5 + discoveryBonus) + basePoints
-      );
-      let totalPoints = bonusPoints;
 
-      gameState.discoverPoints += totalPoints;
-      gameState.discoveredLocations.push(positionKey); // Use .push() for array
-      updateStatus();
-
-      let bonusText = bonusPoints > 0 ? ` (+${bonusPoints} bonus)` : "";
-
-      // For peaks, skip discovery message and just check for recruits
+      // For peaks, skip discovery points and just check for recruits
       if (tile.location === "peaks") {
         const availableCharacter =
           recruitmentSystem.checkSpecialLocationRecruitment(
@@ -167,8 +202,20 @@ export async function checkTileInteraction(tile) {
             logEvent(`🧍🏻 Recruited character from ${tile.location}`);
           }
         }
-        return; // Silent return for peaks, no discovery message
+        return; // Silent return for peaks, no discovery points or message
       }
+
+      // Calculate discovery points for non-peak locations
+      let discoveryBonus = getGroupBonus("discovery");
+      let basePoints = 10;
+      let bonusPoints = Math.floor(Math.random() * (5 + discoveryBonus));
+      let totalPoints = basePoints + bonusPoints;
+
+      gameState.discoverPoints += totalPoints;
+      gameState.discoveredLocations.push(positionKey);
+      updateStatus();
+
+      let bonusText = bonusPoints > 0 ? ` (+${bonusPoints} bonus)` : "";
 
       // Check if there's actually a recruitable character at this location
       const availableCharacter =
@@ -184,7 +231,7 @@ export async function checkTileInteraction(tile) {
         let components = [];
         components.push({
           type: "message",
-          label: `Discovered ${tile.location}! 🌟${bonusText}`,
+          label: `Discovered ${tile.location}! 🌟${totalPoints}`,
           value: "",
         });
         components.push({
@@ -194,7 +241,7 @@ export async function checkTileInteraction(tile) {
         });
 
         await getShowChoiceDialog(
-          `Discovered ${tile.location}! 🌟${bonusText}`,
+          `Discovered ${tile.location}! 🌟${totalPoints}`,
           components
         );
         logEvent(
@@ -218,15 +265,11 @@ export async function checkTileInteraction(tile) {
 
       // If no character available, show regular discovery message
       let components = [];
-      components.push({
-        type: "message",
-        label: `Discovered ${tile.location}! 🌟${bonusText}`,
-        value: "",
-      });
+
       components.push({ type: "button", label: "OK", value: "ok" });
 
       await getShowChoiceDialog(
-        `Discovered ${tile.location}! 🌟${bonusText}`,
+        `Discovered ${tile.location}! 🌟${totalPoints}`,
         components
       );
       logEvent(

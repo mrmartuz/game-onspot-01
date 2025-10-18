@@ -7,6 +7,100 @@ import { gameState } from "../gamestate/game_variables.js";
 import { getCurrentGameDate } from "../time_system.js";
 import { hash } from "../utils.js";
 
+// Entity-based character availability configuration
+export const entityCharacterAvailability = {
+  monster: {
+    recruitmentChance: 0.15, // 15% chance to find wounded character
+    characterCount: { min: 0, max: 1 }, // Always 1 character if found
+    classProbabilities: {
+      fighter: 0.3,
+      ranger: 0.25,
+      hunter: 0.2,
+      dungeondiver: 0.15,
+      brute: 0.1,
+    },
+    rescueCost: { food: 2, water: 1 }, // Resources needed to help
+    joinProbability: 0.4, // 40% chance to join after rescue
+  },
+  beast: {
+    recruitmentChance: 0.12, // 12% chance to find wounded character
+    characterCount: { min: 0, max: 1 }, // Always 1 character if found
+    classProbabilities: {
+      ranger: 0.35,
+      hunter: 0.3,
+      fighter: 0.2,
+      explorer: 0.15,
+    },
+    rescueCost: { food: 1, water: 2 }, // Resources needed to help
+    joinProbability: 0.35, // 35% chance to join after rescue
+  },
+  npc: {
+    recruitmentChance: 0.8, // 80% chance to find recruitable character
+    characterCount: { min: 1, max: 1 }, // Always 1 character
+    classProbabilities: {
+      herbalist: 0.2,
+      craftsman: 0.2,
+      hunter: 0.15,
+      ranger: 0.15,
+      fighter: 0.1,
+      dungeondiver: 0.1,
+      explorer: 0.1,
+    },
+  },
+  group: {
+    recruitmentChance: 0.9, // 90% chance to find recruitable character
+    characterCount: { min: 1, max: 2 }, // 1-2 characters
+    classProbabilities: {
+      fighter: 0.2,
+      archer: 0.2,
+      hunter: 0.15,
+      ranger: 0.15,
+      dungeondiver: 0.1,
+      explorer: 0.1,
+      herbalist: 0.1,
+    },
+  },
+  army: {
+    recruitmentChance: 0.95, // 95% chance to find recruitable character
+    characterCount: { min: 2, max: 3 }, // 2-3 characters
+    classProbabilities: {
+      fighter: 0.3,
+      archer: 0.25,
+      brute: 0.15,
+      paladin: 0.1,
+      martial_artist: 0.1,
+      cleric: 0.05,
+      pyromancer: 0.03,
+      articaster: 0.02,
+    },
+  },
+  trader: {
+    recruitmentChance: 0.7, // 70% chance to find recruitable character
+    characterCount: { min: 1, max: 1 }, // Always 1 character
+    classProbabilities: {
+      craftsman: 0.3,
+      herbalist: 0.2,
+      explorer: 0.15,
+      dungeondiver: 0.15,
+      hunter: 0.1,
+      alchemist: 0.1,
+    },
+  },
+  caravan: {
+    recruitmentChance: 0.85, // 85% chance to find recruitable character
+    characterCount: { min: 1, max: 2 }, // 1-2 characters
+    classProbabilities: {
+      fighter: 0.25,
+      archer: 0.2,
+      hunter: 0.15,
+      ranger: 0.15,
+      explorer: 0.1,
+      dungeondiver: 0.1,
+      craftsman: 0.05,
+    },
+  },
+};
+
 // Location-based character availability configuration
 export const locationCharacterAvailability = {
   city: {
@@ -846,6 +940,169 @@ export function processCharacterDepartures(locationType) {
   return remainingCharacters;
 }
 
+// Check if entity has recruitment opportunities
+export function hasEntityRecruitmentOpportunities(entityType) {
+  const entityConfig = entityCharacterAvailability[entityType];
+  return !!entityConfig;
+}
+
+// Check if entity has rare recruitment opportunity (for monster/beast rescue)
+export function checkEntityRecruitment(entityType, x, y) {
+  const entityConfig = entityCharacterAvailability[entityType];
+  if (!entityConfig || !entityConfig.recruitmentChance) return null;
+
+  // Use deterministic random based on entity coordinates and game date
+  const currentDate = getCurrentGameDate();
+  const dateHash = hash(currentDate.getTime(), 0, 1);
+  const entityHash = hash(x, y, dateHash);
+  const deterministicRandom = entityHash; // This will be 0-1
+
+  if (deterministicRandom <= entityConfig.recruitmentChance) {
+    // Generate single character for entity using deterministic seed
+    const characterSeed = hash(x, y, dateHash + 1); // Different seed for character generation
+    const character = characterGeneration.generateCharacter({
+      className: generateClassForLocation(
+        entityConfig.classProbabilities,
+        characterSeed
+      ),
+      isPlayer: false,
+      seed: characterSeed,
+    });
+
+    // Add entity-specific data
+    character.recruitmentCost = calculateRecruitmentCost(character);
+    character.entityAvailability = {
+      entityType: entityType,
+      availableUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 1 day
+      refreshDate: new Date().toISOString(),
+      isEntityRecruitment: true,
+    };
+
+    // Add rescue-specific data for monster/beast
+    if (entityType === "monster" || entityType === "beast") {
+      character.rescueData = {
+        cost: entityConfig.rescueCost,
+        joinProbability: entityConfig.joinProbability,
+        isWounded: true,
+      };
+    }
+
+    return character;
+  }
+
+  return null;
+}
+
+// Generate characters for a specific entity
+export function generateEntityCharacters(entityType, x, y, count = null) {
+  const entityConfig = entityCharacterAvailability[entityType];
+  if (!entityConfig) {
+    console.warn(`No configuration found for entity type: ${entityType}`);
+    return [];
+  }
+
+  // Use character count from entity config if not specified
+  if (count === null) {
+    const countRange = entityConfig.characterCount || { min: 1, max: 1 };
+    count =
+      Math.floor(Math.random() * (countRange.max - countRange.min + 1)) +
+      countRange.min;
+  }
+
+  const characters = [];
+  const currentDate = getCurrentGameDate();
+  const dateHash = hash(currentDate.getTime(), 0, 1); // Use game date for deterministic generation
+
+  for (let i = 0; i < count; i++) {
+    // Generate deterministic character based on position and date
+    const characterSeed = hash(x, y, i + dateHash);
+
+    // Generate character class based on entity probabilities and seed
+    const className = generateClassForLocation(
+      entityConfig.classProbabilities,
+      characterSeed
+    );
+
+    // Generate character with specific class and seed
+    const character = characterGeneration.generateCharacter({
+      className: className,
+      isPlayer: false,
+      seed: characterSeed, // Pass seed for deterministic generation
+    });
+
+    // Add recruitment-specific data
+    character.recruitmentCost = calculateRecruitmentCost(character);
+    character.entityAvailability = {
+      entityType: entityType,
+      availableUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 1 day
+      refreshDate: new Date().toISOString(),
+      isEntityRecruitment: true,
+    };
+
+    // Add rescue-specific data for monster/beast
+    if (entityType === "monster" || entityType === "beast") {
+      character.rescueData = {
+        cost: entityConfig.rescueCost,
+        joinProbability: entityConfig.joinProbability,
+        isWounded: true,
+      };
+    }
+
+    characters.push(character);
+  }
+
+  return characters;
+}
+
+// Check if player has enough resources for rescue
+export function canPlayerAffordRescue(character) {
+  if (!character.rescueData) return true; // Not a rescue situation
+
+  const { food, water } = character.rescueData.cost;
+  return gameState.food >= food && gameState.water >= water;
+}
+
+// Process rescue attempt
+export function processRescueAttempt(character) {
+  if (!character.rescueData)
+    return { success: false, message: "Not a rescue situation" };
+
+  const { food, water, joinProbability } = character.rescueData;
+
+  // Check if player has enough resources
+  if (!canPlayerAffordRescue(character)) {
+    return {
+      success: false,
+      message: `You need ${food} food and ${water} water to help this person.`,
+    };
+  }
+
+  // Deduct resources
+  gameState.food -= food;
+  gameState.water -= water;
+
+  // Roll for joining
+  const joinRoll = Math.random();
+  const joined = joinRoll <= joinProbability;
+
+  if (joined) {
+    // Character joins for free
+    character.recruitmentCost = { gold: 0, items: [] };
+    return {
+      success: true,
+      message: `${character.firstName} ${character.lastName} has joined your group out of gratitude!`,
+      joined: true,
+    };
+  } else {
+    // Character is grateful but doesn't join
+    return {
+      success: true,
+      message: `${character.firstName} ${character.lastName} is grateful for your help but prefers to continue alone.`,
+      joined: false,
+    };
+  }
+}
+
 // Main recruitment system object
 export const recruitmentSystem = {
   generateCharacterDescription,
@@ -862,7 +1119,15 @@ export const recruitmentSystem = {
   getCharacterDepartureProbability,
   migrateCharacter,
   processCharacterDepartures,
+  // Entity-based recruitment functions
+  hasEntityRecruitmentOpportunities,
+  checkEntityRecruitment,
+  generateEntityCharacters,
+  canPlayerAffordRescue,
+  processRescueAttempt,
+  // Configuration objects
   locationCharacterAvailability,
+  entityCharacterAvailability,
   statDescriptions,
   skillDescriptions,
   recruitmentCosts,
