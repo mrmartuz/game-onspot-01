@@ -9,7 +9,7 @@ export async function showGoldDialog() {
   // Calculate role-based additional costs
   const roleExpenses = gameState.group.reduce((total, member) => {
     let roleCost = 0;
-    const cleanRole = member.role.replace(/[^\w-]/g, "");
+    const cleanRole = (member.class || "").replace(/[^\w-]/g, "");
     if (cleanRole.includes("guide")) roleCost = 1.0; // Guides cost more
     else if (cleanRole.includes("cook")) roleCost = 0.8; // Cooks cost more
     else if (cleanRole.includes("guard")) roleCost = 1.2; // Guards cost more
