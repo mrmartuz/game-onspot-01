@@ -7,6 +7,126 @@ import { checkDeath } from "../utils.js";
 import { getTile } from "../rendering/tile.js";
 import { handleEnhancedCombat } from "./enhancedCombatSystem.js";
 
+// Stat-based combat calculations for simple combat
+function calculatePlayerDamage() {
+  if (!gameState.playerCharacter) return 2; // Fallback damage
+
+  const baseDamage = 1;
+  const strBonus = Math.floor((gameState.playerCharacter.stats?.STR || 8) / 2);
+  const weaponSkill = getPrimaryWeaponSkill(gameState.playerCharacter);
+  const skillBonus = Math.floor(weaponSkill / 10);
+  const equipmentBonus = getEquipmentDamageBonus(gameState.playerCharacter);
+
+  return Math.max(1, baseDamage + strBonus + skillBonus + equipmentBonus);
+}
+
+function calculatePlayerDefense() {
+  if (!gameState.playerCharacter) return 0;
+
+  const conBonus = Math.floor((gameState.playerCharacter.stats?.CON || 8) / 3);
+  const armorSkill = gameState.playerCharacter.skills?.shieldwork || 0;
+  const skillBonus = Math.floor(armorSkill / 15);
+  const equipmentBonus = getEquipmentDefenseBonus(gameState.playerCharacter);
+
+  return conBonus + skillBonus + equipmentBonus;
+}
+
+function calculatePlayerAccuracy() {
+  if (!gameState.playerCharacter) return 50;
+
+  const baseAccuracy = 50;
+  const dexBonus = (gameState.playerCharacter.stats?.DEX || 8) * 2;
+  const weaponSkill = getPrimaryWeaponSkill(gameState.playerCharacter);
+  const skillBonus = weaponSkill;
+  const equipmentBonus = getEquipmentAccuracyBonus(gameState.playerCharacter);
+
+  return Math.min(95, baseAccuracy + dexBonus + skillBonus + equipmentBonus);
+}
+
+// Helper functions (simplified versions from enhanced combat)
+function getPrimaryWeaponSkill(character) {
+  const skills = character.skills || {};
+  const weapon = character.equipment?.weapon || "";
+
+  if (
+    weapon.includes("sword") ||
+    weapon.includes("dagger") ||
+    weapon.includes("rapier")
+  ) {
+    return skills.swordfighting || 0;
+  } else if (weapon.includes("bow") || weapon.includes("crossbow")) {
+    return skills.archery || 0;
+  } else if (
+    weapon.includes("spear") ||
+    weapon.includes("halberd") ||
+    weapon.includes("staff")
+  ) {
+    return skills.polearms || 0;
+  } else if (weapon.includes("unarmed") || weapon === "") {
+    return skills.unarmed || 0;
+  }
+
+  return skills.swordfighting || 0;
+}
+
+function getEquipmentDamageBonus(character) {
+  const equipment = character.equipment || {};
+  let bonus = 0;
+
+  const weapon = equipment.weapon || "";
+  if (weapon.includes("mithril")) bonus += 2;
+  else if (weapon.includes("steel")) bonus += 1;
+  else if (weapon.includes("silver")) bonus += 1;
+
+  return bonus;
+}
+
+function getEquipmentDefenseBonus(character) {
+  const equipment = character.equipment || {};
+  let bonus = 0;
+
+  const armor = equipment.armor || "";
+  if (armor.includes("plate")) bonus += 4;
+  else if (armor.includes("chainmail")) bonus += 3;
+  else if (armor.includes("leather")) bonus += 1;
+
+  const shield = equipment.secondHand || "";
+  if (shield.includes("shield")) bonus += 2;
+
+  return bonus;
+}
+
+function getEquipmentAccuracyBonus(character) {
+  const equipment = character.equipment || {};
+  let bonus = 0;
+
+  const weapon = equipment.weapon || "";
+  if (weapon.includes("mithril")) bonus += 10;
+  else if (weapon.includes("steel")) bonus += 5;
+  else if (weapon.includes("iron")) bonus += 2;
+
+  return bonus;
+}
+
+// Skill progression for simple combat
+function progressCombatSkill(skillName) {
+  if (!gameState.playerCharacter || !gameState.playerCharacter.skills) return;
+
+  const currentLevel = gameState.playerCharacter.skills[skillName] || 0;
+  const progressionAmount = 0.01; // Same rate as enhanced combat
+  const newLevel = Math.min(99.99, currentLevel + progressionAmount);
+
+  gameState.playerCharacter.skills[skillName] = newLevel;
+
+  console.log(
+    `${
+      gameState.playerCharacter.firstName
+    }'s ${skillName} increased from ${currentLevel.toFixed(
+      2
+    )} to ${newLevel.toFixed(2)}`
+  );
+}
+
 export async function handleCombat(ex, ey, isOnTile = false) {
   // Use the enhanced combat system for monsters and beasts
   let tile = getTile(ex, ey);
@@ -16,11 +136,12 @@ export async function handleCombat(ex, ey, isOnTile = false) {
     return await handleEnhancedCombat(ex, ey, isOnTile);
   }
 
-  // Fallback to simple combat for other entities
+  // Fallback to simple combat for other entities (now stat-based)
   let input = await showChoiceDialog(`Hostile ${entity} at (${ex},${ey})!`, [
     { type: "button", label: "⚔️ Attack", value: "1" },
     { type: "button", label: "🌬️ Flee", value: "2" },
   ]);
+
   if (input === "2") {
     if (isOnTile) {
       gameState.px = gameState.prevx;
@@ -36,34 +157,45 @@ export async function handleCombat(ex, ey, isOnTile = false) {
     return false;
   }
 
-  // Apply combat bonus for better success chance
-  let combatBonus = getGroupBonus("combat");
-  let baseSuccessChance = 0.5;
-  let success = Math.random() < baseSuccessChance + combatBonus;
+  // Stat-based combat resolution
+  const playerAccuracy = calculatePlayerAccuracy();
+  const hitRoll = Math.random() * 100;
 
-  if (success) {
-    await showChoiceDialog("Victory! 🏆", [
+  if (hitRoll <= playerAccuracy) {
+    // Player hits - calculate damage
+    const playerDamage = calculatePlayerDamage();
+
+    await showChoiceDialog(`Victory! You dealt ${playerDamage} damage! 🏆`, [
       { type: "button", label: "OK", value: "ok" },
     ]);
+
     gameState.killed.add(`${ex},${ey}`);
     gameState.killPoints += 5;
     updateStatus();
     logEvent(`🏆 Defeated ${entity} at (${ex},${ey})`);
+
+    // Progress combat skills
+    if (gameState.playerCharacter) {
+      const weaponSkill = getPrimaryWeaponSkill(gameState.playerCharacter);
+      progressCombatSkill(weaponSkill);
+    }
+
     return true;
   } else {
-    // Apply health bonus to reduce damage taken
-    let healthBonus = getGroupBonus("health");
-    let damageReduction = healthBonus * 0.5; // Health bonus reduces damage by up to 50%
-    let baseDamage = isOnTile ? 20 : 10;
-    let finalDamage = Math.max(1, baseDamage * (1 - damageReduction));
+    // Player misses - take damage
+    const playerDefense = calculatePlayerDefense();
+    const baseDamage = isOnTile ? 20 : 10;
+    const finalDamage = Math.max(1, baseDamage - playerDefense);
 
-    await showChoiceDialog("Defeat! Took damage.🤕", [
+    await showChoiceDialog(`Defeat! You took ${finalDamage} damage. 🤕`, [
       { type: "button", label: "OK", value: "ok" },
     ]);
+
     gameState.health -= finalDamage;
     updateStatus();
     logEvent(`🤕 Defeated by ${entity} at (${ex},${ey})`);
-    let death = await checkDeath();
+
+    const death = await checkDeath();
     if (death === "health") {
       await showChoiceDialog("You died fighting! ☠️", [
         { type: "button", label: "🔄 Restart Game", value: "restart" },

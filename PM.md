@@ -466,16 +466,16 @@ _Estimated Time: 2-3 days_
 **Dependencies:** Skill-Bonus Mapping
 **Deliverables:**
 
-- Skill-based navigation bonuses
+- Skill-based navigation bonuses lower the malus by hard terrains
 - Terrain-specific skill bonuses
-- Movement speed calculations
+- Movement speed calculations base on number of members, slowest member and equipment
 
 **Tasks:**
 
-- [ ] Replace role-based navigation with skill-based
-- [ ] Add terrain-specific skill bonuses
-- [ ] Update movement speed calculations
-- [ ] Implement skill-based pathfinding
+- [x] Replace role-based navigation with skill-based
+- [x] Add terrain-specific skill bonuses
+- [x] Update movement speed calculations
+- [x] Implement skill-based pathfinding
 
 ### **4.2 Combat System Update**
 

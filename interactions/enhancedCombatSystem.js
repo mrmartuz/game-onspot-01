@@ -6,6 +6,11 @@ import { logEvent } from "../time_system.js";
 import { getTile } from "../rendering/tile.js";
 import { checkDeath } from "../utils.js";
 import { getClassByName } from "./combat/classes.js";
+import { skillDatabase } from "./skills.js";
+import { equipmentDatabase, equipmentTypes } from "./equipment.js";
+
+// Skill progression rate: 0.010 per level per use
+const SKILL_PROGRESSION_RATE = 0.01;
 
 // Combat entity classes
 class CombatEntity {
@@ -79,8 +84,16 @@ class Monster extends CombatEntity {
 }
 
 class Ally extends CombatEntity {
-  constructor(name, role, maxHealth = 5) {
-    super(name, maxHealth, role);
+  constructor(character, maxHealth = null) {
+    // Calculate health based on character stats if not provided
+    const calculatedHealth = maxHealth || calculateCharacterHealth(character);
+    super(
+      character.firstName + " " + character.lastName,
+      calculatedHealth,
+      character.class
+    );
+
+    this.character = character;
     this.maxWounds = 5; // Allies die after 5 wounds
     this.unconscious = false;
   }
@@ -108,7 +121,7 @@ class Ally extends CombatEntity {
   }
 
   getDamage() {
-    return Math.floor(Math.random() * 2) + 1; // 1-2 damage
+    return calculateCharacterDamage(this.character);
   }
 
   isUnconscious() {
@@ -122,6 +135,335 @@ class Ally extends CombatEntity {
   isFleeing() {
     return this.status === "fleeing";
   }
+}
+
+// Character stat-based calculations
+function calculateCharacterHealth(character) {
+  const baseHealth = 20;
+  const conBonus = Math.floor((character.stats?.CON || 8) * 2);
+  const classBonus = getClassHealthBonus(character.class);
+  return Math.max(15, baseHealth + conBonus + classBonus);
+}
+
+function calculateCharacterDamage(character) {
+  const baseDamage = 1;
+
+  // Primary damage stat (STR for most weapons)
+  const primaryStat = character.stats?.STR || 8;
+  const statBonus = Math.floor((primaryStat - 8) / 2); // Every 2 points above 8 = +1 damage
+
+  // Weapon skill bonus
+  const weaponSkill = getPrimaryWeaponSkill(character);
+  const skillBonus = Math.floor(weaponSkill / 10); // Every 10 skill levels = +1 damage
+
+  // Equipment bonus
+  const equipmentBonus = getEquipmentDamageBonus(character);
+
+  // Class bonus
+  const classBonus = getClassDamageBonus(character.class);
+
+  const totalDamage =
+    baseDamage + statBonus + skillBonus + equipmentBonus + classBonus;
+
+  // Add some randomness (±1 damage)
+  const randomVariation = Math.floor(Math.random() * 3) - 1; // -1, 0, or +1
+
+  return Math.max(1, totalDamage + randomVariation);
+}
+
+function calculateCharacterDefense(character) {
+  const baseDefense = 0;
+
+  // Constitution bonus
+  const conBonus = Math.floor((character.stats?.CON || 8) / 3); // Every 3 CON = +1 defense
+
+  // Armor skill bonus
+  const armorSkill = character.skills?.shieldwork || 0;
+  const skillBonus = Math.floor(armorSkill / 15); // Every 15 skill levels = +1 defense
+
+  // Equipment bonus
+  const equipmentBonus = getEquipmentDefenseBonus(character);
+
+  // Class bonus
+  const classBonus = getClassDefenseBonus(character.class);
+
+  return baseDefense + conBonus + skillBonus + equipmentBonus + classBonus;
+}
+
+function calculateCharacterAccuracy(character) {
+  const baseAccuracy = 50; // 50% base hit chance
+
+  // Dexterity bonus
+  const dexBonus = (character.stats?.DEX || 8) * 2; // Each DEX point = +2% accuracy
+
+  // Weapon skill bonus
+  const weaponSkill = getPrimaryWeaponSkill(character);
+  const skillBonus = weaponSkill; // Each skill level = +1% accuracy
+
+  // Equipment bonus
+  const equipmentBonus = getEquipmentAccuracyBonus(character);
+
+  // Class bonus
+  const classBonus = getClassAccuracyBonus(character.class);
+
+  return Math.min(
+    95,
+    baseAccuracy + dexBonus + skillBonus + equipmentBonus + classBonus
+  );
+}
+
+function calculateCharacterInitiative(character) {
+  const baseInitiative = 10;
+
+  // Dexterity bonus
+  const dexBonus = (character.stats?.DEX || 8) * 1.5;
+
+  // Wisdom bonus (awareness)
+  const wisBonus = (character.stats?.WIS || 8) * 0.5;
+
+  // Skill bonus
+  const combatSkill = getPrimaryWeaponSkill(character);
+  const skillBonus = combatSkill * 0.5;
+
+  // Equipment bonus
+  const equipmentBonus = getEquipmentInitiativeBonus(character);
+
+  return baseInitiative + dexBonus + wisBonus + skillBonus + equipmentBonus;
+}
+
+// Helper functions for character calculations
+function getPrimaryWeaponSkill(character) {
+  const skills = character.skills || {};
+
+  // Check equipped weapon type and return appropriate skill
+  const weapon = character.equipment?.weapon || "";
+
+  if (
+    weapon.includes("sword") ||
+    weapon.includes("dagger") ||
+    weapon.includes("rapier")
+  ) {
+    return skills.swordfighting || 0;
+  } else if (weapon.includes("bow") || weapon.includes("crossbow")) {
+    return skills.archery || 0;
+  } else if (
+    weapon.includes("spear") ||
+    weapon.includes("halberd") ||
+    weapon.includes("staff")
+  ) {
+    return skills.polearms || 0;
+  } else if (weapon.includes("unarmed") || weapon === "") {
+    return skills.unarmed || 0;
+  }
+
+  // Default to swordfighting if weapon type unclear
+  return skills.swordfighting || 0;
+}
+
+function getEquipmentDamageBonus(character) {
+  const equipment = character.equipment || {};
+  let bonus = 0;
+
+  // Weapon bonus
+  const weapon = equipment.weapon || "";
+  if (weapon.includes("mithril")) bonus += 2;
+  else if (weapon.includes("steel")) bonus += 1;
+  else if (weapon.includes("silver")) bonus += 1;
+
+  // Armor can provide small damage bonus for certain types
+  const armor = equipment.armor || "";
+  if (armor.includes("plate")) bonus += 1; // Heavy armor can be used offensively
+
+  return bonus;
+}
+
+function getEquipmentDefenseBonus(character) {
+  const equipment = character.equipment || {};
+  let bonus = 0;
+
+  // Armor bonus
+  const armor = equipment.armor || "";
+  if (armor.includes("plate")) bonus += 4;
+  else if (armor.includes("chainmail")) bonus += 3;
+  else if (armor.includes("leather")) bonus += 1;
+
+  // Shield bonus
+  const shield = equipment.secondHand || "";
+  if (shield.includes("shield")) bonus += 2;
+
+  return bonus;
+}
+
+function getEquipmentAccuracyBonus(character) {
+  const equipment = character.equipment || {};
+  let bonus = 0;
+
+  // Weapon quality affects accuracy
+  const weapon = equipment.weapon || "";
+  if (weapon.includes("mithril")) bonus += 10;
+  else if (weapon.includes("steel")) bonus += 5;
+  else if (weapon.includes("iron")) bonus += 2;
+
+  return bonus;
+}
+
+function getEquipmentInitiativeBonus(character) {
+  const equipment = character.equipment || {};
+  let bonus = 0;
+
+  // Heavy armor reduces initiative
+  const armor = equipment.armor || "";
+  if (armor.includes("plate")) bonus -= 3;
+  else if (armor.includes("chainmail")) bonus -= 1;
+
+  // Light armor increases initiative
+  if (armor.includes("leather")) bonus += 1;
+
+  return bonus;
+}
+
+// Class-based bonuses
+function getClassHealthBonus(className) {
+  const classData = getClassByName(className);
+  if (!classData) return 0;
+
+  // Health bonus based on class rarity and type
+  switch (classData.rarity) {
+    case "common":
+      return 0;
+    case "uncommon":
+      return 2;
+    case "rare":
+      return 4;
+    case "legendary":
+      return 6;
+    case "mythic":
+      return 8;
+    default:
+      return 0;
+  }
+}
+
+function getClassDamageBonus(className) {
+  const classData = getClassByName(className);
+  if (!classData) return 0;
+
+  // Combat-focused classes get damage bonus
+  const combatClasses = [
+    "fighter",
+    "archer",
+    "brute",
+    "monk",
+    "paladin",
+    "martial_artist",
+    "ranger",
+  ];
+  if (combatClasses.includes(className)) {
+    switch (classData.rarity) {
+      case "common":
+        return 1;
+      case "uncommon":
+        return 2;
+      case "rare":
+        return 3;
+      case "legendary":
+        return 4;
+      case "mythic":
+        return 5;
+      default:
+        return 0;
+    }
+  }
+
+  return 0;
+}
+
+function getClassDefenseBonus(className) {
+  const classData = getClassByName(className);
+  if (!classData) return 0;
+
+  // Tank classes get defense bonus
+  const tankClasses = ["fighter", "paladin", "brute"];
+  if (tankClasses.includes(className)) {
+    switch (classData.rarity) {
+      case "common":
+        return 1;
+      case "uncommon":
+        return 2;
+      case "rare":
+        return 3;
+      case "legendary":
+        return 4;
+      case "mythic":
+        return 5;
+      default:
+        return 0;
+    }
+  }
+
+  return 0;
+}
+
+function getClassAccuracyBonus(className) {
+  const classData = getClassByName(className);
+  if (!classData) return 0;
+
+  // Precision classes get accuracy bonus
+  const precisionClasses = ["archer", "ranger", "monk", "martial_artist"];
+  if (precisionClasses.includes(className)) {
+    switch (classData.rarity) {
+      case "common":
+        return 5;
+      case "uncommon":
+        return 10;
+      case "rare":
+        return 15;
+      case "legendary":
+        return 20;
+      case "mythic":
+        return 25;
+      default:
+        return 0;
+    }
+  }
+
+  return 0;
+}
+
+// Skill progression system
+function progressSkill(character, skillName, amount = SKILL_PROGRESSION_RATE) {
+  if (!character.skills) character.skills = {};
+
+  const currentLevel = character.skills[skillName] || 0;
+  const skillData = skillDatabase[skillName];
+
+  if (!skillData) return; // Invalid skill
+
+  // Calculate progression based on difficulty
+  let progressionAmount = amount;
+  if (skillData.difficulty === "hard") {
+    progressionAmount *= 0.7; // Harder skills progress slower
+  } else if (skillData.difficulty === "easy") {
+    progressionAmount *= 1.3; // Easier skills progress faster
+  }
+
+  // Apply experience multiplier
+  progressionAmount *= skillData.experienceMultiplier || 1.0;
+
+  // Cap at max level
+  const newLevel = Math.min(
+    skillData.maxLevel,
+    currentLevel + progressionAmount
+  );
+  character.skills[skillName] = newLevel;
+
+  console.log(
+    `${character.firstName} ${
+      character.lastName
+    }'s ${skillName} increased from ${currentLevel.toFixed(
+      2
+    )} to ${newLevel.toFixed(2)}`
+  );
 }
 
 // Detection system
@@ -204,85 +546,36 @@ function calculateStealthModifier() {
   return stealthModifier;
 }
 
-// Class-based combat bonuses
-function calculateClassCombatBonus() {
-  let classBonus = 0;
-
-  gameState.group.forEach((member) => {
-    const className = member.class;
-    const classData = getClassByName(className);
-
-    if (classData) {
-      // Add bonuses based on class rarity and combat focus
-      switch (classData.rarity) {
-        case "common":
-          classBonus += 0.5; // Small bonus for common classes
-          break;
-        case "uncommon":
-          classBonus += 1.0; // Medium bonus for uncommon classes
-          break;
-        case "rare":
-          classBonus += 1.5; // Large bonus for rare classes
-          break;
-        case "legendary":
-          classBonus += 2.0; // Very large bonus for legendary classes
-          break;
-        case "mythic":
-          classBonus += 3.0; // Massive bonus for mythic classes
-          break;
-      }
-
-      // Additional bonuses for combat-focused classes
-      const combatClasses = [
-        "fighter",
-        "archer",
-        "brute",
-        "monk",
-        "cleric",
-        "paladin",
-        "martial_artist",
-        "ranger",
-        "dungeondiver",
-      ];
-      if (combatClasses.includes(className)) {
-        classBonus += 0.5; // Extra bonus for combat classes
-      }
-    }
-  });
-
-  return Math.floor(classBonus);
-}
-
-// Initiative system
+// Initiative system - now stat-based
 function calculateInitiative(playerChoice, stealthModifier) {
   let baseInitiative = 0;
 
+  // Calculate player initiative based on character stats
+  const playerInitiative = gameState.playerCharacter
+    ? calculateCharacterInitiative(gameState.playerCharacter)
+    : 10;
+
   switch (playerChoice) {
     case "charge":
-      baseInitiative = 12; // Very hard for monsters to beat
+      baseInitiative = playerInitiative + 8; // Charge gives big initiative bonus
       break;
     case "attack":
-      baseInitiative = 8; // Good chance to beat monsters
+      baseInitiative = playerInitiative + 4; // Attack gives moderate bonus
       break;
     case "stalk":
     case "keep_distance":
-      baseInitiative = 7; // Medium-hard, influenced by stealth
+      baseInitiative = playerInitiative + stealthModifier; // Stealth affects initiative
       break;
     case "run":
-      baseInitiative = 2; // Very low initiative for running
+      baseInitiative = playerInitiative - 5; // Running reduces initiative
       break;
-  }
-
-  // Stealth affects initiative for stalk/keep distance
-  if (playerChoice === "stalk" || playerChoice === "keep_distance") {
-    baseInitiative += stealthModifier;
   }
 
   const playerRoll = Math.random() * 10 + baseInitiative;
   const monsterRoll = Math.random() * 10 + 5; // Base monster initiative
 
   console.log(
-    `Initiative Debug - Base: ${baseInitiative}, Player Roll: ${playerRoll.toFixed(
+    `Initiative Debug - Player Initiative: ${playerInitiative}, Base: ${baseInitiative}, Player Roll: ${playerRoll.toFixed(
       2
     )}, Monster Roll: ${monsterRoll.toFixed(2)}, Player Wins: ${
       playerRoll > monsterRoll
@@ -292,7 +585,7 @@ function calculateInitiative(playerChoice, stealthModifier) {
   return playerRoll > monsterRoll;
 }
 
-// Monster generation
+// Monster generation (keeping existing system)
 function generateMonsters(count, entityType, x, y) {
   const monsters = [];
 
@@ -444,7 +737,7 @@ function generateMonsters(count, entityType, x, y) {
         detectionMessages: [
           "A massive bear rises on its hind legs, roaring in challenge.",
           "The bear emerges from the forest, claws extended.",
-          "Muscle ripples under thick fur as the bear steps forward.",
+          "Muscle ripples under thick fur as the bear step forward.",
           "The bear's roar echoes as it reveals its massive form.",
         ],
       },
@@ -593,77 +886,18 @@ function getCreatureRarityColor(rarity) {
   }
 }
 
-// Ally generation - Phase 2.1 Migration
+// Ally generation - now stat-based
 function generateAllies() {
   const allies = [];
 
   // Include player character if it exists
   if (gameState.playerCharacter) {
-    const player = gameState.playerCharacter;
-    // Calculate combat power from STR + combat skills
-    const combatSkills = [
-      "swordfighting",
-      "archery",
-      "polearms",
-      "unarmed",
-      "shieldwork",
-      "tactics",
-      "intimidation",
-      "divine_magic",
-      "fire_magic",
-      "ice_magic",
-      "earth_magic",
-      "death_magic",
-      "nature_magic",
-    ];
-    const combatPower =
-      (player.stats?.STR || 8) +
-      combatSkills.reduce(
-        (total, skill) => total + (player.skills?.[skill] || 0),
-        0
-      );
-
-    allies.push(
-      new Ally(
-        `${player.firstName} ${player.lastName}` || gameState.name || "Player",
-        player.class || "player",
-        Math.max(8, Math.floor(combatPower / 2))
-      )
-    );
+    allies.push(new Ally(gameState.playerCharacter));
   }
 
   // Include all group members (NPCs)
   gameState.group.forEach((member) => {
-    // Calculate combat power from STR + combat skills
-    const combatSkills = [
-      "swordfighting",
-      "archery",
-      "polearms",
-      "unarmed",
-      "shieldwork",
-      "tactics",
-      "intimidation",
-      "divine_magic",
-      "fire_magic",
-      "ice_magic",
-      "earth_magic",
-      "death_magic",
-      "nature_magic",
-    ];
-    const combatPower =
-      (member.stats?.STR || 8) +
-      combatSkills.reduce(
-        (total, skill) => total + (member.skills?.[skill] || 0),
-        0
-      );
-
-    allies.push(
-      new Ally(
-        `${member.firstName} ${member.lastName}` || member.class || "Unknown",
-        member.class || "unknown",
-        Math.max(6, Math.floor(combatPower / 2))
-      )
-    );
+    allies.push(new Ally(member));
   });
 
   return allies;
@@ -710,7 +944,7 @@ function getCombatStatus(allies, monsters, turnCount = 0) {
   return status;
 }
 
-// AI behavior
+// AI behavior - now stat-based
 function allyAI(allies, monsters, turnCount = 0) {
   const activeAllies = allies.filter(
     (ally) => !ally.isDead() && !ally.isFleeing() && !ally.isUnconscious()
@@ -734,18 +968,39 @@ function allyAI(allies, monsters, turnCount = 0) {
       prev.wounds > current.wounds ? prev : current
     );
 
-    const damage = ally.getDamage();
-    const oldHealth = target.currentHealth;
-    target.takeDamage(damage);
-    const newHealth = target.currentHealth;
+    // Calculate hit chance based on character accuracy
+    const accuracy = calculateCharacterAccuracy(ally.character);
+    const hitRoll = Math.random() * 100;
 
-    console.log(
-      `Round ${turnCount} - ${ally.name} attacks ${target.name}: ${damage} damage (${oldHealth} → ${newHealth} HP)`
-    );
-    logEvent(`${ally.name} attacks ${target.name} for ${damage} damage!`);
+    if (hitRoll <= accuracy) {
+      const damage = ally.getDamage();
+      const oldHealth = target.currentHealth;
+      target.takeDamage(damage);
+      const newHealth = target.currentHealth;
 
-    // Chance to flee if heavily wounded
-    if (ally.wounds >= 3 && Math.random() < 0.3) {
+      console.log(
+        `Round ${turnCount} - ${ally.name} attacks ${target.name}: ${damage} damage (${oldHealth} → ${newHealth} HP)`
+      );
+      logEvent(`${ally.name} attacks ${target.name} for ${damage} damage!`);
+
+      // Progress combat skills
+      const weaponSkill = getPrimaryWeaponSkill(ally.character);
+      progressSkill(ally.character, weaponSkill);
+    } else {
+      console.log(
+        `Round ${turnCount} - ${ally.name} misses ${
+          target.name
+        } (${hitRoll.toFixed(1)} > ${accuracy})`
+      );
+      logEvent(`${ally.name} attacks ${target.name} but misses!`);
+    }
+
+    // Chance to flee if heavily wounded (based on character stats)
+    const courage =
+      (ally.character.stats?.CHA || 8) + (ally.character.stats?.WIS || 8);
+    const fleeThreshold = Math.max(0.1, 0.4 - (courage - 16) * 0.02); // Higher courage = less likely to flee
+
+    if (ally.wounds >= 3 && Math.random() < fleeThreshold) {
       ally.flee();
       console.log(`Round ${turnCount} - ${ally.name} flees from combat!`);
       logEvent(`${ally.name} flees from combat!`);
@@ -785,21 +1040,28 @@ function monsterAI(monsters, allies, turnCount = 0) {
     const damage = monster.getDamage();
     const oldHealth = target.currentHealth;
     const wasUnconscious = target.isUnconscious();
-    target.takeDamage(damage);
+
+    // Apply defense reduction
+    const defense = calculateCharacterDefense(target.character);
+    const finalDamage = Math.max(1, damage - defense);
+
+    target.takeDamage(finalDamage);
     const newHealth = target.currentHealth;
 
     if (wasUnconscious) {
       console.log(
-        `Round ${turnCount} - ${monster.name} finishes off unconscious ${target.name}: ${damage} damage (${oldHealth} → ${newHealth} HP) - ${target.name} is now DEAD`
+        `Round ${turnCount} - ${monster.name} finishes off unconscious ${target.name}: ${finalDamage} damage (${oldHealth} → ${newHealth} HP) - ${target.name} is now DEAD`
       );
       logEvent(
         `${monster.name} finishes off unconscious ${target.name}! ${target.name} is dead!`
       );
     } else {
       console.log(
-        `Round ${turnCount} - ${monster.name} attacks ${target.name}: ${damage} damage (${oldHealth} → ${newHealth} HP)`
+        `Round ${turnCount} - ${monster.name} attacks ${target.name}: ${finalDamage} damage (${oldHealth} → ${newHealth} HP)`
       );
-      logEvent(`${monster.name} attacks ${target.name} for ${damage} damage!`);
+      logEvent(
+        `${monster.name} attacks ${target.name} for ${finalDamage} damage!`
+      );
 
       if (target.isUnconscious()) {
         logEvent(`${target.name} falls unconscious!`);
@@ -975,13 +1237,18 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
 
     if (activeAllies.length === 0) {
       console.log(`Round ${turnCount} - DEFEAT! All allies fallen`);
-      // Player takes damage
-      const damage = Math.floor(Math.random() * 15) + 10;
-      gameState.health -= damage;
+      // Player takes damage based on character stats
+      const playerDefense = gameState.playerCharacter
+        ? calculateCharacterDefense(gameState.playerCharacter)
+        : 0;
+      const baseDamage = Math.floor(Math.random() * 15) + 10;
+      const finalDamage = Math.max(1, baseDamage - playerDefense);
+
+      gameState.health -= finalDamage;
       updateStatus();
 
       await showChoiceDialog(
-        `Defeat! All allies fallen. You took ${damage} damage. 🤕`,
+        `Defeat! All allies fallen. You took ${finalDamage} damage. 🤕`,
         [{ type: "button", label: "OK", value: "ok" }]
       );
 
@@ -1031,15 +1298,41 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
         case "attack":
           const target =
             activeMonsters[Math.floor(Math.random() * activeMonsters.length)];
-          const damage = Math.floor(Math.random() * 3) + 1; // 1-3 damage
-          const oldHealth = target.currentHealth;
-          target.takeDamage(damage);
-          const newHealth = target.currentHealth;
 
-          console.log(
-            `Round ${turnCount} - Player attacks ${target.name}: ${damage} damage (${oldHealth} → ${newHealth} HP)`
-          );
-          logEvent(`You attack ${target.name} for ${damage} damage!`);
+          // Calculate hit chance and damage based on player stats
+          const playerAccuracy = gameState.playerCharacter
+            ? calculateCharacterAccuracy(gameState.playerCharacter)
+            : 50;
+          const hitRoll = Math.random() * 100;
+
+          if (hitRoll <= playerAccuracy) {
+            const damage = gameState.playerCharacter
+              ? calculateCharacterDamage(gameState.playerCharacter)
+              : 2;
+            const oldHealth = target.currentHealth;
+            target.takeDamage(damage);
+            const newHealth = target.currentHealth;
+
+            console.log(
+              `Round ${turnCount} - Player attacks ${target.name}: ${damage} damage (${oldHealth} → ${newHealth} HP)`
+            );
+            logEvent(`You attack ${target.name} for ${damage} damage!`);
+
+            // Progress combat skills
+            if (gameState.playerCharacter) {
+              const weaponSkill = getPrimaryWeaponSkill(
+                gameState.playerCharacter
+              );
+              progressSkill(gameState.playerCharacter, weaponSkill);
+            }
+          } else {
+            console.log(
+              `Round ${turnCount} - Player misses ${
+                target.name
+              } (${hitRoll.toFixed(1)} > ${playerAccuracy})`
+            );
+            logEvent(`You attack ${target.name} but miss!`);
+          }
           break;
 
         case "rally_attack":
@@ -1103,10 +1396,12 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
             break;
           }
 
-          // Player attempts to flee
-          const combatBonus =
-            getGroupBonus("combat") + calculateClassCombatBonus();
-          const fleeChance = 0.6 + combatBonus * 0.1;
+          // Player attempts to flee - now based on stats
+          const playerSpeed = gameState.playerCharacter
+            ? (gameState.playerCharacter.stats?.DEX || 8) +
+              (gameState.playerCharacter.stats?.CON || 8)
+            : 16;
+          const fleeChance = Math.min(0.8, 0.4 + (playerSpeed - 16) * 0.02); // Higher speed = better flee chance
           const fleeRoll = Math.random();
           console.log(
             `Round ${turnCount} - Flee chance: ${fleeChance.toFixed(
@@ -1155,11 +1450,16 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
 
       if (currentActiveAllies.length === 0) {
         console.log(`Round ${turnCount} - DEFEAT! All allies fallen`);
-        const damage = Math.floor(Math.random() * 15) + 10;
-        gameState.health -= damage;
+        const playerDefense = gameState.playerCharacter
+          ? calculateCharacterDefense(gameState.playerCharacter)
+          : 0;
+        const baseDamage = Math.floor(Math.random() * 15) + 10;
+        const finalDamage = Math.max(1, baseDamage - playerDefense);
+
+        gameState.health -= finalDamage;
         updateStatus();
         await showChoiceDialog(
-          `Defeat! All allies fallen. You took ${damage} damage. 🤕`,
+          `Defeat! All allies fallen. You took ${finalDamage} damage. 🤕`,
           [{ type: "button", label: "OK", value: "ok" }]
         );
         logEvent(`🤕 Defeated by ${entity}s at (${ex},${ey})`);
@@ -1204,29 +1504,52 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
 
       console.log(`Round ${turnCount} - Player chose: ${playerAction}`);
 
-      // Resolve player action
+      // Resolve player action (same as above)
       switch (playerAction) {
         case "attack":
           const target =
             activeMonsters[Math.floor(Math.random() * activeMonsters.length)];
-          const damage = Math.floor(Math.random() * 3) + 1; // 1-3 damage
-          const oldHealth = target.currentHealth;
-          target.takeDamage(damage);
-          const newHealth = target.currentHealth;
 
-          console.log(
-            `Round ${turnCount} - Player attacks ${target.name}: ${damage} damage (${oldHealth} → ${newHealth} HP)`
-          );
-          logEvent(`You attack ${target.name} for ${damage} damage!`);
+          const playerAccuracy = gameState.playerCharacter
+            ? calculateCharacterAccuracy(gameState.playerCharacter)
+            : 50;
+          const hitRoll = Math.random() * 100;
+
+          if (hitRoll <= playerAccuracy) {
+            const damage = gameState.playerCharacter
+              ? calculateCharacterDamage(gameState.playerCharacter)
+              : 2;
+            const oldHealth = target.currentHealth;
+            target.takeDamage(damage);
+            const newHealth = target.currentHealth;
+
+            console.log(
+              `Round ${turnCount} - Player attacks ${target.name}: ${damage} damage (${oldHealth} → ${newHealth} HP)`
+            );
+            logEvent(`You attack ${target.name} for ${damage} damage!`);
+
+            if (gameState.playerCharacter) {
+              const weaponSkill = getPrimaryWeaponSkill(
+                gameState.playerCharacter
+              );
+              progressSkill(gameState.playerCharacter, weaponSkill);
+            }
+          } else {
+            console.log(
+              `Round ${turnCount} - Player misses ${
+                target.name
+              } (${hitRoll.toFixed(1)} > ${playerAccuracy})`
+            );
+            logEvent(`You attack ${target.name} but miss!`);
+          }
           break;
 
         case "rally_attack":
           console.log(`Round ${turnCount} - Player rallies allies`);
-          // Boost ally attack power for this turn
           allies.forEach((ally) => {
             if (!ally.isDead() && !ally.isFleeing()) {
               const oldHealth = ally.currentHealth;
-              ally.takeDamage(-1); // Heal 1 HP as rally effect
+              ally.takeDamage(-1);
               const newHealth = ally.currentHealth;
               console.log(
                 `Round ${turnCount} - ${ally.name} healed by rally: ${oldHealth} → ${newHealth} HP`
@@ -1238,7 +1561,6 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
 
         case "call_help":
           console.log(`Round ${turnCount} - Player calls for help`);
-          // Chance to call for reinforcements (if any available)
           if (Math.random() < 0.3) {
             const newAlly = new Ally("Reinforcement", "guard");
             allies.push(newAlly);
@@ -1254,7 +1576,6 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
 
         case "order_retreat":
           console.log(`Round ${turnCount} - Player orders retreat`);
-          // Order allies to retreat
           let retreatedCount = 0;
           allies.forEach((ally) => {
             if (!ally.isDead() && Math.random() < 0.7) {
@@ -1271,8 +1592,7 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
         case "run_away":
           console.log(`Round ${turnCount} - Player attempts to flee`);
 
-          // Check if player is unconscious
-          const player = allies[0]; // Player is first ally
+          const player = allies[0];
           if (player && player.isUnconscious()) {
             console.log(
               `Round ${turnCount} - Player cannot flee while unconscious`
@@ -1281,10 +1601,11 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
             break;
           }
 
-          // Player attempts to flee
-          const combatBonus =
-            getGroupBonus("combat") + calculateClassCombatBonus();
-          const fleeChance = 0.6 + combatBonus * 0.1;
+          const playerSpeed = gameState.playerCharacter
+            ? (gameState.playerCharacter.stats?.DEX || 8) +
+              (gameState.playerCharacter.stats?.CON || 8)
+            : 16;
+          const fleeChance = Math.min(0.8, 0.4 + (playerSpeed - 16) * 0.02);
           const fleeRoll = Math.random();
           console.log(
             `Round ${turnCount} - Flee chance: ${fleeChance.toFixed(
@@ -1327,11 +1648,16 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
 
       if (currentActiveAllies.length === 0) {
         console.log(`Round ${turnCount} - DEFEAT! All allies fallen`);
-        const damage = Math.floor(Math.random() * 15) + 10;
-        gameState.health -= damage;
+        const playerDefense = gameState.playerCharacter
+          ? calculateCharacterDefense(gameState.playerCharacter)
+          : 0;
+        const baseDamage = Math.floor(Math.random() * 15) + 10;
+        const finalDamage = Math.max(1, baseDamage - playerDefense);
+
+        gameState.health -= finalDamage;
         updateStatus();
         await showChoiceDialog(
-          `Defeat! All allies fallen. You took ${damage} damage. 🤕`,
+          `Defeat! All allies fallen. You took ${finalDamage} damage. 🤕`,
           [{ type: "button", label: "OK", value: "ok" }]
         );
         logEvent(`🤕 Defeated by ${entity}s at (${ex},${ey})`);
