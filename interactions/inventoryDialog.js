@@ -71,7 +71,7 @@ export async function showInventoryDialog() {
   const { nextFood, nextWater, nextGold, currentHour, currentMinute } =
     getNextConsumptionTimes();
 
-  const message =
+  let message =
     `📦 **Party Inventory**\n` +
     `🛒: ${gameState.carts}*100 + 📦: ${getNumCarriers()}*24 + 👥: ${
       gameState.group.length - getNumCarriers() - gameState.carts
@@ -95,7 +95,61 @@ export async function showInventoryDialog() {
       .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}\n` +
     `**Storage Capacity:** ${maxStorage}`;
 
-  return getShowChoiceDialog(message, [
+  // Add character equipment section
+  message += `\n\n⚔️ **CHARACTER EQUIPMENT:**\n`;
+
+  // Player character equipment
+  if (gameState.playerCharacter && gameState.playerCharacter.equipment) {
+    const player = gameState.playerCharacter;
+    message += `👤 **${player.firstName} ${player.lastName}:**\n`;
+
+    if (player.equipment.armor) {
+      message += `  Armor: ${player.equipment.armor}\n`;
+    }
+    if (player.equipment.weapon) {
+      message += `  Weapon: ${player.equipment.weapon}\n`;
+    }
+    if (player.equipment.tool) {
+      message += `  Tool: ${player.equipment.tool}\n`;
+    }
+    message += `\n`;
+  }
+
+  // Group member equipment
+  if (gameState.group.length > 0) {
+    gameState.group.forEach((member, index) => {
+      if (member.equipment) {
+        message += `👥 **${member.firstName} ${member.lastName}:**\n`;
+
+        if (member.equipment.armor) {
+          message += `  Armor: ${member.equipment.armor}\n`;
+        }
+        if (member.equipment.weapon) {
+          message += `  Weapon: ${member.equipment.weapon}\n`;
+        }
+        if (member.equipment.tool) {
+          message += `  Tool: ${member.equipment.tool}\n`;
+        }
+        message += `\n`;
+      }
+    });
+  }
+
+  const components = [
+    { type: "message", label: message, value: "" },
+    { type: "button", label: "👥 Character Management", value: "char_mgmt" },
     { type: "button", label: "❌ Close", value: "close" },
-  ]);
+  ];
+
+  const choice = await getShowChoiceDialog("Party Inventory", components);
+
+  if (choice === "char_mgmt") {
+    const { showCharacterManagementDialog } = await import(
+      "./characterManagementDialog.js"
+    );
+    await showCharacterManagementDialog();
+    return await showInventoryDialog(); // Return to inventory after character management
+  }
+
+  return choice;
 }

@@ -1,6 +1,11 @@
+// Health Group Dialog
+// Displays group status, character information, and bonuses
+// Integrated with Character Management Interface for detailed character management
+
 import { gameState } from "../gamestate/game_variables.js";
 import { getGroupBonus } from "../utils.js";
 import { getShowChoiceDialog } from "../interactions.js";
+import { showCharacterManagementDialog } from "./characterManagementDialog.js";
 
 export async function showHealthGroupDialog() {
   let message = "";
@@ -22,8 +27,8 @@ export async function showHealthGroupDialog() {
   }`;
   message += `📍🛡️\n`;
 
-  // Class emoji mapping for display
-  let classEmoji = {
+  // Class emoji mapping for display (consistent with character management)
+  const classEmoji = {
     fighter: "⚔️",
     archer: "🏹",
     brute: "💪",
@@ -44,6 +49,21 @@ export async function showHealthGroupDialog() {
     craftsman: "🔨",
   };
 
+  // Race emoji mapping for display (consistent with character management)
+  const raceEmoji = {
+    Human: "👤",
+    Elf: "🧝",
+    Dwarf: "🧙",
+    Orc: "👹",
+    Goblin: "👺",
+    Demon: "👿",
+    Angel: "👼",
+    Undead: "💀",
+    Draconic: "🐉",
+    Fishman: "🐠",
+    Birdman: "🦅",
+  };
+
   // Debug: Log the current state
   console.log("Current gameState.playerCharacter:", gameState.playerCharacter);
   console.log("Current gameState.group:", gameState.group);
@@ -52,14 +72,16 @@ export async function showHealthGroupDialog() {
   // Player character details
   if (gameState.playerCharacter) {
     const player = gameState.playerCharacter;
-    const emoji = classEmoji[player.class] || "👤";
+    const classEmojiIcon = classEmoji[player.class] || "👤";
+    const raceEmojiIcon = raceEmoji[player.race] || "👤";
 
     let playerStats = `👤 **Player Character**\n`;
     playerStats += `Name: ${player.firstName} ${player.lastName}\n`;
-    playerStats += `Race: ${player.race} | Class: ${player.class} ${emoji}\n`;
-    playerStats += `Level: ${player.level || 1} | Health: ${
-      player.health?.current || 0
-    }/${player.health?.max || 0} ❤️‍🩹\n`;
+    playerStats += `Race: ${player.race} ${raceEmojiIcon} | Class: ${player.class} ${classEmojiIcon}\n`;
+    playerStats += `Gender: ${player.gender} | Level: ${player.level || 1}\n`;
+    playerStats += `Health: ${player.health?.current || 0}/${
+      player.health?.max || 0
+    } ❤️‍🩹\n`;
 
     // Display stats
     if (player.stats) {
@@ -90,11 +112,14 @@ export async function showHealthGroupDialog() {
     message += `👥 **Group Members (${gameState.group.length}):**\n`;
 
     gameState.group.forEach((member, index) => {
-      const emoji = classEmoji[member.class] || "👤";
-      message += `${index + 1}. ${member.firstName} ${member.lastName} - ${
-        member.race
-      } ${member.class} ${emoji}\n`;
-      message += `   Level: ${member.level || 1} | Health: ${
+      const classEmojiIcon = classEmoji[member.class] || "👤";
+      const raceEmojiIcon = raceEmoji[member.race] || "👤";
+
+      message += `${index + 1}. ${member.firstName} ${member.lastName}\n`;
+      message += `   ${member.race} ${raceEmojiIcon} ${
+        member.class
+      } ${classEmojiIcon} | Level ${member.level || 1}\n`;
+      message += `   Gender: ${member.gender} | Health: ${
         member.health?.current || 0
       }/${member.health?.max || 0}\n`;
 
@@ -195,6 +220,11 @@ export async function showHealthGroupDialog() {
     { type: "message", label: message, value: "" },
     {
       type: "button",
+      label: "👥 Character Management",
+      value: "char_mgmt",
+    },
+    {
+      type: "button",
       label: "Detailed Breakdown",
       value: "detailed-breakdown",
     },
@@ -203,7 +233,10 @@ export async function showHealthGroupDialog() {
 
   const choice = await getShowChoiceDialog("Group Status", components);
 
-  if (choice === "detailed-breakdown") {
+  if (choice === "char_mgmt") {
+    await showCharacterManagementDialog();
+    return await showHealthGroupDialog(); // Return to health dialog after character management
+  } else if (choice === "detailed-breakdown") {
     return showDetailedBreakdownDialog();
   }
 
@@ -264,9 +297,17 @@ export async function showDetailedBreakdownDialog() {
     });
   }
 
-  return getShowChoiceDialog(message, [
+  const choice = await getShowChoiceDialog(message, [
+    { type: "button", label: "👥 Character Management", value: "char_mgmt" },
     { type: "button", label: "❌ Close", value: "close" },
   ]);
+
+  if (choice === "char_mgmt") {
+    await showCharacterManagementDialog();
+    return await showDetailedBreakdownDialog(); // Return to detailed breakdown after character management
+  }
+
+  return choice;
 }
 
 // Helper function to calculate skill-based bonuses (similar to getGroupBonus but without groupBonus)

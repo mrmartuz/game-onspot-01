@@ -7,6 +7,7 @@ import { getGroupBonus } from "../utils.js";
 import { getShowChoiceDialog } from "../interactions.js";
 import { logEvent } from "../time_system.js";
 import { updateStatus } from "../rendering.js";
+import { showCharacterManagementDialog } from "./characterManagementDialog.js";
 
 export async function showMenu() {
   // Check if player is on a tile with location or entity
@@ -46,11 +47,16 @@ export async function showMenu() {
     ...(isFlora
       ? [{ type: "button", label: "🌱 Harvest flowers", value: "4" }]
       : []),
+    { type: "button", label: "👥 Character Management", value: "char_mgmt" },
     { type: "button", label: "🏗️ Build camp ⛺ (5 🪵)", value: "2" },
     { type: "button", label: "🏗️ Build outpost 🏕️ (10 🧱, 10 🪵)", value: "3" },
     { type: "button", label: "❌ Close", value: "close" },
   ]);
   if (choice === "close") return;
+  if (choice === "char_mgmt") {
+    await showCharacterManagementDialog();
+    return;
+  }
   if (choice === "2" || choice === "3") {
     let costMats = choice === "2" ? 0 : 10;
     let costWood = choice === "2" ? 5 : 10;
