@@ -7,6 +7,7 @@ export const creatureTemplates = {
     class: "fighter",
     level: 1,
     rarity: "common",
+    inventorySize: 1,
     baseStats: {
       STR: 6,
       DEX: 12,
@@ -48,6 +49,7 @@ export const creatureTemplates = {
     class: "brute",
     level: 2,
     rarity: "common",
+    inventorySize: 1,
     baseStats: {
       STR: 14,
       DEX: 8,
@@ -89,6 +91,7 @@ export const creatureTemplates = {
     class: "brute",
     level: 4,
     rarity: "uncommon",
+    inventorySize: 3,
     baseStats: {
       STR: 18,
       DEX: 4,
@@ -130,6 +133,7 @@ export const creatureTemplates = {
     class: "pyromancer",
     level: 8,
     rarity: "legendary",
+    inventorySize: 10,
     baseStats: {
       STR: 20,
       DEX: 12,
@@ -173,6 +177,7 @@ export const creatureTemplates = {
     class: "hunter",
     level: 1,
     rarity: "common",
+    inventorySize: 1,
     baseStats: {
       STR: 8,
       DEX: 14,
@@ -214,6 +219,7 @@ export const creatureTemplates = {
     class: "brute",
     level: 3,
     rarity: "uncommon",
+    inventorySize: 1,
     baseStats: {
       STR: 16,
       DEX: 8,
@@ -255,6 +261,7 @@ export const creatureTemplates = {
     class: "hunter",
     level: 2,
     rarity: "uncommon",
+    inventorySize: 1,
     baseStats: {
       STR: 12,
       DEX: 16,
@@ -324,5 +331,3 @@ export function getCreatureRarityColor(rarity) {
 
   return colors[rarity] || "#90EE90"; // Default to light green
 }
-
-

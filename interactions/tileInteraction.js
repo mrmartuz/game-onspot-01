@@ -10,6 +10,7 @@ import {
 } from "../interactions.js";
 import { recruitmentDialog } from "./recruitmentDialog.js";
 import { recruitmentSystem } from "./recruitmentSystem.js";
+import { handleChoice } from "./handleChoice.js";
 
 // Helper function to show minimal menu after recruitment
 async function showMinimalMenuAfterRecruitment(tile) {
@@ -34,6 +35,44 @@ async function showMinimalMenuAfterRecruitment(tile) {
   // Handle the choice if user wants to fight monsters
   if (choice === "9") {
     await getHandleEnhancedCombatDialog(gameState.px, gameState.py, true);
+  }
+}
+
+// Helper function to show menu after entity interaction (with trade option for armies)
+async function showMenuAfterEntityInteraction(tile) {
+  let options = [{ type: "button", label: "🚶 Leave", value: "1" }];
+
+  // Add fight option for monster caves
+  if (tile.location === "monster caves" || tile.entity === "monster") {
+    options.unshift({
+      type: "button",
+      label: "Fight the monsters",
+      value: "9",
+    });
+  }
+
+  // Add trade option for armies
+  if (tile.entity === "army") {
+    options.unshift({
+      type: "button",
+      label: "💰 Trade",
+      value: "3",
+    });
+  }
+
+  const msg = `At ${tile.location !== "none" ? tile.location : ""} ${
+    tile.entity !== "none" ? tile.entity : ""
+  }`.trim();
+  const finalMsg = msg === "At" ? "On this tile" : msg;
+
+  const choice = await getShowChoiceDialog(finalMsg, options);
+
+  // Handle the choice
+  if (choice === "9") {
+    await getHandleEnhancedCombatDialog(gameState.px, gameState.py, true);
+  } else if (choice === "3") {
+    // Handle trade for armies
+    await handleChoice("3", tile);
   }
 }
 
@@ -91,8 +130,8 @@ export async function checkTileInteraction(tile) {
       logEvent(`👥 No one willing to join from ${tile.entity}`);
     }
 
-    // Show minimal menu after recruitment attempt
-    await showMinimalMenuAfterRecruitment(tile);
+    // Show menu after recruitment attempt
+    await showMenuAfterEntityInteraction(tile);
     return;
   }
 

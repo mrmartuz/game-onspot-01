@@ -4,6 +4,7 @@ import { getGroupBonus } from "../utils.js";
 import { getNumCarriers } from "../utils.js";
 import { getShowChoiceDialog } from "../interactions.js";
 import { getCurrentGameDate } from "../time_system.js";
+import { getTotalHeadSpace, getAllHeadsForDisplay } from "./loot-system.js";
 
 function getNextConsumptionTimes() {
   const currentGameDate = getCurrentGameDate();
@@ -71,12 +72,17 @@ export async function showInventoryDialog() {
   const { nextFood, nextWater, nextGold, currentHour, currentMinute } =
     getNextConsumptionTimes();
 
+  const totalHeadSpace = getTotalHeadSpace();
+  const availableSpace = maxStorage - totalHeadSpace;
+
   let message =
     `📦 **Party Inventory**\n` +
     `🛒: ${gameState.carts}*100 + 📦: ${getNumCarriers()}*24 + 👥: ${
       gameState.group.length - getNumCarriers() - gameState.carts
     }*10\n` +
-    `📦 Max Storage: ${maxStorage}\n\n` +
+    `📦 Max Storage: ${maxStorage}\n` +
+    `🏺 Monster Heads: ${gameState.monsterHeads.length} (${totalHeadSpace} space)\n` +
+    `📦 Available Space: ${availableSpace}\n\n` +
     `🪙 Gold: ${gameState.gold}\n` +
     `🍞 Food: ${gameState.food.toFixed(1)} -${dailyFoodConsumption.toFixed(
       1
@@ -94,6 +100,15 @@ export async function showInventoryDialog() {
       .toString()
       .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}\n` +
     `**Storage Capacity:** ${maxStorage}`;
+
+  // Add monster heads section
+  if (gameState.monsterHeads.length > 0) {
+    message += `\n\n🏺 **MONSTER HEADS:**\n`;
+    const headsForDisplay = getAllHeadsForDisplay();
+    headsForDisplay.forEach((headData, index) => {
+      message += `  ${headData.text}\n`;
+    });
+  }
 
   // Add character equipment section
   message += `\n\n⚔️ **CHARACTER EQUIPMENT:**\n`;

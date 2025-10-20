@@ -17,6 +17,14 @@ import {
   calculateCharacterInitiative,
 } from "./character-calculations.js";
 import { Monster, Ally } from "./entities.js";
+import {
+  generateMonsterHead,
+  addHeadToInventory,
+  getAvailableHeadSpace,
+  formatHeadForDisplay,
+  getRaceEmoji as getLootRaceEmoji,
+} from "../loot-system.js";
+import { logEvent } from "../../time_system.js";
 
 // Race emoji mapping for display
 const raceEmoji = {
@@ -685,6 +693,10 @@ async function handleResolutionPhase(status) {
       "🏆 VICTORY!\n\nAll enemies have been defeated!\nYour group celebrates their victory.",
       [{ type: "button", label: "Continue", value: "ok" }]
     );
+
+    // Show harvest dialog after victory
+    await handleHarvestDialog();
+
     return "victory";
   } else if (status.defeat) {
     await getShowChoiceDialog(
@@ -695,6 +707,114 @@ async function handleResolutionPhase(status) {
   }
 
   return "unknown";
+}
+
+// Handle harvest dialog after combat victory
+async function handleHarvestDialog() {
+  const defeatedMonsters = combatState.monsters.filter((monster) =>
+    monster.isDead()
+  );
+
+  if (defeatedMonsters.length === 0) {
+    return; // No monsters to harvest
+  }
+
+  const availableSpace = getAvailableHeadSpace();
+  let harvestMessage = "🏺 **HARVEST LOOT**\n\n";
+  harvestMessage += `Available inventory space: ${availableSpace}\n\n`;
+  harvestMessage += "Defeated monsters:\n";
+
+  // Create harvest options
+  const harvestOptions = [];
+  let totalSelectedSpace = 0;
+
+  for (let i = 0; i < defeatedMonsters.length; i++) {
+    const monster = defeatedMonsters[i];
+    const head = generateMonsterHead(monster);
+    const emoji = getLootRaceEmoji(monster.race);
+
+    harvestMessage += `${emoji} ${monster.race} (Level ${monster.level}, ${monster.rarity}) - ${head.inventorySize} space\n`;
+
+    // Add checkbox option for each monster
+    harvestOptions.push({
+      type: "checkbox",
+      value: `harvest_${i}`,
+      label: `${emoji} ${monster.race} Head (${head.inventorySize} space)`,
+      checked: false,
+    });
+  }
+
+  harvestOptions.push({
+    type: "button",
+    label: "✅ Harvest Selected",
+    value: "harvest",
+  });
+  harvestOptions.push({
+    type: "button",
+    label: "❌ Skip Harvest",
+    value: "skip",
+  });
+
+  const harvestResult = await getShowChoiceDialog(
+    harvestMessage,
+    harvestOptions
+  );
+
+  console.log("Harvest result:", harvestResult);
+  console.log("Harvest result keys:", Object.keys(harvestResult));
+
+  if (harvestResult === "skip") {
+    return;
+  }
+
+  if (harvestResult === "harvest" || harvestResult.value === "harvest") {
+    let harvestedCount = 0;
+    let harvestedItems = [];
+
+    console.log(
+      "Processing harvest, defeatedMonsters.length:",
+      defeatedMonsters.length
+    );
+
+    for (let i = 0; i < defeatedMonsters.length; i++) {
+      console.log(`Checking harvest_${i}:`, harvestResult[`harvest_${i}`]);
+      if (harvestResult[`harvest_${i}`]) {
+        const monster = defeatedMonsters[i];
+        const head = generateMonsterHead(monster);
+
+        console.log("Generated head:", head);
+
+        if (addHeadToInventory(head)) {
+          harvestedCount++;
+          harvestedItems.push(
+            `${getLootRaceEmoji(monster.race)} ${monster.race} Head`
+          );
+          console.log("Successfully added head to inventory");
+        } else {
+          console.log("Failed to add head to inventory - not enough space");
+          await getShowChoiceDialog(
+            `❌ Not enough inventory space for ${monster.race} head!`,
+            [{ type: "button", label: "OK", value: "ok" }]
+          );
+          break;
+        }
+      }
+    }
+
+    if (harvestedCount > 0) {
+      const harvestSummary = `✅ Harvested ${harvestedCount} monster head${
+        harvestedCount > 1 ? "s" : ""
+      }:\n${harvestedItems.join("\n")}`;
+      await getShowChoiceDialog(harvestSummary, [
+        { type: "button", label: "OK", value: "ok" },
+      ]);
+      logEvent(
+        `🏺 Harvested ${harvestedCount} monster head${
+          harvestedCount > 1 ? "s" : ""
+        }`
+      );
+    }
+  }
 }
 
 // Helper functions

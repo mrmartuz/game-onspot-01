@@ -34,6 +34,9 @@ export const gameState = {
   npcCharacters: [], // Array of NPC character objects with position and persistence data
   // Structure: [{ character: {...}, position: {x, y, locationType}, migrationCount: 0, isPersistent: false }]
 
+  // Monster Head Loot System
+  monsterHeads: [], // Array of {race, rarity, level, inventorySize, timestamp, id}
+
   groupBonus: {
     navigation: 0,
     discovery: 0,

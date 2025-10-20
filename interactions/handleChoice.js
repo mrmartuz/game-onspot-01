@@ -11,6 +11,12 @@ import { getMaxStorage } from "../utils.js";
 import { updateGroupBonus } from "../utils.js";
 import { getSaveGameDialog } from "../interactions.js";
 import { recruitmentDialog } from "./recruitmentDialog.js";
+import {
+  calculateHeadValue,
+  removeHeadFromInventory,
+  getAllHeadsForDisplay,
+  getRaceEmoji,
+} from "./loot-system.js";
 
 export async function handleChoice(choice, tile) {
   if (choice === "close") {
@@ -49,7 +55,11 @@ export async function handleChoice(choice, tile) {
 
     let trading = true;
     while (trading) {
-      let t = await getShowChoiceDialog("Trade options:", [
+      // Determine location type for pricing
+      const locationType = tile?.location || "village";
+
+      // Create trade options
+      const tradeOptions = [
         {
           type: "button",
           label: `📥 Buy food 🍞 (${Math.floor(
@@ -82,8 +92,20 @@ export async function handleChoice(choice, tile) {
           value: "5",
         },
         { type: "button", label: "📥 Buy cart 🛒 (100g for 1)", value: "6" },
-        { type: "button", label: "❌ Close", value: "close" },
-      ]);
+      ];
+
+      // Add monster head selling options if available
+      if (gameState.monsterHeads.length > 0) {
+        tradeOptions.push({
+          type: "button",
+          label: "🏺 Sell Monster Heads",
+          value: "heads",
+        });
+      }
+
+      tradeOptions.push({ type: "button", label: "❌ Close", value: "close" });
+
+      let t = await getShowChoiceDialog("Trade options:", tradeOptions);
 
       if (t === "close") {
         trading = false;
@@ -162,6 +184,10 @@ export async function handleChoice(choice, tile) {
             { type: "button", label: "OK", value: "ok" },
           ]);
         }
+      } else if (t === "heads") {
+        // Handle monster head selling
+        await handleMonsterHeadSelling(locationType, interactBonus);
+        tradeDesc = "Monster head trading completed";
       }
       if (tradeDesc) {
         logEvent(tradeDesc);
@@ -241,5 +267,73 @@ export async function handleChoice(choice, tile) {
   } else if (choice === "9") {
     // Handle monster cave exploration - trigger enhanced combat
     await getHandleEnhancedCombatDialog(gameState.px, gameState.py, true);
+  }
+}
+
+// Handle monster head selling dialog
+async function handleMonsterHeadSelling(locationType, interactBonus) {
+  if (gameState.monsterHeads.length === 0) {
+    await getShowChoiceDialog("You have no monster heads to sell!", [
+      { type: "button", label: "OK", value: "ok" },
+    ]);
+    return;
+  }
+
+  let selling = true;
+  while (selling) {
+    const headsForDisplay = getAllHeadsForDisplay();
+    let sellMessage = `🏺 **SELL MONSTER HEADS**\n\n`;
+    sellMessage += `Location: ${locationType}\n`;
+    sellMessage += `Interact Bonus: +${(interactBonus * 100).toFixed(0)}%\n\n`;
+    sellMessage += `Available heads:\n`;
+
+    const sellOptions = [];
+
+    headsForDisplay.forEach((headData, index) => {
+      const price = calculateHeadValue(
+        headData.head,
+        locationType,
+        interactBonus
+      );
+      sellMessage += `${headData.text} - ${price}g\n`;
+
+      sellOptions.push({
+        type: "button",
+        label: `${headData.text} - ${price}g`,
+        value: `sell_${index}`,
+      });
+    });
+
+    sellOptions.push({ type: "button", label: "❌ Close", value: "close" });
+
+    const sellChoice = await getShowChoiceDialog(sellMessage, sellOptions);
+
+    if (sellChoice === "close") {
+      selling = false;
+      continue;
+    }
+
+    if (sellChoice.startsWith("sell_")) {
+      const headIndex = parseInt(sellChoice.split("_")[1]);
+      const head = gameState.monsterHeads[headIndex];
+
+      if (head) {
+        const price = calculateHeadValue(head, locationType, interactBonus);
+        gameState.gold += price;
+        removeHeadFromInventory(headIndex);
+
+        const emoji = getRaceEmoji(head.race);
+        const sellSummary = `✅ Sold ${emoji} ${head.race} Head for ${price}g`;
+        await getShowChoiceDialog(sellSummary, [
+          { type: "button", label: "OK", value: "ok" },
+        ]);
+        logEvent(sellSummary);
+
+        // If no more heads, exit selling loop
+        if (gameState.monsterHeads.length === 0) {
+          selling = false;
+        }
+      }
+    }
   }
 }

@@ -214,6 +214,16 @@ export function getMaxStorage() {
   return baseStorage + bonusStorage;
 }
 
+// Get available storage space accounting for monster heads
+export function getAvailableStorage() {
+  const maxStorage = getMaxStorage();
+  const usedByHeads = gameState.monsterHeads.reduce(
+    (total, head) => total + head.inventorySize,
+    0
+  );
+  return Math.max(0, maxStorage - usedByHeads);
+}
+
 // Phase 2.1 Migration: Removed getBonusForRole() - now using skill-based calculations
 
 export function updateGroupBonus() {
