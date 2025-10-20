@@ -460,6 +460,36 @@ async function handlePlayerAttack(player, targets) {
 }
 
 async function executeAttack(attacker, target) {
+  console.log(
+    `[ATTACK ATTEMPT] ${attacker.name} (${
+      attacker.character?.race || attacker.race || "unknown"
+    }) attempting to attack ${target.name} (${
+      target.character?.race || target.race || "unknown"
+    })`
+  );
+  console.log(
+    `[ATTACKER STATE] ${attacker.name} - Status: ${attacker.status}, Health: ${
+      attacker.currentHealth
+    }/${attacker.maxHealth}, Unconscious: ${
+      attacker.unconscious
+    }, Dead: ${attacker.isDead()}`
+  );
+  console.log(
+    `[TARGET STATE] ${target.name} - Status: ${target.status}, Health: ${
+      target.currentHealth
+    }/${target.maxHealth}, Unconscious: ${
+      target.unconscious
+    }, Dead: ${target.isDead()}`
+  );
+
+  // Check if attacker can attack
+  if (attacker.isDead() || attacker.isFleeing() || attacker.isUnconscious()) {
+    console.log(
+      `[ATTACK ERROR] ${attacker.name} cannot attack - Status: ${attacker.status}, Unconscious: ${attacker.unconscious}`
+    );
+    return;
+  }
+
   const damage = attacker.character
     ? calculateCharacterDamage(attacker.character)
     : attacker.getDamage();
@@ -475,12 +505,23 @@ async function executeAttack(attacker, target) {
   const hitChance = Math.max(5, Math.min(95, accuracy - defense + 50));
   const hitRoll = Math.random() * 100;
 
+  console.log(
+    `[ATTACK CALC] ${
+      attacker.name
+    } - Damage: ${damage}, Accuracy: ${accuracy}, Hit Chance: ${hitChance}%, Roll: ${hitRoll.toFixed(
+      1
+    )}`
+  );
+
   if (hitRoll <= hitChance) {
     const actualDamage = target.takeDamage(damage);
     const attackerEmoji = getRaceEmoji(
       attacker.character?.race || attacker.race
     );
     const targetEmoji = getRaceEmoji(target.character?.race || target.race);
+    console.log(
+      `[ATTACK HIT] ${attacker.name} hits ${target.name} for ${actualDamage} damage!`
+    );
     await getShowChoiceDialog(
       `⚔️ ${attacker.name} ${attackerEmoji} attacks ${target.name} ${targetEmoji} for ${actualDamage} damage!`,
       [{ type: "button", label: "Continue", value: "ok" }]
@@ -490,6 +531,7 @@ async function executeAttack(attacker, target) {
       attacker.character?.race || attacker.race
     );
     const targetEmoji = getRaceEmoji(target.character?.race || target.race);
+    console.log(`[ATTACK MISS] ${attacker.name} misses ${target.name}!`);
     await getShowChoiceDialog(
       `⚔️ ${attacker.name} ${attackerEmoji} attacks ${target.name} ${targetEmoji} but misses!`,
       [{ type: "button", label: "Continue", value: "ok" }]
@@ -561,11 +603,33 @@ async function handlePlayerFlee() {
 
 // Ally turn handler
 async function handleAllyTurn(ally) {
-  console.log(`Ally turn: ${ally.name}`);
+  console.log(
+    `[ALLY TURN] ${ally.name} (${
+      ally.character?.race || "unknown"
+    }) - Status: ${ally.status}, Health: ${ally.currentHealth}/${
+      ally.maxHealth
+    }, Unconscious: ${ally.unconscious}, Dead: ${ally.isDead()}`
+  );
+
+  // Check if ally can act
+  if (ally.isDead() || ally.isFleeing() || ally.isUnconscious()) {
+    console.log(
+      `[ALLY TURN] ${ally.name} cannot act - Status: ${ally.status}, Unconscious: ${ally.unconscious}`
+    );
+    return;
+  }
 
   // Simple AI for allies
   const aliveMonsters = combatState.monsters.filter(
     (m) => !m.isDead() && !m.isFleeing()
+  );
+
+  console.log(
+    `[ALLY TARGETS] ${ally.name} can target ${
+      aliveMonsters.length
+    } monsters: ${aliveMonsters
+      .map((m) => `${m.name}(${m.status},${m.currentHealth}/${m.maxHealth})`)
+      .join(", ")}`
   );
 
   if (aliveMonsters.length === 0) return;
@@ -577,11 +641,33 @@ async function handleAllyTurn(ally) {
 
 // Monster turn handler
 async function handleMonsterTurn(monster) {
-  console.log(`Monster turn: ${monster.name}`);
+  console.log(
+    `[MONSTER TURN] ${monster.name} (${monster.race || "unknown"}) - Status: ${
+      monster.status
+    }, Health: ${monster.currentHealth}/${monster.maxHealth}, Unconscious: ${
+      monster.unconscious
+    }, Dead: ${monster.isDead()}`
+  );
+
+  // Check if monster can act
+  if (monster.isDead() || monster.isFleeing() || monster.isUnconscious()) {
+    console.log(
+      `[MONSTER TURN] ${monster.name} cannot act - Status: ${monster.status}, Unconscious: ${monster.unconscious}`
+    );
+    return;
+  }
 
   // Simple AI for monsters
   const aliveAllies = combatState.allies.filter(
     (a) => !a.isDead() && !a.isFleeing()
+  );
+
+  console.log(
+    `[MONSTER TARGETS] ${monster.name} can target ${
+      aliveAllies.length
+    } allies: ${aliveAllies
+      .map((a) => `${a.name}(${a.status},${a.currentHealth}/${a.maxHealth})`)
+      .join(", ")}`
   );
 
   if (aliveAllies.length === 0) return;

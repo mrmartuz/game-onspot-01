@@ -44,8 +44,15 @@ export async function generateAllies() {
 export function allyAI(allies, monsters, turnCount = 0) {
   // AI behavior for ally characters
   allies.forEach((ally) => {
-    if (ally.isDead() || ally.isFleeing()) {
-      return; // Skip dead or fleeing allies
+    if (ally.isDead() || ally.isFleeing() || ally.isUnconscious()) {
+      if (ally.isUnconscious()) {
+        console.log(
+          `[ALLY AI] ${ally.name} (${
+            ally.character?.race || "unknown"
+          }) is unconscious - skipping turn`
+        );
+      }
+      return; // Skip dead, fleeing, or unconscious allies
     }
 
     // Determine AI behavior based on personality
@@ -88,8 +95,15 @@ export function allyAI(allies, monsters, turnCount = 0) {
 export function monsterAI(monsters, allies, turnCount = 0) {
   // AI behavior for monster characters
   monsters.forEach((monster) => {
-    if (monster.isDead() || monster.isFleeing()) {
-      return; // Skip dead or fleeing monsters
+    if (monster.isDead() || monster.isFleeing() || monster.isUnconscious()) {
+      if (monster.isUnconscious()) {
+        console.log(
+          `[MONSTER AI] ${monster.name} (${
+            monster.race || "unknown"
+          }) is unconscious - skipping turn`
+        );
+      }
+      return; // Skip dead, fleeing, or unconscious monsters
     }
 
     // Determine AI behavior based on creature type
@@ -135,7 +149,8 @@ function findWeakestTarget(targets) {
   if (!targets || targets.length === 0) return null;
 
   return targets.reduce((weakest, current) => {
-    if (current.isDead() || current.isFleeing()) return weakest;
+    if (current.isDead() || current.isFleeing() || current.isUnconscious())
+      return weakest;
     if (!weakest) return current;
 
     const currentHealth = current.currentHealth / current.maxHealth;
@@ -149,7 +164,8 @@ function findStrongestTarget(targets) {
   if (!targets || targets.length === 0) return null;
 
   return targets.reduce((strongest, current) => {
-    if (current.isDead() || current.isFleeing()) return strongest;
+    if (current.isDead() || current.isFleeing() || current.isUnconscious())
+      return strongest;
     if (!strongest) return current;
 
     const currentThreat = calculateThreatLevel(current);
@@ -163,7 +179,8 @@ function findBalancedTarget(targets) {
   if (!targets || targets.length === 0) return null;
 
   const validTargets = targets.filter(
-    (target) => !target.isDead() && !target.isFleeing()
+    (target) =>
+      !target.isDead() && !target.isFleeing() && !target.isUnconscious()
   );
 
   if (validTargets.length === 0) return null;
@@ -183,7 +200,8 @@ function findRandomTarget(targets) {
   if (!targets || targets.length === 0) return null;
 
   const validTargets = targets.filter(
-    (target) => !target.isDead() && !target.isFleeing()
+    (target) =>
+      !target.isDead() && !target.isFleeing() && !target.isUnconscious()
   );
 
   if (validTargets.length === 0) return null;
@@ -206,6 +224,22 @@ function calculateThreatLevel(entity) {
 
 function executeAttack(attacker, target) {
   // Execute attack action
+  console.log(
+    `[ATTACK] ${attacker.name} (${
+      attacker.race || attacker.character?.race || "unknown"
+    }) attempting to attack ${target.name} (${
+      target.race || target.character?.race || "unknown"
+    })`
+  );
+
+  // Check attacker status before attack
+  if (attacker.isUnconscious()) {
+    console.log(
+      `[ATTACK ERROR] ${attacker.name} is unconscious but still attempting to attack! Status: ${attacker.status}, Unconscious: ${attacker.unconscious}`
+    );
+    return;
+  }
+
   const damage = attacker.character
     ? calculateCharacterDamage(attacker.character)
     : attacker.getDamage();
@@ -228,7 +262,11 @@ function executeAttack(attacker, target) {
     attacker.damageDealt += actualDamage;
 
     console.log(
-      `${attacker.name} attacks ${target.name} for ${actualDamage} damage!`
+      `[ATTACK HIT] ${attacker.name} (${
+        attacker.race || attacker.character?.race || "unknown"
+      }) attacks ${target.name} (${
+        target.race || target.character?.race || "unknown"
+      }) for ${actualDamage} damage!`
     );
 
     // Progress combat skills
@@ -238,7 +276,13 @@ function executeAttack(attacker, target) {
     }
   } else {
     // Miss!
-    console.log(`${attacker.name} attacks ${target.name} but misses!`);
+    console.log(
+      `[ATTACK MISS] ${attacker.name} (${
+        attacker.race || attacker.character?.race || "unknown"
+      }) attacks ${target.name} (${
+        target.race || target.character?.race || "unknown"
+      }) but misses!`
+    );
   }
 }
 

@@ -154,6 +154,28 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
       console.log("Player attempts to hide!");
     }
 
+    // Log creature status before AI turns
+    console.log(
+      `[TURN ${turnCount} STATUS] Allies: ${allies
+        .map(
+          (a) =>
+            `${a.name}(${a.status},${
+              a.unconscious ? "unconscious" : "conscious"
+            })`
+        )
+        .join(", ")}`
+    );
+    console.log(
+      `[TURN ${turnCount} STATUS] Monsters: ${monsters
+        .map(
+          (m) =>
+            `${m.name}(${m.status},${
+              m.unconscious ? "unconscious" : "conscious"
+            })`
+        )
+        .join(", ")}`
+    );
+
     // Ally AI turn
     if (allies.length > 0) {
       console.log("Ally AI turn...");

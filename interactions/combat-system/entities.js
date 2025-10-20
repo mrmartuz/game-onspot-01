@@ -44,6 +44,10 @@ export class CombatEntity {
     return this.status === "fleeing";
   }
 
+  isUnconscious() {
+    return this.unconscious || this.status === "unconscious";
+  }
+
   flee() {
     this.status = "fleeing";
     return true;
@@ -78,7 +82,28 @@ export class Monster extends CombatEntity {
 
   takeDamage(amount) {
     const actualDamage = this.calculateActualDamage(amount);
-    return super.takeDamage(actualDamage);
+    const damageApplied = super.takeDamage(actualDamage);
+
+    console.log(
+      `[MONSTER DAMAGE] ${this.name} (${
+        this.race || "unknown"
+      }) takes ${damageApplied} damage. Health: ${this.currentHealth}/${
+        this.maxHealth
+      }`
+    );
+
+    // Check for unconsciousness (at 0 HP) - let base class handle death status
+    if (this.currentHealth <= 0 && !this.unconscious && !this.isDead()) {
+      this.unconscious = true;
+      // Don't set status here, let base class handle it
+      console.log(
+        `[MONSTER UNCONSCIOUS] ${this.name} (${
+          this.race || "unknown"
+        }) becomes unconscious! Health: ${this.currentHealth}/${this.maxHealth}`
+      );
+    }
+
+    return damageApplied;
   }
 
   calculateActualDamage(amount) {
@@ -248,13 +273,26 @@ export class Ally extends CombatEntity {
     const actualDamage = this.calculateActualDamage(amount);
     const damageApplied = super.takeDamage(actualDamage);
 
+    console.log(
+      `[ALLY DAMAGE] ${this.name} (${
+        this.character?.race || "unknown"
+      }) takes ${damageApplied} damage. Health: ${this.currentHealth}/${
+        this.maxHealth
+      }`
+    );
+
     // Update character health
     this.character.health.current = this.currentHealth;
 
-    // Check for unconsciousness (below 25% health)
-    if (this.currentHealth <= this.maxHealth * 0.25 && !this.unconscious) {
+    // Check for unconsciousness (at 0 HP) - let base class handle death status
+    if (this.currentHealth <= 0 && !this.unconscious) {
       this.unconscious = true;
-      this.status = "unconscious";
+      // Don't set status here, let base class handle it
+      console.log(
+        `[ALLY UNCONSCIOUS] ${this.name} (${
+          this.character?.race || "unknown"
+        }) becomes unconscious! Health: ${this.currentHealth}/${this.maxHealth}`
+      );
     }
 
     return damageApplied;
