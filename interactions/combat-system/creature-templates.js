@@ -325,3 +325,4 @@ export function getCreatureRarityColor(rarity) {
   return colors[rarity] || "#90EE90"; // Default to light green
 }
 
+

@@ -352,3 +352,4 @@ export function progressSkill(
   return character.skills[skillName];
 }
 
+

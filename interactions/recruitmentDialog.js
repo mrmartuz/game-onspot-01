@@ -229,6 +229,10 @@ export async function showSpecialLocationRecruitmentDialog(locationType, x, y) {
   );
 
   if (!character) {
+    // For peaks, suppress exploration dialog when no recruit is found
+    if (locationType === "peaks") {
+      return "no_recruitment_available";
+    }
     const message = `${locationType.toUpperCase()} EXPLORATION`;
     const components = [
       {

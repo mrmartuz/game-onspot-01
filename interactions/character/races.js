@@ -239,3 +239,4 @@ export function isCreatureRace(raceName) {
   const raceData = raceDatabase[raceName];
   return raceData ? raceData.rarity === "creature" : false;
 }
+
