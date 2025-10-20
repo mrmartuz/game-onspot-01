@@ -123,7 +123,7 @@ async function showPlayerCharacterDialog() {
     const topSkills = Object.entries(player.skills)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
-      .map(([skill, level]) => `${skill}: ${level.toFixed(1)}`)
+      .map(([skill, level]) => `${skill}: ${level.toFixed(2)}`)
       .join("\n");
     message += `${topSkills}\n\n`;
   }
@@ -312,7 +312,7 @@ async function showMemberDetailsDialog(member, memberIndex) {
     const topSkills = Object.entries(member.skills)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
-      .map(([skill, level]) => `${skill}: ${level.toFixed(1)}`)
+      .map(([skill, level]) => `${skill}: ${level.toFixed(2)}`)
       .join("\n");
     message += `${topSkills}\n\n`;
   }
@@ -605,7 +605,7 @@ async function showSkillsDialog(character, title, returnContext) {
             : level >= 4
             ? "Good"
             : "Novice";
-        message += `  ${skill}: ${level.toFixed(1)} (${levelText})\n`;
+        message += `  ${skill}: ${level.toFixed(2)} (${levelText})\n`;
       });
       message += "\n";
     }

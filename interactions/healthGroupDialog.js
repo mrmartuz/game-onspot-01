@@ -93,7 +93,7 @@ export async function showHealthGroupDialog() {
       const topSkills = Object.entries(player.skills)
         .sort(([, a], [, b]) => b - a)
         .slice(0, 3)
-        .map(([skill, level]) => `${skill}:${level.toFixed(1)}`)
+        .map(([skill, level]) => `${skill}:${level.toFixed(2)}`)
         .join(", ");
       if (topSkills) {
         playerStats += `Top Skills: ${topSkills}\n`;
@@ -128,7 +128,7 @@ export async function showHealthGroupDialog() {
         const topSkills = Object.entries(member.skills)
           .sort(([, a], [, b]) => b - a)
           .slice(0, 2)
-          .map(([skill, level]) => `${skill}:${level.toFixed(1)}`)
+          .map(([skill, level]) => `${skill}:${level.toFixed(2)}`)
           .join(", ");
         if (topSkills) {
           message += `   Skills: ${topSkills}\n`;

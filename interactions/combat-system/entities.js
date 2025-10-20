@@ -1,5 +1,8 @@
 // Combat entity classes for enhanced combat system
-import { calculateCharacterHealth } from "./character-calculations.js";
+import {
+  calculateCharacterHealth,
+  progressSkill,
+} from "./character-calculations.js";
 
 export class CombatEntity {
   constructor(name, maxHealth, role = null) {
@@ -18,6 +21,28 @@ export class CombatEntity {
     const damageApplied = Math.min(amount, this.currentHealth);
     this.currentHealth = Math.max(0, this.currentHealth - damageApplied);
     this.damageTaken += damageApplied;
+
+    // Progress defense skills when taking damage
+    if (this.character && damageApplied > 0) {
+      const shieldSkill = this.character.skills.shieldwork || 0;
+      const tacticsSkill = this.character.skills.tactics || 0;
+
+      // Progress shieldwork skill (smaller amount since taking damage)
+      const shieldProgress = Math.max(0.001, 0.015 - shieldSkill * 0.002);
+      progressSkill(this.character, "shieldwork", shieldProgress);
+
+      // Progress tactics skill (smaller amount since taking damage)
+      const tacticsProgress = Math.max(0.001, 0.015 - tacticsSkill * 0.002);
+      progressSkill(this.character, "tactics", tacticsProgress);
+
+      console.log(
+        `[SKILL PROGRESS] ${this.name} gained ${shieldProgress.toFixed(
+          4
+        )} shieldwork and ${tacticsProgress.toFixed(
+          4
+        )} tactics experience from taking damage`
+      );
+    }
 
     if (this.currentHealth <= 0) {
       this.status = "dead";

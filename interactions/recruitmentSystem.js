@@ -1072,7 +1072,8 @@ export function processRescueAttempt(character) {
   if (!character.rescueData)
     return { success: false, message: "Not a rescue situation" };
 
-  const { food, water, joinProbability } = character.rescueData;
+  const { food, water } = character.rescueData.cost;
+  const { joinProbability } = character.rescueData;
 
   // Check if player has enough resources
   if (!canPlayerAffordRescue(character)) {

@@ -15,6 +15,7 @@ import {
   calculateCharacterDefense,
   calculateCharacterAccuracy,
   calculateCharacterInitiative,
+  progressSkill,
 } from "./character-calculations.js";
 import { Monster, Ally } from "./entities.js";
 import {
@@ -25,6 +26,7 @@ import {
   getRaceEmoji as getLootRaceEmoji,
 } from "../loot-system.js";
 import { logEvent } from "../../time_system.js";
+import { updateStatus } from "../../rendering.js";
 
 // Race emoji mapping for display
 const raceEmoji = {
@@ -530,6 +532,20 @@ async function executeAttack(attacker, target) {
     console.log(
       `[ATTACK HIT] ${attacker.name} hits ${target.name} for ${actualDamage} damage!`
     );
+
+    // Progress combat skills for successful attack
+    if (attacker.character) {
+      const primarySkill = getPrimaryWeaponSkill(attacker.character);
+      const skillLevel = attacker.character.skills[primarySkill] || 0;
+      const skillProgress = Math.max(0.001, 0.033 - skillLevel * 0.003);
+      progressSkill(attacker.character, primarySkill, skillProgress);
+      console.log(
+        `[SKILL PROGRESS] ${attacker.name} gained ${skillProgress.toFixed(
+          4
+        )} ${primarySkill} experience`
+      );
+    }
+
     await getShowChoiceDialog(
       `⚔️ ${attacker.name} ${attackerEmoji} attacks ${target.name} ${targetEmoji} for ${actualDamage} damage!`,
       [{ type: "button", label: "Continue", value: "ok" }]
@@ -554,6 +570,30 @@ async function handlePlayerDefend(player) {
     : player.getDefense();
 
   player.temporaryDefenseBonus = Math.floor(defense * 0.5);
+
+  // Progress defense skills
+  if (player.character) {
+    const shieldSkill = player.character.skills.shieldwork || 0;
+    const tacticsSkill = player.character.skills.tactics || 0;
+
+    // Progress shieldwork skill
+    const shieldProgress = Math.max(0.001, 0.033 - shieldSkill * 0.003);
+    progressSkill(player.character, "shieldwork", shieldProgress);
+    console.log(
+      `[SKILL PROGRESS] ${player.name} gained ${shieldProgress.toFixed(
+        4
+      )} shieldwork experience`
+    );
+
+    // Progress tactics skill
+    const tacticsProgress = Math.max(0.001, 0.033 - tacticsSkill * 0.003);
+    progressSkill(player.character, "tactics", tacticsProgress);
+    console.log(
+      `[SKILL PROGRESS] ${player.name} gained ${tacticsProgress.toFixed(
+        4
+      )} tactics experience`
+    );
+  }
 
   await getShowChoiceDialog(
     `🛡️ ${player.name} takes a defensive stance!\nDefense increased by ${player.temporaryDefenseBonus}.`,
@@ -697,12 +737,19 @@ async function handleResolutionPhase(status) {
     // Show harvest dialog after victory
     await handleHarvestDialog();
 
+    // Update status display to reflect skill progression
+    updateStatus();
+
     return "victory";
   } else if (status.defeat) {
     await getShowChoiceDialog(
       "💀 DEFEAT!\n\nAll allies have been defeated!\nYour group has fallen in battle.",
       [{ type: "button", label: "Continue", value: "ok" }]
     );
+
+    // Update status display even after defeat
+    updateStatus();
+
     return "defeat";
   }
 
@@ -790,6 +837,22 @@ async function handleHarvestDialog() {
             `${getLootRaceEmoji(monster.race)} ${monster.race} Head`
           );
           console.log("Successfully added head to inventory");
+
+          // Progress survival skill for successful harvest
+          if (gameState.playerCharacter) {
+            const survivalSkill =
+              gameState.playerCharacter.skills.survival || 0;
+            const skillProgress = Math.max(
+              0.001,
+              0.033 - survivalSkill * 0.003
+            );
+            progressSkill(gameState.playerCharacter, "survival", skillProgress);
+            console.log(
+              `[SKILL PROGRESS] Player gained ${skillProgress.toFixed(
+                4
+              )} survival experience from harvesting`
+            );
+          }
         } else {
           console.log("Failed to add head to inventory - not enough space");
           await getShowChoiceDialog(
@@ -860,4 +923,26 @@ function getCombatStatus() {
     defeat: aliveAllies.length === 0,
     combatActive: aliveAllies.length > 0 && aliveMonsters.length > 0,
   };
+}
+
+// Helper function to get primary weapon skill
+function getPrimaryWeaponSkill(character) {
+  // Determine primary weapon skill based on equipment
+  const weapon = character.equipment?.weapon;
+  if (!weapon) return "unarmed";
+
+  const weaponType = weapon.toLowerCase();
+
+  // Map weapon types to skills
+  if (weaponType.includes("sword")) return "swordfighting";
+  if (weaponType.includes("bow") || weaponType.includes("arrow"))
+    return "archery";
+  if (weaponType.includes("spear") || weaponType.includes("polearm"))
+    return "polearms";
+  if (weaponType.includes("axe")) return "swordfighting";
+  if (weaponType.includes("mace") || weaponType.includes("club"))
+    return "swordfighting";
+  if (weaponType.includes("dagger")) return "swordfighting";
+
+  return "unarmed";
 }
