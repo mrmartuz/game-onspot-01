@@ -240,10 +240,7 @@ export async function checkTileInteraction(tile) {
           value: "continue",
         });
 
-        await getShowChoiceDialog(
-          `Discovered ${tile.location}! 🌟${totalPoints}`,
-          components
-        );
+        await getShowChoiceDialog(`You have found a new location!`, components);
         logEvent(
           `🌟 Discovered ${tile.location} at ${positionKey} +${totalPoints} points`
         );
