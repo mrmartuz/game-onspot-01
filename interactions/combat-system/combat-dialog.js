@@ -18,6 +18,26 @@ import {
 } from "./character-calculations.js";
 import { Monster, Ally } from "./entities.js";
 
+// Race emoji mapping for display
+const raceEmoji = {
+  Human: "👤",
+  Elf: "🧝",
+  Dwarf: "🧙",
+  Orc: "👹",
+  Goblin: "👺",
+  Demon: "👿",
+  Angel: "👼",
+  Undead: "💀",
+  Draconic: "🐉",
+  Fishman: "🐠",
+  Birdman: "🦅",
+};
+
+// Helper function to get race emoji
+function getRaceEmoji(race) {
+  return raceEmoji[race] || "👤";
+}
+
 // Combat phases
 const COMBAT_PHASES = {
   DETECTION: "detection",
@@ -133,9 +153,10 @@ async function handleEngagementPhase() {
       combatState.monsters.length > 0 ? "enemies" : "enemy"
     }:\n`;
     combatState.monsters.forEach((monster, index) => {
-      engagementMessage += `${index + 1}. ${monster.name} (${monster.race} ${
-        monster.class
-      } Lv.${monster.level})\n`;
+      const emoji = getRaceEmoji(monster.race);
+      engagementMessage += `${index + 1}. ${monster.name} (${
+        monster.race
+      } ${emoji} ${monster.class} Lv.${monster.level})\n`;
     });
     engagementMessage += `\nWhat do you want to do?`;
 
@@ -363,16 +384,18 @@ async function handlePlayerTurn(player) {
           : ally.unconscious
           ? "Unconscious"
           : "Active";
-      combatMessage += `- ${ally.name}: ${ally.currentHealth}/${ally.maxHealth} HP (${condition})\n`;
+      const emoji = getRaceEmoji(ally.character?.race);
+      combatMessage += `- ${ally.name} ${emoji}: ${ally.currentHealth}/${ally.maxHealth} HP (${condition})\n`;
     });
     combatMessage += `\n`;
   }
   combatMessage += `Available targets:\n`;
 
   aliveMonsters.forEach((monster, index) => {
-    combatMessage += `${index + 1}. ${monster.name} (${monster.currentHealth}/${
-      monster.maxHealth
-    } HP)\n`;
+    const emoji = getRaceEmoji(monster.race);
+    combatMessage += `${index + 1}. ${monster.name} ${emoji} (${
+      monster.currentHealth
+    }/${monster.maxHealth} HP)\n`;
   });
 
   const choices = [
@@ -410,16 +433,20 @@ async function handlePlayerAttack(player, targets) {
     // Multiple targets, let player choose
     let targetMessage = `🎯 CHOOSE TARGET\n\n`;
     targets.forEach((target, index) => {
-      targetMessage += `${index + 1}. ${target.name} (${target.currentHealth}/${
-        target.maxHealth
-      } HP)\n`;
+      const emoji = getRaceEmoji(target.race);
+      targetMessage += `${index + 1}. ${target.name} ${emoji} (${
+        target.currentHealth
+      }/${target.maxHealth} HP)\n`;
     });
 
-    const targetChoices = targets.map((target, index) => ({
-      type: "button",
-      label: `${target.name} (${target.currentHealth}/${target.maxHealth} HP)`,
-      value: `target_${index}`,
-    }));
+    const targetChoices = targets.map((target, index) => {
+      const emoji = getRaceEmoji(target.race);
+      return {
+        type: "button",
+        label: `${target.name} ${emoji} (${target.currentHealth}/${target.maxHealth} HP)`,
+        value: `target_${index}`,
+      };
+    });
 
     const targetChoice = await getShowChoiceDialog(
       targetMessage,
@@ -450,13 +477,21 @@ async function executeAttack(attacker, target) {
 
   if (hitRoll <= hitChance) {
     const actualDamage = target.takeDamage(damage);
+    const attackerEmoji = getRaceEmoji(
+      attacker.character?.race || attacker.race
+    );
+    const targetEmoji = getRaceEmoji(target.character?.race || target.race);
     await getShowChoiceDialog(
-      `⚔️ ${attacker.name} attacks ${target.name} for ${actualDamage} damage!`,
+      `⚔️ ${attacker.name} ${attackerEmoji} attacks ${target.name} ${targetEmoji} for ${actualDamage} damage!`,
       [{ type: "button", label: "Continue", value: "ok" }]
     );
   } else {
+    const attackerEmoji = getRaceEmoji(
+      attacker.character?.race || attacker.race
+    );
+    const targetEmoji = getRaceEmoji(target.character?.race || target.race);
     await getShowChoiceDialog(
-      `⚔️ ${attacker.name} attacks ${target.name} but misses!`,
+      `⚔️ ${attacker.name} ${attackerEmoji} attacks ${target.name} ${targetEmoji} but misses!`,
       [{ type: "button", label: "Continue", value: "ok" }]
     );
   }
