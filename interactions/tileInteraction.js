@@ -115,7 +115,7 @@ export async function checkTileInteraction(tile) {
         // For peaks, skip discovery message and just check for recruits
         if (tile.location === "peaks") {
           const availableCharacter =
-            recruitmentSystem.checkSpecialLocationRecruitment(
+            await recruitmentSystem.checkSpecialLocationRecruitment(
               tile.location,
               gameState.px,
               gameState.py

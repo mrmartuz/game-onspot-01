@@ -1,7 +1,7 @@
 // Recruitment System for location-based character recruitment
 // Implements character generation, availability tracking, and recruitment mechanics
 
-import { characterGeneration } from "./characterGeneration.js";
+import { characterGeneration } from "./character/index.js";
 import { classDatabase } from "./combat/classes.js";
 import { gameState } from "../gamestate/game_variables.js";
 import { getCurrentGameDate } from "../time_system.js";
@@ -431,7 +431,12 @@ function getEquipmentDescription(equipment) {
 }
 
 // Generate characters for a specific location using deterministic generation
-export function generateLocationCharacters(locationType, x, y, count = null) {
+export async function generateLocationCharacters(
+  locationType,
+  x,
+  y,
+  count = null
+) {
   const locationConfig = locationCharacterAvailability[locationType];
   if (!locationConfig) {
     console.warn(`No configuration found for location type: ${locationType}`);
@@ -461,7 +466,7 @@ export function generateLocationCharacters(locationType, x, y, count = null) {
     );
 
     // Generate character with specific class and seed
-    const character = characterGeneration.generateCharacter({
+    const character = await characterGeneration.generateCharacter({
       className: className,
       isPlayer: false,
       seed: characterSeed, // Pass seed for deterministic generation
@@ -482,7 +487,7 @@ export function generateLocationCharacters(locationType, x, y, count = null) {
 }
 
 // Get characters for a specific location (checking persistent storage first)
-export function getLocationCharacters(locationType, x, y) {
+export async function getLocationCharacters(locationType, x, y) {
   const locationKey = `${x},${y}`;
 
   // Check if characters exist for this location
@@ -547,7 +552,7 @@ export function getLocationCharacters(locationType, x, y) {
   }
 
   // No existing characters - generate new ones
-  const newCharacters = generateLocationCharacters(locationType, x, y);
+  const newCharacters = await generateLocationCharacters(locationType, x, y);
 
   // Store new characters
   newCharacters.forEach((character) => {
@@ -770,7 +775,7 @@ export function hasRecruitmentOpportunities(locationType) {
 }
 
 // Check if special location has rare recruitment opportunity
-export function checkSpecialLocationRecruitment(locationType, x, y) {
+export async function checkSpecialLocationRecruitment(locationType, x, y) {
   const locationConfig = locationCharacterAvailability[locationType];
   if (!locationConfig || !locationConfig.recruitmentChance) return null;
 
@@ -783,7 +788,7 @@ export function checkSpecialLocationRecruitment(locationType, x, y) {
   if (deterministicRandom <= locationConfig.recruitmentChance) {
     // Generate single character for special location using deterministic seed
     const characterSeed = hash(x, y, dateHash + 1); // Different seed for character generation
-    const character = characterGeneration.generateCharacter({
+    const character = await characterGeneration.generateCharacter({
       className: generateClassForLocation(
         locationConfig.classProbabilities,
         characterSeed
@@ -837,10 +842,10 @@ export function updateCharacterAvailability(character) {
 }
 
 // Get available characters for a location
-export function getAvailableCharacters(locationType) {
+export async function getAvailableCharacters(locationType) {
   // This would typically check a database or stored character pool
   // For now, we'll generate fresh characters each time
-  return generateLocationCharacters(locationType, 4);
+  return await generateLocationCharacters(locationType, 4);
 }
 
 // Calculate character departure probability based on time
@@ -947,7 +952,7 @@ export function hasEntityRecruitmentOpportunities(entityType) {
 }
 
 // Check if entity has rare recruitment opportunity (for monster/beast rescue)
-export function checkEntityRecruitment(entityType, x, y) {
+export async function checkEntityRecruitment(entityType, x, y) {
   const entityConfig = entityCharacterAvailability[entityType];
   if (!entityConfig || !entityConfig.recruitmentChance) return null;
 
@@ -960,7 +965,7 @@ export function checkEntityRecruitment(entityType, x, y) {
   if (deterministicRandom <= entityConfig.recruitmentChance) {
     // Generate single character for entity using deterministic seed
     const characterSeed = hash(x, y, dateHash + 1); // Different seed for character generation
-    const character = characterGeneration.generateCharacter({
+    const character = await characterGeneration.generateCharacter({
       className: generateClassForLocation(
         entityConfig.classProbabilities,
         characterSeed
@@ -994,7 +999,7 @@ export function checkEntityRecruitment(entityType, x, y) {
 }
 
 // Generate characters for a specific entity
-export function generateEntityCharacters(entityType, x, y, count = null) {
+export async function generateEntityCharacters(entityType, x, y, count = null) {
   const entityConfig = entityCharacterAvailability[entityType];
   if (!entityConfig) {
     console.warn(`No configuration found for entity type: ${entityType}`);
@@ -1024,7 +1029,7 @@ export function generateEntityCharacters(entityType, x, y, count = null) {
     );
 
     // Generate character with specific class and seed
-    const character = characterGeneration.generateCharacter({
+    const character = await characterGeneration.generateCharacter({
       className: className,
       isPlayer: false,
       seed: characterSeed, // Pass seed for deterministic generation

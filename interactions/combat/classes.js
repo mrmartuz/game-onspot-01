@@ -511,6 +511,495 @@ export const classDatabase = {
       tool: ["smithing_tools", "workshop_kit"],
     },
   },
+
+  // CREATURE CLASSES FOR MONSTERS AND BEASTS (NOT AVAILABLE TO PLAYERS/NPCS)
+
+  // BEAST/MONSTER AGE-BASED CLASSES
+  Baby: {
+    name: "Baby",
+    rarity: "creature",
+    description: "A young creature with reduced stats but high potential",
+    lore: "Baby creatures are vulnerable but learn quickly, representing the youngest and weakest of their kind.",
+    isCreatureClass: true,
+    statMultiplier: 0.33, // Stats divided by 3
+    statBonuses: {
+      STR: 0,
+      CON: 0,
+      DEX: 0,
+      INT: 0,
+      WIS: 0,
+      CHA: 0,
+      LUCK: 0,
+    },
+    startingSkills: {
+      survival: 1.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+    },
+  },
+
+  Young: {
+    name: "Young",
+    rarity: "creature",
+    description: "An adolescent creature growing into its power",
+    lore: "Young creatures are developing their abilities and represent the adolescent stage of their species.",
+    isCreatureClass: true,
+    statMultiplier: 0.5, // Stats divided by 2
+    statBonuses: {
+      STR: 0,
+      CON: 0,
+      DEX: 0,
+      INT: 0,
+      WIS: 0,
+      CHA: 0,
+      LUCK: 0,
+    },
+    startingSkills: {
+      survival: 1.5,
+      intimidation: 1.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+    },
+  },
+
+  Adult: {
+    name: "Adult",
+    rarity: "creature",
+    description: "A mature creature at the peak of its natural abilities",
+    lore: "Adult creatures represent the standard, mature form of their species with full natural capabilities.",
+    isCreatureClass: true,
+    statMultiplier: 1.0, // Base stats
+    statBonuses: {
+      STR: 0,
+      CON: 0,
+      DEX: 0,
+      INT: 0,
+      WIS: 0,
+      CHA: 0,
+      LUCK: 0,
+    },
+    startingSkills: {
+      survival: 2.0,
+      intimidation: 2.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+    },
+  },
+
+  Elder: {
+    name: "Old",
+    rarity: "creature",
+    description: "An elderly creature with wisdom and experience",
+    lore: "Old creatures are veterans of their kind, slower but wiser and more experienced.",
+    isCreatureClass: true,
+    statMultiplier: 2.0, // Stats multiplied by 2
+    statBonuses: {
+      STR: 0,
+      CON: 0,
+      DEX: 0,
+      INT: 1,
+      WIS: 2,
+      CHA: 0,
+      LUCK: 0,
+    },
+    startingSkills: {
+      survival: 3.0,
+      intimidation: 2.5,
+      tactics: 2.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+    },
+  },
+
+  Alpha: {
+    name: "Alpha",
+    rarity: "creature",
+    description: "A dominant creature that leads its kind",
+    lore: "Alpha creatures are the leaders and strongest of their species, commanding respect and fear.",
+    isCreatureClass: true,
+    statMultiplier: 3.0, // Stats multiplied by 3
+    statBonuses: {
+      STR: 1,
+      CON: 1,
+      DEX: 0,
+      INT: 1,
+      WIS: 1,
+      CHA: 2,
+      LUCK: 1,
+    },
+    startingSkills: {
+      survival: 4.0,
+      intimidation: 4.0,
+      tactics: 3.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+    },
+  },
+
+  Ancient: {
+    name: "Ancient",
+    rarity: "creature",
+    description: "An ancient creature of legendary power and wisdom",
+    lore: "Ancient creatures are legendary beings that have survived for centuries, accumulating immense power and knowledge.",
+    isCreatureClass: true,
+    statMultiplier: 4.0, // Stats multiplied by 4
+    statBonuses: {
+      STR: 2,
+      CON: 2,
+      DEX: 1,
+      INT: 3,
+      WIS: 3,
+      CHA: 3,
+      LUCK: 2,
+    },
+    startingSkills: {
+      survival: 5.0,
+      intimidation: 5.0,
+      tactics: 4.0,
+      lore_knowledge: 3.0,
+    },
+    equipmentPreferences: {
+      clothes: ["noble-clothes"],
+    },
+  },
+
+  // HOSTILE NPC CLASSES (GOBLINS, ORCS)
+  scavenger: {
+    name: "Scavenger",
+    rarity: "creature",
+    description: "A weak creature that survives by picking through scraps",
+    lore: "Scavengers are the weakest of their kind, surviving through cunning rather than strength.",
+    isCreatureClass: true,
+    statMultiplier: 0.7, // Stats multiplied by 0.7 (reduced)
+    statBonuses: {
+      STR: -1,
+      CON: -1,
+      DEX: 1,
+      INT: 1,
+      WIS: 0,
+      CHA: -1,
+      LUCK: 1,
+    },
+    startingSkills: {
+      stealth: 2.0,
+      survival: 2.0,
+      bartering: 1.5,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+      weapon: ["dagger"],
+    },
+  },
+
+  scout: {
+    name: "Scout",
+    rarity: "creature",
+    description: "A fast and agile creature specialized in reconnaissance",
+    lore: "Scouts are the eyes and ears of their groups, relying on speed and stealth to gather information.",
+    isCreatureClass: true,
+    statMultiplier: 0.8, // Stats multiplied by 0.8
+    statBonuses: {
+      STR: 0,
+      CON: 0,
+      DEX: 2,
+      INT: 1,
+      WIS: 1,
+      CHA: 0,
+      LUCK: 1,
+    },
+    startingSkills: {
+      stealth: 3.0,
+      scouting: 3.0,
+      survival: 2.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+      weapon: ["dagger", "shortsword"],
+      tool: ["rope"],
+    },
+  },
+
+  warrior: {
+    name: "Warrior",
+    rarity: "creature",
+    description: "A standard combatant trained in basic warfare",
+    lore: "Warriors are the backbone of their groups, trained in standard combat techniques.",
+    isCreatureClass: true,
+    statMultiplier: 1.0, // Base stats
+    statBonuses: {
+      STR: 1,
+      CON: 1,
+      DEX: 0,
+      INT: 0,
+      WIS: 0,
+      CHA: 0,
+      LUCK: 0,
+    },
+    startingSkills: {
+      swordfighting: 2.0,
+      intimidation: 2.0,
+      survival: 1.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+      armor: ["leather-armor"],
+      weapon: ["sword", "axe", "club"],
+      shield: ["shield"],
+    },
+  },
+
+  raider: {
+    name: "Raider",
+    rarity: "creature",
+    description: "An aggressive combatant specialized in hit-and-run tactics",
+    lore: "Raiders are experienced fighters who excel at quick, brutal attacks and intimidation.",
+    isCreatureClass: true,
+    statMultiplier: 1.2, // Stats multiplied by 1.2
+    statBonuses: {
+      STR: 2,
+      CON: 1,
+      DEX: 1,
+      INT: 0,
+      WIS: 0,
+      CHA: 1,
+      LUCK: 0,
+    },
+    startingSkills: {
+      swordfighting: 3.0,
+      intimidation: 3.0,
+      tactics: 2.0,
+      survival: 2.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+      armor: ["leather-armor", "chainmail-armor"],
+      weapon: ["sword", "axe", "mace"],
+      shield: ["shield"],
+    },
+  },
+
+  chief: {
+    name: "Chief",
+    rarity: "creature",
+    description: "A powerful leader who commands respect and fear",
+    lore: "Chiefs are the leaders of their groups, combining combat prowess with leadership abilities.",
+    isCreatureClass: true,
+    statMultiplier: 1.6, // Stats multiplied by 1.6
+    statBonuses: {
+      STR: 2,
+      CON: 2,
+      DEX: 1,
+      INT: 1,
+      WIS: 1,
+      CHA: 3,
+      LUCK: 1,
+    },
+    startingSkills: {
+      swordfighting: 4.0,
+      intimidation: 4.0,
+      tactics: 3.0,
+      survival: 2.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+      armor: ["chainmail-armor"],
+      weapon: ["sword", "axe", "mace"],
+      shield: ["shield"],
+    },
+  },
+
+  // DEMON CLASSES
+  screamer: {
+    name: "Screamer",
+    rarity: "creature",
+    description: "A weak demon that relies on terror rather than strength",
+    lore: "Screamers are the weakest demons, using their terrifying appearance and screams to intimidate rather than fight.",
+    isCreatureClass: true,
+    statMultiplier: 1.0, // Base stats
+    statBonuses: {
+      STR: 0,
+      CON: 0,
+      DEX: 0,
+      INT: 0,
+      WIS: 0,
+      CHA: 1,
+      LUCK: 0,
+    },
+    startingSkills: {
+      intimidation: 3.0,
+      deception: 2.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+    },
+  },
+
+  stalker: {
+    name: "Stalker",
+    rarity: "creature",
+    description: "A stealthy demon that hunts from the shadows",
+    lore: "Stalkers are demons that prefer to hunt their prey through stealth and deception rather than direct confrontation.",
+    isCreatureClass: true,
+    statMultiplier: 1.1, // Stats multiplied by 1.1
+    statBonuses: {
+      STR: 0,
+      CON: 0,
+      DEX: 2,
+      INT: 1,
+      WIS: 1,
+      CHA: 1,
+      LUCK: 1,
+    },
+    startingSkills: {
+      stealth: 3.0,
+      intimidation: 2.0,
+      deception: 2.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+      weapon: ["dagger"],
+    },
+  },
+
+  hunter: {
+    name: "Hunter",
+    rarity: "creature",
+    description: "A skilled demon predator that tracks and kills its prey",
+    lore: "Hunters are demons that specialize in tracking and killing their targets with precision and skill.",
+    isCreatureClass: true,
+    statMultiplier: 1.3, // Stats multiplied by 1.3
+    statBonuses: {
+      STR: 1,
+      CON: 1,
+      DEX: 2,
+      INT: 1,
+      WIS: 2,
+      CHA: 1,
+      LUCK: 1,
+    },
+    startingSkills: {
+      tracking: 3.0,
+      intimidation: 3.0,
+      tactics: 2.0,
+      survival: 2.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+      weapon: ["sword", "dagger"],
+    },
+  },
+
+  blood_harvester: {
+    name: "Blood Harvester",
+    rarity: "creature",
+    description: "A demon that feeds on the life force of its victims",
+    lore: "Blood Harvesters are demons that drain the life force from their victims, growing stronger with each kill.",
+    isCreatureClass: true,
+    statMultiplier: 2.0, // Stats multiplied by 2.0
+    statBonuses: {
+      STR: 2,
+      CON: 2,
+      DEX: 1,
+      INT: 2,
+      WIS: 1,
+      CHA: 2,
+      LUCK: 1,
+    },
+    startingSkills: {
+      death_magic: 4.0,
+      intimidation: 4.0,
+      tactics: 2.0,
+    },
+    equipmentPreferences: {
+      clothes: ["commoner-clothes"],
+    },
+  },
+
+  reaper: {
+    name: "Reaper",
+    rarity: "creature",
+    description: "A powerful demon that brings death to all it encounters",
+    lore: "Reapers are demons of death, wielding dark magic to harvest souls and spread destruction.",
+    isCreatureClass: true,
+    statMultiplier: 4.0, // Stats multiplied by 4.0
+    statBonuses: {
+      STR: 3,
+      CON: 3,
+      DEX: 2,
+      INT: 3,
+      WIS: 2,
+      CHA: 3,
+      LUCK: 2,
+    },
+    startingSkills: {
+      death_magic: 5.0,
+      intimidation: 5.0,
+      tactics: 4.0,
+    },
+    equipmentPreferences: {
+      clothes: ["noble-clothes"],
+    },
+  },
+
+  general: {
+    name: "General",
+    rarity: "creature",
+    description: "A demon commander that leads armies of lesser demons",
+    lore: "Generals are demon commanders that lead legions of lesser demons in battle, combining tactical genius with demonic power.",
+    isCreatureClass: true,
+    statMultiplier: 3.0, // Stats multiplied by 3.0
+    statBonuses: {
+      STR: 2,
+      CON: 2,
+      DEX: 1,
+      INT: 3,
+      WIS: 3,
+      CHA: 4,
+      LUCK: 2,
+    },
+    startingSkills: {
+      tactics: 5.0,
+      intimidation: 4.0,
+      fire_magic: 3.0,
+      death_magic: 3.0,
+    },
+    equipmentPreferences: {
+      clothes: ["noble-clothes"],
+    },
+  },
+
+  lord: {
+    name: "Lord",
+    rarity: "creature",
+    description: "A demon lord of immense power and authority",
+    lore: "Demon Lords are among the most powerful demons, commanding vast armies and wielding incredible dark magic.",
+    isCreatureClass: true,
+    statMultiplier: 5.0, // Stats multiplied by 5.0
+    statBonuses: {
+      STR: 4,
+      CON: 4,
+      DEX: 2,
+      INT: 4,
+      WIS: 3,
+      CHA: 5,
+      LUCK: 3,
+    },
+    startingSkills: {
+      fire_magic: 6.0,
+      death_magic: 6.0,
+      intimidation: 6.0,
+      tactics: 5.0,
+      deception: 4.0,
+    },
+    equipmentPreferences: {
+      clothes: ["noble-clothes"],
+    },
+  },
 };
 
 // Class rarity system
@@ -539,6 +1028,11 @@ export const classRarity = {
     color: "#ff0080",
     description: "Mythic classes are legendary figures of immense power",
     spawnWeight: 1,
+  },
+  creature: {
+    color: "#8B4513",
+    description: "Creature classes are exclusive to monsters and beasts",
+    spawnWeight: 0, // Not available for player/NPC generation
   },
 };
 
@@ -594,4 +1088,25 @@ export function getClassStartingSkills(className) {
 export function getClassEquipmentPreferences(className) {
   const classData = getClassByName(className);
   return classData ? classData.equipmentPreferences : {};
+}
+
+// Helper functions to filter creature classes from player/NPC generation
+export function getPlayerAvailableClasses() {
+  return Object.values(classDatabase).filter(
+    (cls) => cls.rarity !== "creature" && !cls.isCreatureClass
+  );
+}
+
+export function getPlayerAvailableClassesByRarity(rarity) {
+  return Object.values(classDatabase).filter(
+    (cls) =>
+      cls.rarity === rarity && cls.rarity !== "creature" && !cls.isCreatureClass
+  );
+}
+
+export function isCreatureClass(className) {
+  const classData = getClassByName(className);
+  return classData
+    ? classData.rarity === "creature" || classData.isCreatureClass
+    : false;
 }

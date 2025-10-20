@@ -8,6 +8,11 @@ import { checkDeath } from "../utils.js";
 import { getClassByName } from "./combat/classes.js";
 import { skillDatabase } from "./skills.js";
 import { equipmentDatabase, equipmentTypes } from "./equipment.js";
+import {
+  characterGeneration,
+  raceDatabase,
+  nameDatabase,
+} from "./characterGeneration.js";
 
 // Skill progression rate: 0.010 per level per use
 const SKILL_PROGRESSION_RATE = 0.01;
@@ -65,6 +70,7 @@ class Monster extends CombatEntity {
     this.killValue = 1;
     this.discoveryMessages = [];
     this.detectionMessages = [];
+    this.character = null; // Will be set when generated
     // Use hash to determine wounds deterministically
     const woundHash = hash(x, y, 200);
     this.maxWounds = Math.floor(woundHash * 2) + 2; // 2-3 wounds
@@ -78,8 +84,37 @@ class Monster extends CombatEntity {
   }
 
   getDamage() {
+    // Use character-based damage calculation if character exists
+    if (this.character) {
+      return calculateCharacterDamage(this.character);
+    }
+    // Fallback to old system
     const damageRange = this.attackLevel.max - this.attackLevel.min;
     return this.attackLevel.min + Math.floor(Math.random() * (damageRange + 1));
+  }
+
+  getDefense() {
+    // Use character-based defense calculation if character exists
+    if (this.character) {
+      return calculateCharacterDefense(this.character);
+    }
+    return 0; // Fallback
+  }
+
+  getAccuracy() {
+    // Use character-based accuracy calculation if character exists
+    if (this.character) {
+      return calculateCharacterAccuracy(this.character);
+    }
+    return 50; // Fallback
+  }
+
+  getInitiative() {
+    // Use character-based initiative calculation if character exists
+    if (this.character) {
+      return calculateCharacterInitiative(this.character);
+    }
+    return 10; // Fallback
   }
 }
 
@@ -589,17 +624,15 @@ function calculateInitiative(playerChoice, stealthModifier) {
 function generateMonsters(count, entityType, x, y) {
   const monsters = [];
 
-  // Define creature types with detailed properties
-  const creatureDatabase = {
+  // NEW CREATURE GENERATION SYSTEM USING CHARACTER GENERATION
+  const creatureTemplates = {
     monster: [
       {
-        name: "Goblin",
-        rarity: "common",
-        health: { min: 6, max: 10 },
-        attack: { min: 1, max: 2 },
+        race: "Goblin",
+        classes: ["scavenger", "scout", "warrior", "raider", "chief"],
+        teamComposition: "pack",
+        allies: ["Orc"],
         killValue: 3,
-        teamComposition: "pack", // Can be in groups
-        allies: ["Orc"], // Can ally with orcs
         discoveryMessages: [
           "Small, crude footprints scatter the ground.",
           "You hear faint chittering and see small claw marks.",
@@ -614,13 +647,11 @@ function generateMonsters(count, entityType, x, y) {
         ],
       },
       {
-        name: "Orc",
-        rarity: "common",
-        health: { min: 8, max: 12 },
-        attack: { min: 1, max: 3 },
+        race: "Orc",
+        classes: ["scavenger", "scout", "warrior", "raider", "chief"],
+        teamComposition: "pack",
+        allies: ["Goblin", "Wolf"],
         killValue: 4,
-        teamComposition: "pack", // Can be in groups
-        allies: ["Goblin", "Wolf"], // Can ally with goblins and wolves
         discoveryMessages: [
           "Large, heavy footprints mark the earth.",
           "You find crude armor and weapons discarded nearby.",
@@ -635,13 +666,18 @@ function generateMonsters(count, entityType, x, y) {
         ],
       },
       {
-        name: "Troll",
-        rarity: "uncommon",
-        health: { min: 12, max: 18 },
-        attack: { min: 2, max: 3 },
+        race: "Troll",
+        classes: [
+          "baby_beast",
+          "young_beast",
+          "adult_beast",
+          "old_beast",
+          "alpha_beast",
+          "ancient_beast",
+        ],
+        teamComposition: "solo",
+        allies: [],
         killValue: 6,
-        teamComposition: "solo", // Usually alone
-        allies: [], // No allies
         discoveryMessages: [
           "Massive footprints sink deep into the earth.",
           "You find bones and debris scattered around a crude camp.",
@@ -656,13 +692,18 @@ function generateMonsters(count, entityType, x, y) {
         ],
       },
       {
-        name: "Dragon",
-        rarity: "legendary",
-        health: { min: 20, max: 30 },
-        attack: { min: 3, max: 5 },
+        race: "Dragon",
+        classes: [
+          "baby_beast",
+          "young_beast",
+          "adult_beast",
+          "old_beast",
+          "alpha_beast",
+          "ancient_beast",
+        ],
+        teamComposition: "solo",
+        allies: [],
         killValue: 15,
-        teamComposition: "solo", // Always alone
-        allies: [], // No allies
         discoveryMessages: [
           "The ground is scorched and melted where fire has touched.",
           "Massive claw marks gouge deep into stone and earth.",
@@ -677,13 +718,19 @@ function generateMonsters(count, entityType, x, y) {
         ],
       },
       {
-        name: "Demon",
-        rarity: "rare",
-        health: { min: 15, max: 22 },
-        attack: { min: 2, max: 4 },
+        race: "Demon",
+        classes: [
+          "screamer",
+          "stalker",
+          "hunter",
+          "blood_harvester",
+          "reaper",
+          "general",
+          "lord",
+        ],
+        teamComposition: "solo_or_pair",
+        allies: ["Demon"],
         killValue: 10,
-        teamComposition: "solo_or_pair", // Alone or with other demons
-        allies: ["Demon"], // Can ally with other demons
         discoveryMessages: [
           "The ground is blackened and cracked with unnatural heat.",
           "You find twisted, otherworldly tracks that seem to burn the earth.",
@@ -700,13 +747,18 @@ function generateMonsters(count, entityType, x, y) {
     ],
     beast: [
       {
-        name: "Wolf",
-        rarity: "common",
-        health: { min: 5, max: 8 },
-        attack: { min: 1, max: 2 },
+        race: "Wolf",
+        classes: [
+          "baby_beast",
+          "young_beast",
+          "adult_beast",
+          "old_beast",
+          "alpha_beast",
+          "ancient_beast",
+        ],
+        teamComposition: "pack",
+        allies: ["Orc"],
         killValue: 2,
-        teamComposition: "pack", // Usually in packs
-        allies: ["Orc"], // Can ally with orcs
         discoveryMessages: [
           "Paw prints and fur tufts mark the wolf's passage.",
           "You hear distant howling carried on the wind.",
@@ -721,13 +773,18 @@ function generateMonsters(count, entityType, x, y) {
         ],
       },
       {
-        name: "Bear",
-        rarity: "uncommon",
-        health: { min: 10, max: 15 },
-        attack: { min: 2, max: 3 },
+        race: "Bear",
+        classes: [
+          "baby_beast",
+          "young_beast",
+          "adult_beast",
+          "old_beast",
+          "alpha_beast",
+          "ancient_beast",
+        ],
+        teamComposition: "solo",
+        allies: [],
         killValue: 5,
-        teamComposition: "solo", // Usually alone
-        allies: [], // No allies
         discoveryMessages: [
           "Massive claw marks scar the trees and ground.",
           "You find a den with bones and the smell of wild animal.",
@@ -742,13 +799,18 @@ function generateMonsters(count, entityType, x, y) {
         ],
       },
       {
-        name: "Mountain Lion",
-        rarity: "uncommon",
-        health: { min: 8, max: 12 },
-        attack: { min: 2, max: 3 },
+        race: "MountainLion",
+        classes: [
+          "baby_beast",
+          "young_beast",
+          "adult_beast",
+          "old_beast",
+          "alpha_beast",
+          "ancient_beast",
+        ],
+        teamComposition: "solo",
+        allies: [],
         killValue: 4,
-        teamComposition: "solo", // Usually alone
-        allies: [], // No allies
         discoveryMessages: [
           "Silent paw prints show the cat's careful approach.",
           "You find scratch marks high on tree trunks.",
@@ -766,23 +828,18 @@ function generateMonsters(count, entityType, x, y) {
   };
 
   const creatureTypes =
-    creatureDatabase[entityType] || creatureDatabase["monster"];
+    creatureTemplates[entityType] || creatureTemplates["monster"];
 
   // Generate team composition based on creature type
   const teamComposition = generateTeamComposition(count, creatureTypes, x, y);
 
   teamComposition.forEach((creatureTemplate, index) => {
-    // Use hash to determine health deterministically
-    const healthHash = hash(x, y, index + 100);
-    const healthRange =
-      creatureTemplate.health.max - creatureTemplate.health.min;
-    const health =
-      creatureTemplate.health.min + Math.floor(healthHash * (healthRange + 1));
+    // Generate creature using character generation system
+    const creature = generateCreature(creatureTemplate, x, y, index);
 
-    // Create monster with template properties
-    const monster = new Monster(creatureTemplate.name, health, 0, x, y);
-    monster.rarity = creatureTemplate.rarity;
-    monster.attackLevel = creatureTemplate.attack;
+    // Create monster with generated character data
+    const monster = new Monster(creature.name, creature.health.max, 0, x, y);
+    monster.character = creature; // Store the full character data
     monster.killValue = creatureTemplate.killValue;
     monster.discoveryMessages = creatureTemplate.discoveryMessages;
     monster.detectionMessages = creatureTemplate.detectionMessages;
@@ -791,6 +848,245 @@ function generateMonsters(count, entityType, x, y) {
   });
 
   return monsters;
+}
+
+// Generate creature using character generation system
+function generateCreature(creatureTemplate, x, y, index) {
+  // Select random class from available classes for this creature type
+  const selectedClass =
+    creatureTemplate.classes[
+      Math.floor(Math.random() * creatureTemplate.classes.length)
+    ];
+
+  // Generate creature using character generation with creature-specific options
+  const creature = characterGeneration.generateCharacter({
+    usePointAllocation: false, // Use procedural generation for creatures
+    className: selectedClass,
+    raceName: creatureTemplate.race,
+    gender: Math.random() < 0.7 ? "male" : "female", // 70/30 male/female
+    isPlayer: false,
+  });
+
+  // Apply creature-specific stat scaling based on size and power
+  const scaledStats = scaleCreatureStats(creature.stats, creatureTemplate.race);
+  creature.stats = scaledStats;
+
+  // Apply class stat multiplier
+  const classData = getClassByName(selectedClass);
+  if (classData && classData.statMultiplier) {
+    Object.keys(creature.stats).forEach((stat) => {
+      creature.stats[stat] = Math.floor(
+        creature.stats[stat] * classData.statMultiplier
+      );
+    });
+  }
+
+  // Recalculate health based on scaled stats
+  creature.health = {
+    current: calculateCharacterHealth(creature),
+    max: calculateCharacterHealth(creature),
+  };
+
+  // Add creature-specific equipment based on class
+  creature.equipment = generateCreatureEquipment(
+    selectedClass,
+    creatureTemplate.race
+  );
+
+  return creature;
+}
+
+// Scale creature stats based on race characteristics
+function scaleCreatureStats(baseStats, race) {
+  const scaledStats = { ...baseStats };
+
+  // Apply creature-specific scaling multipliers
+  const scalingFactors = {
+    Goblin: {
+      STR: 0.8,
+      DEX: 1.2,
+      CON: 0.9,
+      INT: 1.1,
+      WIS: 1.0,
+      CHA: 0.9,
+      LUCK: 1.2,
+    },
+    Orc: {
+      STR: 1.3,
+      DEX: 0.9,
+      CON: 1.2,
+      INT: 0.8,
+      WIS: 0.9,
+      CHA: 0.9,
+      LUCK: 1.0,
+    },
+    Troll: {
+      STR: 1.5,
+      DEX: 0.7,
+      CON: 1.4,
+      INT: 0.7,
+      WIS: 0.8,
+      CHA: 0.8,
+      LUCK: 1.0,
+    },
+    Dragon: {
+      STR: 1.8,
+      DEX: 1.1,
+      CON: 1.6,
+      INT: 1.4,
+      WIS: 1.3,
+      CHA: 1.3,
+      LUCK: 1.2,
+    },
+    Demon: {
+      STR: 1.4,
+      DEX: 1.1,
+      CON: 1.3,
+      INT: 1.2,
+      WIS: 1.1,
+      CHA: 1.3,
+      LUCK: 1.1,
+    },
+    Wolf: {
+      STR: 1.0,
+      DEX: 1.2,
+      CON: 1.1,
+      INT: 0.9,
+      WIS: 1.2,
+      CHA: 1.0,
+      LUCK: 1.1,
+    },
+    Bear: {
+      STR: 1.4,
+      DEX: 0.8,
+      CON: 1.3,
+      INT: 0.8,
+      WIS: 1.1,
+      CHA: 0.9,
+      LUCK: 1.0,
+    },
+    MountainLion: {
+      STR: 1.1,
+      DEX: 1.3,
+      CON: 1.1,
+      INT: 1.0,
+      WIS: 1.2,
+      CHA: 1.0,
+      LUCK: 1.1,
+    },
+  };
+
+  const factors = scalingFactors[race] || {
+    STR: 1.0,
+    DEX: 1.0,
+    CON: 1.0,
+    INT: 1.0,
+    WIS: 1.0,
+    CHA: 1.0,
+    LUCK: 1.0,
+  };
+
+  Object.keys(scaledStats).forEach((stat) => {
+    scaledStats[stat] = Math.floor(scaledStats[stat] * factors[stat]);
+  });
+
+  return scaledStats;
+}
+
+// Generate equipment for creatures based on their class and race
+function generateCreatureEquipment(className, race) {
+  const classData = getClassByName(className);
+  if (!classData || !classData.equipmentPreferences) {
+    return { clothes: null, armor: null, weapon: null, tool: null };
+  }
+
+  const equipment = {
+    clothes: null,
+    armor: null,
+    weapon: null,
+    secondHand: null,
+    back: null,
+    tool: null,
+  };
+
+  // Always generate clothes
+  if (
+    classData.equipmentPreferences.clothes &&
+    classData.equipmentPreferences.clothes.length > 0
+  ) {
+    const clothesType =
+      classData.equipmentPreferences.clothes[
+        Math.floor(
+          Math.random() * classData.equipmentPreferences.clothes.length
+        )
+      ];
+    equipment.clothes = generateEquipmentItem("clothes", clothesType);
+  }
+
+  // Generate armor for martial creatures
+  const martialClasses = ["goblin_warrior", "orc_raider", "troll_brute"];
+  if (
+    martialClasses.includes(className) &&
+    classData.equipmentPreferences.armor
+  ) {
+    const armorType =
+      classData.equipmentPreferences.armor[
+        Math.floor(Math.random() * classData.equipmentPreferences.armor.length)
+      ];
+    equipment.armor = generateEquipmentItem("armor", armorType);
+  }
+
+  // Generate weapon
+  if (
+    classData.equipmentPreferences.weapon &&
+    classData.equipmentPreferences.weapon.length > 0
+  ) {
+    const weaponType =
+      classData.equipmentPreferences.weapon[
+        Math.floor(Math.random() * classData.equipmentPreferences.weapon.length)
+      ];
+    equipment.weapon = generateEquipmentItem("weapon1h", weaponType);
+  }
+
+  // Generate shield for certain classes
+  if (
+    classData.equipmentPreferences.shield &&
+    classData.equipmentPreferences.shield.length > 0
+  ) {
+    const shieldType =
+      classData.equipmentPreferences.shield[
+        Math.floor(Math.random() * classData.equipmentPreferences.shield.length)
+      ];
+    equipment.secondHand = generateEquipmentItem("shield", shieldType);
+  }
+
+  // Generate tool
+  if (
+    classData.equipmentPreferences.tool &&
+    classData.equipmentPreferences.tool.length > 0
+  ) {
+    const toolType =
+      classData.equipmentPreferences.tool[
+        Math.floor(Math.random() * classData.equipmentPreferences.tool.length)
+      ];
+    equipment.tool = generateEquipmentItem("tool", toolType);
+  }
+
+  return equipment;
+}
+
+// Generate individual equipment item (simplified version)
+function generateEquipmentItem(equipmentType, itemType) {
+  // Simplified equipment generation for creatures
+  const statuses = ["worn", "damaged", "intact", "good", "excellent"];
+  const materials = ["leather", "iron", "steel", "wood", "bone"];
+  const rarities = ["poor", "common", "good", "rare"];
+
+  const status = statuses[Math.floor(Math.random() * statuses.length)];
+  const material = materials[Math.floor(Math.random() * materials.length)];
+  const rarity = rarities[Math.floor(Math.random() * rarities.length)];
+
+  return `${status} ${material} ${rarity} [${itemType}]`;
 }
 
 // Team composition logic

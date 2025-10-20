@@ -17,7 +17,11 @@ export async function showRecruitmentDialog(
 
   // Get characters using persistent storage system
   if (!characters) {
-    characters = recruitmentSystem.getLocationCharacters(locationType, x, y);
+    characters = await recruitmentSystem.getLocationCharacters(
+      locationType,
+      x,
+      y
+    );
   }
 
   // Add character previews
@@ -218,7 +222,7 @@ async function processRecruitment(character, cost) {
 
 // Show special location recruitment dialog
 export async function showSpecialLocationRecruitmentDialog(locationType, x, y) {
-  const character = recruitmentSystem.checkSpecialLocationRecruitment(
+  const character = await recruitmentSystem.checkSpecialLocationRecruitment(
     locationType,
     x,
     y
@@ -279,7 +283,7 @@ export async function showSpecialLocationRecruitmentDialog(locationType, x, y) {
 
 // Show entity recruitment dialog (for npc, group, army, trader, caravan)
 export async function showEntityRecruitmentDialog(entityType, x, y) {
-  const characters = recruitmentSystem.generateEntityCharacters(
+  const characters = await recruitmentSystem.generateEntityCharacters(
     entityType,
     x,
     y
@@ -384,7 +388,11 @@ export async function showEntityRecruitmentDialog(entityType, x, y) {
 
 // Show wounded character rescue dialog (for monster/beast)
 export async function showWoundedCharacterDialog(entityType, x, y) {
-  const character = recruitmentSystem.checkEntityRecruitment(entityType, x, y);
+  const character = await recruitmentSystem.checkEntityRecruitment(
+    entityType,
+    x,
+    y
+  );
 
   if (!character) {
     const message = `${entityType.toUpperCase()} ENCOUNTER`;

@@ -7,7 +7,7 @@ import characterGeneration, {
   proceduralGeneration,
   raceDatabase,
   nameDatabase,
-} from "./characterGeneration.js";
+} from "./character/index.js";
 import { classDatabase } from "./combat/classes.js";
 
 export async function showCharacterGenerationDialog() {
@@ -82,7 +82,7 @@ async function handleRandomGeneration() {
   const choiceValue = getDialogValue(choice, "value");
 
   if (choiceValue === "generate") {
-    const character = characterGeneration.generateCharacter({
+    const character = await characterGeneration.generateCharacter({
       usePointAllocation: false,
     });
     const result = await showCharacterPreview(character, "random");
@@ -120,7 +120,7 @@ async function handleCustomCreation() {
   if (statsResult === "back") return "back";
 
   // Step 6: Create character and show preview
-  const character = characterGeneration.generateCharacter({
+  const character = await characterGeneration.generateCharacter({
     firstName: nameResult.firstName,
     lastName: nameResult.lastName,
     raceName: raceResult,
@@ -599,7 +599,7 @@ async function handleClassSelection() {
   });
 
   // Only show common classes
-  const commonClasses = characterGeneration.getClassesByRarity("common");
+  const commonClasses = await characterGeneration.getClassesByRarity("common");
 
   if (commonClasses.length > 0) {
     commonClasses.forEach((className) => {
@@ -645,7 +645,11 @@ async function handleRaceSelection() {
   const basicRaces = ["Human", "Elf", "Dwarf", "Orc"];
 
   basicRaces.forEach((raceName) => {
-    const raceData = raceDatabase[raceName];
+    const raceData = raceDatabase && raceDatabase[raceName];
+    if (!raceData) {
+      console.warn("Race not found in raceDatabase:", raceName);
+      return; // Skip undefined races to prevent crash
+    }
     components.push({
       type: "button",
       label: `${raceData.name} (${raceData.region}) - ${raceData.description}`,
@@ -863,12 +867,12 @@ async function showCharacterPreview(character, generationMethod) {
   let components = [];
 
   // Character basic info - First line: gender, race name (explanation race)
-  const raceData = raceDatabase[character.race];
+  const raceData = raceDatabase && raceDatabase[character.race];
+  const raceRegion = raceData ? raceData.region : "Unknown Region";
+  const raceName = raceData ? raceData.name.toLowerCase() : "unknown";
   components.push({
     type: "message",
-    label: `${character.gender} ${
-      raceData.region
-    } (${raceData.name.toLowerCase()})`,
+    label: `${character.gender} ${raceRegion} (${raceName})`,
     value: "",
   });
 

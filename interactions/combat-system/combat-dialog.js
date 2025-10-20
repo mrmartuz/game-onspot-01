@@ -1,0 +1,622 @@
+// Enhanced Combat Dialog System
+// Implements proper combat phases: Detection, Engagement, Combat
+
+import { getShowChoiceDialog } from "../../interactions.js";
+import { gameState } from "../../gamestate/game_variables.js";
+import { generateMonsters } from "./creature-generation.js";
+import { generateAllies } from "./ai.js";
+import {
+  calculateDetectionBonus,
+  calculateStealthModifier,
+  calculateInitiative,
+} from "./detection-stealth.js";
+import {
+  calculateCharacterDamage,
+  calculateCharacterDefense,
+  calculateCharacterAccuracy,
+  calculateCharacterInitiative,
+} from "./character-calculations.js";
+import { Monster, Ally } from "./entities.js";
+
+// Combat phases
+const COMBAT_PHASES = {
+  DETECTION: "detection",
+  ENGAGEMENT: "engagement",
+  COMBAT: "combat",
+  RESOLUTION: "resolution",
+};
+
+// Combat state
+let combatState = {
+  phase: COMBAT_PHASES.DETECTION,
+  allies: [],
+  monsters: [],
+  turnCount: 0,
+  playerDetected: false,
+  enemiesDetected: false,
+  initiativeOrder: [],
+  currentTurn: 0,
+  combatActive: false,
+};
+
+export async function handleEnhancedCombatDialog(ex, ey, isOnTile = false) {
+  console.log(`Starting enhanced combat dialog at (${ex}, ${ey})`);
+
+  // Reset combat state
+  combatState = {
+    phase: COMBAT_PHASES.DETECTION,
+    allies: [],
+    monsters: [],
+    turnCount: 0,
+    playerDetected: false,
+    enemiesDetected: false,
+    initiativeOrder: [],
+    currentTurn: 0,
+    combatActive: false,
+  };
+
+  // Generate combatants
+  combatState.allies = await generateAllies();
+  combatState.monsters = await generateMonsters(
+    Math.floor(Math.random() * 3) + 1, // 1-3 monsters
+    "goblin", // Default monster type
+    ex,
+    ey
+  );
+
+  console.log(
+    `Generated ${combatState.allies.length} allies and ${combatState.monsters.length} monsters`
+  );
+
+  // Start with detection phase
+  return await handleDetectionPhase();
+}
+
+// Phase 1: Detection
+async function handleDetectionPhase() {
+  console.log("=== DETECTION PHASE ===");
+
+  const detectionBonus = calculateDetectionBonus();
+  const stealthModifier = calculateStealthModifier();
+
+  // Check if group detects enemies
+  const groupDetectionRoll = Math.random() * 100;
+  const groupDetectionThreshold = 50 + detectionBonus;
+  combatState.enemiesDetected = groupDetectionRoll <= groupDetectionThreshold;
+
+  // Check if enemies detect group
+  const enemyDetectionRoll = Math.random() * 100;
+  const enemyDetectionThreshold = 30 - stealthModifier; // Lower threshold = easier to detect
+  combatState.playerDetected = enemyDetectionRoll <= enemyDetectionThreshold;
+
+  let detectionMessage = "🔍 DETECTION PHASE\n\n";
+
+  if (combatState.enemiesDetected) {
+    detectionMessage += `✅ Your group detects ${combatState.monsters.length} ${
+      combatState.monsters.length > 0 ? "enemies" : "enemy"
+    }!\n`;
+    detectionMessage += `Enemies spotted: ${combatState.monsters
+      .map((m) => m.name)
+      .join(", ")}\n\n`;
+  } else {
+    detectionMessage += `❌ Your group doesn't detect any immediate threats.\n\n`;
+  }
+
+  if (combatState.playerDetected) {
+    detectionMessage += `⚠️ The enemies have spotted your group!\n`;
+  } else {
+    detectionMessage += `✅ Your group remains undetected.\n`;
+  }
+
+  detectionMessage += `\nDetection Bonus: +${detectionBonus}\n`;
+  detectionMessage += `Stealth Modifier: ${
+    stealthModifier > 0 ? "+" : ""
+  }${stealthModifier}`;
+
+  await getShowChoiceDialog(detectionMessage, [
+    { type: "button", label: "Continue", value: "continue" },
+  ]);
+
+  // Move to engagement phase
+  combatState.phase = COMBAT_PHASES.ENGAGEMENT;
+  return await handleEngagementPhase();
+}
+
+// Phase 2: Engagement
+async function handleEngagementPhase() {
+  console.log("=== ENGAGEMENT PHASE ===");
+
+  let engagementMessage = "⚔️ ENGAGEMENT PHASE\n\n";
+
+  if (combatState.enemiesDetected) {
+    engagementMessage += `You have spotted ${combatState.monsters.length} ${
+      combatState.monsters.length > 0 ? "enemies" : "enemy"
+    }:\n`;
+    combatState.monsters.forEach((monster, index) => {
+      engagementMessage += `${index + 1}. ${monster.name} (${monster.race} ${
+        monster.class
+      } Lv.${monster.level})\n`;
+    });
+    engagementMessage += `\nWhat do you want to do?`;
+
+    const choices = [
+      { type: "button", label: "⚡ Charge Attack", value: "charge" },
+      { type: "button", label: "🎯 Careful Attack", value: "attack" },
+      { type: "button", label: "🥷 Stalk", value: "stalk" },
+      { type: "button", label: "🏃 Run Away", value: "flee" },
+    ];
+
+    const choice = await getShowChoiceDialog(engagementMessage, choices);
+
+    switch (choice) {
+      case "charge":
+        return await handleChargeAttack();
+      case "attack":
+        return await handleCarefulAttack();
+      case "stalk":
+        return await handleStalk();
+      case "flee":
+        return await handleFlee();
+    }
+  } else {
+    // Group didn't detect enemies - enemies might attack first
+    if (combatState.playerDetected) {
+      engagementMessage += `⚠️ The enemies have spotted you and are attacking!\n`;
+      engagementMessage += `You didn't detect them in time to prepare.\n\n`;
+
+      await getShowChoiceDialog(engagementMessage, [
+        { type: "button", label: "Defend!", value: "defend" },
+      ]);
+
+      return await handleSurpriseAttack();
+    } else {
+      engagementMessage += `❌ Neither side detected the other.\n`;
+      engagementMessage += `Combat begins with initiative rolls.\n\n`;
+
+      await getShowChoiceDialog(engagementMessage, [
+        { type: "button", label: "Begin Combat", value: "begin" },
+      ]);
+
+      return await handleInitiativeCombat();
+    }
+  }
+}
+
+// Engagement actions
+async function handleChargeAttack() {
+  console.log("Player chooses: Charge Attack");
+
+  // Charge gives initiative bonus but higher risk
+  combatState.initiativeOrder = await calculateInitiativeOrder(true); // Charge bonus
+  combatState.combatActive = true;
+  combatState.phase = COMBAT_PHASES.COMBAT;
+
+  await getShowChoiceDialog(
+    "⚡ CHARGE ATTACK!\n\nYour group charges forward with battle cries!\nYou gain initiative bonus but enemies are alerted.",
+    [{ type: "button", label: "Begin Combat", value: "begin" }]
+  );
+
+  return await handleCombatPhase();
+}
+
+async function handleCarefulAttack() {
+  console.log("Player chooses: Careful Attack");
+
+  // Careful attack - normal initiative
+  combatState.initiativeOrder = await calculateInitiativeOrder(false);
+  combatState.combatActive = true;
+  combatState.phase = COMBAT_PHASES.COMBAT;
+
+  await getShowChoiceDialog(
+    "🎯 CAREFUL ATTACK\n\nYour group approaches cautiously, weapons ready.\nNormal initiative rolls.",
+    [{ type: "button", label: "Begin Combat", value: "begin" }]
+  );
+
+  return await handleCombatPhase();
+}
+
+async function handleStalk() {
+  console.log("Player chooses: Stalk");
+
+  // Stalk gives stealth bonus but might fail
+  const stalkSuccess = Math.random() < 0.7; // 70% chance of success
+
+  if (stalkSuccess) {
+    combatState.initiativeOrder = await calculateInitiativeOrder(false, true); // Stealth bonus
+    combatState.combatActive = true;
+    combatState.phase = COMBAT_PHASES.COMBAT;
+
+    await getShowChoiceDialog(
+      "🥷 STALKING SUCCESS\n\nYour group successfully stalks the enemies.\nYou gain stealth bonus to initiative.",
+      [{ type: "button", label: "Begin Combat", value: "begin" }]
+    );
+  } else {
+    await getShowChoiceDialog(
+      "🥷 STALKING FAILED\n\nYour group is detected while stalking!\nEnemies gain initiative bonus.",
+      [{ type: "button", label: "Begin Combat", value: "begin" }]
+    );
+
+    combatState.initiativeOrder = await calculateInitiativeOrder(
+      false,
+      false,
+      true
+    ); // Enemy bonus
+    combatState.combatActive = true;
+    combatState.phase = COMBAT_PHASES.COMBAT;
+  }
+
+  return await handleCombatPhase();
+}
+
+async function handleFlee() {
+  console.log("Player chooses: Flee");
+
+  // Flee attempt - might succeed or fail
+  const fleeSuccess = Math.random() < 0.8; // 80% chance of success
+
+  if (fleeSuccess) {
+    await getShowChoiceDialog(
+      "🏃 FLEE SUCCESSFUL\n\nYour group successfully flees from combat!\nNo casualties.",
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+    return "fled";
+  } else {
+    await getShowChoiceDialog(
+      "🏃 FLEE FAILED\n\nYour group couldn't escape!\nCombat begins with enemies having advantage.",
+      [{ type: "button", label: "Begin Combat", value: "begin" }]
+    );
+
+    combatState.initiativeOrder = await calculateInitiativeOrder(
+      false,
+      false,
+      true
+    ); // Enemy bonus
+    combatState.combatActive = true;
+    combatState.phase = COMBAT_PHASES.COMBAT;
+
+    return await handleCombatPhase();
+  }
+}
+
+async function handleSurpriseAttack() {
+  console.log("Enemies surprise attack");
+
+  // Enemies attack first due to surprise
+  combatState.initiativeOrder = await calculateInitiativeOrder(
+    false,
+    false,
+    true
+  ); // Enemy bonus
+  combatState.combatActive = true;
+  combatState.phase = COMBAT_PHASES.COMBAT;
+
+  return await handleCombatPhase();
+}
+
+async function handleInitiativeCombat() {
+  console.log("Initiative-based combat");
+
+  // Normal initiative rolls
+  combatState.initiativeOrder = await calculateInitiativeOrder(false);
+  combatState.combatActive = true;
+  combatState.phase = COMBAT_PHASES.COMBAT;
+
+  return await handleCombatPhase();
+}
+
+// Phase 3: Combat
+async function handleCombatPhase() {
+  console.log("=== COMBAT PHASE ===");
+
+  while (combatState.combatActive) {
+    combatState.turnCount++;
+
+    // Get current combatant
+    const currentCombatant =
+      combatState.initiativeOrder[combatState.currentTurn];
+
+    if (currentCombatant.isPlayer) {
+      // Player turn
+      await handlePlayerTurn(currentCombatant);
+    } else if (currentCombatant.character) {
+      // Ally turn
+      await handleAllyTurn(currentCombatant);
+    } else {
+      // Monster turn
+      await handleMonsterTurn(currentCombatant);
+    }
+
+    // Check combat end conditions
+    const status = getCombatStatus();
+    if (status.victory || status.defeat) {
+      combatState.combatActive = false;
+      return await handleResolutionPhase(status);
+    }
+
+    // Next turn
+    combatState.currentTurn =
+      (combatState.currentTurn + 1) % combatState.initiativeOrder.length;
+  }
+}
+
+// Player turn handler
+async function handlePlayerTurn(player) {
+  console.log(`Player turn: ${player.name}`);
+
+  const aliveMonsters = combatState.monsters.filter(
+    (m) => !m.isDead() && !m.isFleeing()
+  );
+
+  if (aliveMonsters.length === 0) {
+    return; // No targets
+  }
+
+  let combatMessage = `⚔️ YOUR TURN\n\n`;
+  combatMessage += `Health: ${player.currentHealth}/${player.maxHealth}\n\n`;
+  // Allies status
+  if (combatState.allies && combatState.allies.length > 0) {
+    combatMessage += `Allies:\n`;
+    combatState.allies.forEach((ally) => {
+      const condition =
+        ally.status === "dead"
+          ? "Dead"
+          : ally.unconscious
+          ? "Unconscious"
+          : "Active";
+      combatMessage += `- ${ally.name}: ${ally.currentHealth}/${ally.maxHealth} HP (${condition})\n`;
+    });
+    combatMessage += `\n`;
+  }
+  combatMessage += `Available targets:\n`;
+
+  aliveMonsters.forEach((monster, index) => {
+    combatMessage += `${index + 1}. ${monster.name} (${monster.currentHealth}/${
+      monster.maxHealth
+    } HP)\n`;
+  });
+
+  const choices = [
+    { type: "button", label: "⚔️ Attack", value: "attack" },
+    { type: "button", label: "🛡️ Defend", value: "defend" },
+    { type: "button", label: "🛡️ Protect Ally", value: "protect" },
+    { type: "button", label: "🏃 Retreat (All)", value: "retreat" },
+    { type: "button", label: "🏃 Run Away", value: "flee" },
+  ];
+
+  const choice = await getShowChoiceDialog(combatMessage, choices);
+
+  switch (choice) {
+    case "attack":
+      await handlePlayerAttack(player, aliveMonsters);
+      break;
+    case "defend":
+      await handlePlayerDefend(player);
+      break;
+    case "protect":
+      await handlePlayerProtect(player);
+      break;
+    case "retreat":
+      return await handleGroupRetreat();
+    case "flee":
+      return await handlePlayerFlee();
+  }
+}
+
+async function handlePlayerAttack(player, targets) {
+  if (targets.length === 1) {
+    // Only one target, attack directly
+    await executeAttack(player, targets[0]);
+  } else {
+    // Multiple targets, let player choose
+    let targetMessage = `🎯 CHOOSE TARGET\n\n`;
+    targets.forEach((target, index) => {
+      targetMessage += `${index + 1}. ${target.name} (${target.currentHealth}/${
+        target.maxHealth
+      } HP)\n`;
+    });
+
+    const targetChoices = targets.map((target, index) => ({
+      type: "button",
+      label: `${target.name} (${target.currentHealth}/${target.maxHealth} HP)`,
+      value: `target_${index}`,
+    }));
+
+    const targetChoice = await getShowChoiceDialog(
+      targetMessage,
+      targetChoices
+    );
+    const targetIndex = parseInt(targetChoice.split("_")[1]);
+    const selectedTarget = targets[targetIndex];
+
+    await executeAttack(player, selectedTarget);
+  }
+}
+
+async function executeAttack(attacker, target) {
+  const damage = attacker.character
+    ? calculateCharacterDamage(attacker.character)
+    : attacker.getDamage();
+
+  const accuracy = attacker.character
+    ? calculateCharacterAccuracy(attacker.character)
+    : attacker.getAccuracy();
+
+  const defense = target.character
+    ? calculateCharacterDefense(target.character)
+    : target.getDefense();
+
+  const hitChance = Math.max(5, Math.min(95, accuracy - defense + 50));
+  const hitRoll = Math.random() * 100;
+
+  if (hitRoll <= hitChance) {
+    const actualDamage = target.takeDamage(damage);
+    await getShowChoiceDialog(
+      `⚔️ ${attacker.name} attacks ${target.name} for ${actualDamage} damage!`,
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+  } else {
+    await getShowChoiceDialog(
+      `⚔️ ${attacker.name} attacks ${target.name} but misses!`,
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+  }
+}
+
+async function handlePlayerDefend(player) {
+  // Defend action provides temporary defense bonus
+  const defense = player.character
+    ? calculateCharacterDefense(player.character)
+    : player.getDefense();
+
+  player.temporaryDefenseBonus = Math.floor(defense * 0.5);
+
+  await getShowChoiceDialog(
+    `🛡️ ${player.name} takes a defensive stance!\nDefense increased by ${player.temporaryDefenseBonus}.`,
+    [{ type: "button", label: "Continue", value: "ok" }]
+  );
+}
+
+async function handlePlayerProtect(player) {
+  // Protect action - reduce damage to allies
+  player.protectionActive = true;
+
+  await getShowChoiceDialog(
+    `🛡️ ${player.name} prepares to protect allies!\nDamage to allies will be reduced.`,
+    [{ type: "button", label: "Continue", value: "ok" }]
+  );
+}
+
+async function handleGroupRetreat() {
+  // Group retreat - all allies attempt to flee
+  const retreatSuccess = Math.random() < 0.6; // 60% chance
+
+  if (retreatSuccess) {
+    await getShowChoiceDialog(
+      "🏃 GROUP RETREAT SUCCESSFUL\n\nYour group successfully retreats from combat!\nSome members may be wounded.",
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+    return "retreated";
+  } else {
+    await getShowChoiceDialog(
+      "🏃 GROUP RETREAT FAILED\n\nYour group couldn't retreat!\nCombat continues.",
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+    // Continue combat
+  }
+}
+
+async function handlePlayerFlee() {
+  // Individual flee - player runs away, allies continue fighting
+  const fleeSuccess = Math.random() < 0.8; // 80% chance
+
+  if (fleeSuccess) {
+    await getShowChoiceDialog(
+      "🏃 YOU FLEE\n\nYou successfully flee from combat!\nYour allies continue fighting.",
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+    return "fled";
+  } else {
+    await getShowChoiceDialog(
+      "🏃 FLEE FAILED\n\nYou couldn't escape!\nCombat continues.",
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+    // Continue combat
+  }
+}
+
+// Ally turn handler
+async function handleAllyTurn(ally) {
+  console.log(`Ally turn: ${ally.name}`);
+
+  // Simple AI for allies
+  const aliveMonsters = combatState.monsters.filter(
+    (m) => !m.isDead() && !m.isFleeing()
+  );
+
+  if (aliveMonsters.length === 0) return;
+
+  const target =
+    aliveMonsters[Math.floor(Math.random() * aliveMonsters.length)];
+  await executeAttack(ally, target);
+}
+
+// Monster turn handler
+async function handleMonsterTurn(monster) {
+  console.log(`Monster turn: ${monster.name}`);
+
+  // Simple AI for monsters
+  const aliveAllies = combatState.allies.filter(
+    (a) => !a.isDead() && !a.isFleeing()
+  );
+
+  if (aliveAllies.length === 0) return;
+
+  const target = aliveAllies[Math.floor(Math.random() * aliveAllies.length)];
+  await executeAttack(monster, target);
+}
+
+// Phase 4: Resolution
+async function handleResolutionPhase(status) {
+  console.log("=== RESOLUTION PHASE ===");
+
+  if (status.victory) {
+    await getShowChoiceDialog(
+      "🏆 VICTORY!\n\nAll enemies have been defeated!\nYour group celebrates their victory.",
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+    return "victory";
+  } else if (status.defeat) {
+    await getShowChoiceDialog(
+      "💀 DEFEAT!\n\nAll allies have been defeated!\nYour group has fallen in battle.",
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+    return "defeat";
+  }
+
+  return "unknown";
+}
+
+// Helper functions
+async function calculateInitiativeOrder(
+  chargeBonus = false,
+  stealthBonus = false,
+  enemyBonus = false
+) {
+  const combatants = [...combatState.allies, ...combatState.monsters];
+
+  const initiativeRolls = combatants.map((combatant) => {
+    let initiative = combatant.character
+      ? calculateCharacterInitiative(combatant.character)
+      : combatant.getInitiative();
+
+    // Apply bonuses
+    if (chargeBonus && combatant.isPlayer) initiative += 5;
+    if (stealthBonus && combatant.isPlayer) initiative += 3;
+    if (enemyBonus && !combatant.isPlayer) initiative += 5;
+
+    return {
+      combatant,
+      initiative: initiative + Math.random() * 10, // Add randomness
+    };
+  });
+
+  // Sort by initiative (highest first)
+  initiativeRolls.sort((a, b) => b.initiative - a.initiative);
+
+  return initiativeRolls.map((roll) => roll.combatant);
+}
+
+function getCombatStatus() {
+  const aliveAllies = combatState.allies.filter(
+    (a) => !a.isDead() && !a.isFleeing()
+  );
+  const aliveMonsters = combatState.monsters.filter(
+    (m) => !m.isDead() && !m.isFleeing()
+  );
+
+  return {
+    victory: aliveMonsters.length === 0,
+    defeat: aliveAllies.length === 0,
+    combatActive: aliveAllies.length > 0 && aliveMonsters.length > 0,
+  };
+}

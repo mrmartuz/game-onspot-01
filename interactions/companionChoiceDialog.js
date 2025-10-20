@@ -2,7 +2,7 @@
 // Provides choice between starting alone (+50 gold) or selecting from 4 random companions
 
 import { getShowChoiceDialog, getDialogValue } from "../interactions.js";
-import characterGeneration, { raceDatabase } from "./characterGeneration.js";
+import characterGeneration, { raceDatabase } from "./character/index.js";
 import { classDatabase } from "./combat/classes.js";
 import { gameState } from "../gamestate/game_variables.js";
 import { generateCharacterDescription } from "./recruitmentSystem.js";
@@ -62,7 +62,7 @@ async function showCompanionSelectionDialog(playerCharacter) {
   });
 
   // Generate 4 random companions of the same race and common classes
-  const companions = generateRandomCompanions(playerCharacter.race, 4);
+  const companions = await generateRandomCompanions(playerCharacter.race, 4);
 
   companions.forEach((companion, index) => {
     const classData = classDatabase[companion.class];
@@ -120,9 +120,9 @@ async function showCompanionSelectionDialog(playerCharacter) {
   return "back";
 }
 
-function generateRandomCompanions(race, count) {
+async function generateRandomCompanions(race, count) {
   const companions = [];
-  const commonClasses = characterGeneration.getClassesByRarity("common");
+  const commonClasses = await characterGeneration.getClassesByRarity("common");
 
   for (let i = 0; i < count; i++) {
     // Generate random gender
@@ -134,7 +134,7 @@ function generateRandomCompanions(race, count) {
       commonClasses[Math.floor(Math.random() * commonClasses.length)];
 
     // Generate character with specific race and class
-    const companion = characterGeneration.generateCharacter({
+    const companion = await characterGeneration.generateCharacter({
       raceName: race,
       gender: gender,
       className: className,
