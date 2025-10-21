@@ -7,6 +7,76 @@ import {
 
 // Equipment assignment system
 export const equipmentAssignment = {
+  // Helper function to determine weapon category for new weapon system
+  getWeaponCategory: function (weaponName) {
+    const weaponType = weaponName.toLowerCase();
+
+    // Map weapon types to specific categories - order matters for overlapping names
+    if (
+      weaponType.includes("greatsword") ||
+      weaponType.includes("claymore") ||
+      weaponType.includes("zweihander")
+    )
+      return "great_swords";
+    if (weaponType.includes("sword") || weaponType.includes("skrith-blade"))
+      return "swords";
+    if (
+      weaponType.includes("greataxe") ||
+      weaponType.includes("battleaxe") ||
+      weaponType.includes("vrakgul-axe")
+    )
+      return "great_axes";
+    if (weaponType.includes("axe")) return "axes";
+    if (
+      weaponType.includes("spear") ||
+      weaponType.includes("halberd") ||
+      weaponType.includes("polearm") ||
+      weaponType.includes("staff") ||
+      weaponType.includes("quarterstaff") ||
+      weaponType.includes("scythe") ||
+      weaponType.includes("pike") ||
+      weaponType.includes("glaive")
+    )
+      return "polearms";
+    if (
+      weaponType.includes("maul") ||
+      weaponType.includes("great-hammer") ||
+      weaponType.includes("gormith-hammer")
+    )
+      return "great_hammers";
+    if (
+      weaponType.includes("mace") ||
+      weaponType.includes("club") ||
+      weaponType.includes("warhammer") ||
+      weaponType.includes("flail") ||
+      weaponType.includes("morningstar")
+    )
+      return "hammers";
+    if (
+      weaponType.includes("crossbow") ||
+      weaponType.includes("gormith-crossbow")
+    )
+      return "crossbows";
+    if (weaponType.includes("bow") || weaponType.includes("lyssarion-bow"))
+      return "bows";
+    if (
+      weaponType.includes("dagger") ||
+      weaponType.includes("javelin") ||
+      weaponType.includes("throwing") ||
+      weaponType.includes("sling") ||
+      weaponType.includes("skrith-nedle")
+    )
+      return "throwing";
+    if (
+      weaponType.includes("shield") ||
+      weaponType.includes("aurethine-shield")
+    )
+      return "shields";
+
+    // Default fallback
+    return "swords";
+  },
+
   // Generate starting equipment based on class preferences
   generateStartingEquipment: async function (className) {
     // Import classDatabase dynamically to avoid circular dependency
@@ -82,10 +152,11 @@ export const equipmentAssignment = {
             Math.random() * classData.equipmentPreferences.weapon.length
           )
         ];
-      equipment.weapon = this.generateEquipmentItem("weapon1h", weaponType);
+      const weaponCategory = this.getWeaponCategory(weaponType);
+      equipment.weapon = this.generateEquipmentItem(weaponCategory, weaponType);
     } else {
       // Fallback weapon if no preferences defined
-      equipment.weapon = this.generateEquipmentItem("weapon1h", "sword");
+      equipment.weapon = this.generateEquipmentItem("swords", "sword");
     }
 
     // Generate shield or second weapon
@@ -99,7 +170,11 @@ export const equipmentAssignment = {
             Math.random() * classData.equipmentPreferences.shield.length
           )
         ];
-      equipment.secondHand = this.generateEquipmentItem("shield", shieldType);
+      const shieldCategory = this.getWeaponCategory(shieldType);
+      equipment.secondHand = this.generateEquipmentItem(
+        shieldCategory,
+        shieldType
+      );
     }
 
     // Generate 2h weapon or container for back slot
@@ -111,17 +186,26 @@ export const equipmentAssignment = {
         classData.equipmentPreferences.back[
           Math.floor(Math.random() * classData.equipmentPreferences.back.length)
         ];
-      // Determine if it's a weapon or container
-      const weapon2hItems = equipmentTypes.weapon2h.items;
-      const rangedItems = equipmentTypes.ranged.items;
-      const containerItems = equipmentTypes.container.items;
 
-      if (weapon2hItems.includes(backType)) {
-        equipment.back = this.generateEquipmentItem("weapon2h", backType);
-      } else if (rangedItems.includes(backType)) {
+      // Determine the correct equipment category for the back item
+      const backCategory = this.getWeaponCategory(backType);
+
+      // Check if it's a container or ranged weapon
+      if (
+        equipmentTypes.ranged &&
+        equipmentTypes.ranged.items &&
+        equipmentTypes.ranged.items.includes(backType)
+      ) {
         equipment.back = this.generateEquipmentItem("ranged", backType);
-      } else if (containerItems.includes(backType)) {
+      } else if (
+        equipmentTypes.container &&
+        equipmentTypes.container.items &&
+        equipmentTypes.container.items.includes(backType)
+      ) {
         equipment.back = this.generateEquipmentItem("container", backType);
+      } else {
+        // Use the determined weapon category
+        equipment.back = this.generateEquipmentItem(backCategory, backType);
       }
     }
 
@@ -204,7 +288,7 @@ export const equipmentAssignment = {
     );
 
     // ALWAYS generate weapon - this is critical for all characters
-    equipment.weapon = this.generateEquipmentItem("weapon1h", "sword");
+    equipment.weapon = this.generateEquipmentItem("swords", "sword");
 
     // Randomly decide which additional equipment slots to fill (0-2 more items)
     const slots = ["armor", "secondHand", "back", "tool"];
@@ -222,11 +306,21 @@ export const equipmentAssignment = {
           equipmentType = "armor";
           break;
         case "secondHand":
-          equipmentType = "shield";
+          // Randomly choose between shields
+          equipmentType = "shields";
           break;
         case "back":
-          // Randomly choose between 2h weapon, ranged, or container
-          const backTypes = ["weapon2h", "ranged", "container"];
+          // Randomly choose between 2h weapons, ranged, or container
+          const backTypes = [
+            "great_swords",
+            "great_axes",
+            "polearms",
+            "great_hammers",
+            "bows",
+            "crossbows",
+            "ranged",
+            "container",
+          ];
           equipmentType =
             backTypes[Math.floor(Math.random() * backTypes.length)];
           break;

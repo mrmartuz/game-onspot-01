@@ -2,26 +2,110 @@
 // Skills range from 0.01 to 99.99 with difficulty scaling and synergies
 
 export const skillDatabase = {
-  // COMBAT SKILLS (8 skills)
-  swordfighting: {
-    name: "Swordfighting",
+  // COMBAT SKILLS (12 weapon skills + 4 combat skills)
+  swords: {
+    name: "Swords",
     category: "combat",
-    description:
-      "The art of wielding swords and other bladed weapons in combat.",
+    description: "The art of wielding one-handed swords in combat.",
     maxLevel: 99.99,
     difficulty: "medium",
     primaryStat: "STR",
     secondaryStat: "DEX",
     prerequisites: [],
-    synergies: ["shieldwork", "tactics"],
-    bonusCalculation: "linear", // Each level adds +0.1 to combat bonus
+    synergies: ["shields", "tactics"],
+    bonusCalculation: "linear",
     experienceMultiplier: 1.0,
   },
 
-  archery: {
-    name: "Archery",
+  great_swords: {
+    name: "Great Swords",
     category: "combat",
-    description: "The skill of using bows and crossbows with deadly accuracy.",
+    description: "Mastery of two-handed swords and greatswords.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "STR",
+    secondaryStat: "CON",
+    prerequisites: [],
+    synergies: ["tactics", "intimidation"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+  },
+
+  axes: {
+    name: "Axes",
+    category: "combat",
+    description: "The skill of wielding one-handed axes and hatchets.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "STR",
+    secondaryStat: "DEX",
+    prerequisites: [],
+    synergies: ["shields", "intimidation"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+  },
+
+  great_axes: {
+    name: "Great Axes",
+    category: "combat",
+    description: "Mastery of two-handed axes and greataxes.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "STR",
+    secondaryStat: "CON",
+    prerequisites: [],
+    synergies: ["tactics", "intimidation"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+  },
+
+  polearms: {
+    name: "Polearms",
+    category: "combat",
+    description:
+      "Mastery of long weapons like spears, halberds, pikes, and staffs.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "STR",
+    secondaryStat: "CON",
+    prerequisites: [],
+    synergies: ["tactics", "intimidation"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+  },
+
+  hammers: {
+    name: "Hammers",
+    category: "combat",
+    description: "The skill of wielding one-handed hammers and maces.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "STR",
+    secondaryStat: "CON",
+    prerequisites: [],
+    synergies: ["shields", "intimidation"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+  },
+
+  great_hammers: {
+    name: "Great Hammers",
+    category: "combat",
+    description: "Mastery of two-handed hammers and mauls.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "STR",
+    secondaryStat: "CON",
+    prerequisites: [],
+    synergies: ["tactics", "intimidation"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+  },
+
+  bows: {
+    name: "Bows",
+    category: "combat",
+    description: "The skill of using bows with deadly accuracy.",
     maxLevel: 99.99,
     difficulty: "medium",
     primaryStat: "DEX",
@@ -32,14 +116,59 @@ export const skillDatabase = {
     experienceMultiplier: 1.0,
   },
 
-  polearms: {
-    name: "Polearms",
+  crossbows: {
+    name: "Crossbows",
     category: "combat",
-    description: "Mastery of long weapons like spears, halberds, and pikes.",
+    description: "The skill of using crossbows and mechanical ranged weapons.",
     maxLevel: 99.99,
     difficulty: "medium",
-    primaryStat: "STR",
-    secondaryStat: "CON",
+    primaryStat: "DEX",
+    secondaryStat: "INT",
+    prerequisites: [],
+    synergies: ["tracking", "tactics"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+  },
+
+  throwing: {
+    name: "Throwing",
+    category: "combat",
+    description:
+      "The art of throwing weapons like daggers, javelins, and stones.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "DEX",
+    secondaryStat: "STR",
+    prerequisites: [],
+    synergies: ["scouting", "tactics"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+  },
+
+  shields: {
+    name: "Shields",
+    category: "combat",
+    description:
+      "The defensive art of using shields to protect oneself and allies.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "CON",
+    secondaryStat: "STR",
+    prerequisites: [],
+    synergies: ["swords", "axes", "hammers"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+  },
+
+  great_shields: {
+    name: "Great Shields",
+    category: "combat",
+    description:
+      "Mastery of large shields and tower shields for maximum protection.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "CON",
+    secondaryStat: "STR",
     prerequisites: [],
     synergies: ["tactics", "intimidation"],
     bonusCalculation: "linear",
@@ -719,11 +848,19 @@ export const skillCategories = {
     description: "Skills related to fighting and warfare",
     color: "#ff4444",
     skills: [
-      "swordfighting",
-      "archery",
+      "swords",
+      "great_swords",
+      "axes",
+      "great_axes",
       "polearms",
+      "hammers",
+      "great_hammers",
+      "bows",
+      "crossbows",
+      "throwing",
+      "shields",
+      "great_shields",
       "unarmed",
-      "shieldwork",
       "tactics",
       "intimidation",
       "divine_magic",
@@ -944,18 +1081,34 @@ export function getDiscoveryBonus(characterSkills) {
 }
 
 export function getCombatBonus(characterSkills) {
-  const swordfighting = characterSkills.swordfighting || 0;
-  const archery = characterSkills.archery || 0;
+  const swords = characterSkills.swords || 0;
+  const greatSwords = characterSkills.great_swords || 0;
+  const axes = characterSkills.axes || 0;
+  const greatAxes = characterSkills.great_axes || 0;
   const polearms = characterSkills.polearms || 0;
+  const hammers = characterSkills.hammers || 0;
+  const greatHammers = characterSkills.great_hammers || 0;
+  const bows = characterSkills.bows || 0;
+  const crossbows = characterSkills.crossbows || 0;
+  const throwing = characterSkills.throwing || 0;
+  const shields = characterSkills.shields || 0;
+  const greatShields = characterSkills.great_shields || 0;
   const unarmed = characterSkills.unarmed || 0;
-  const shieldwork = characterSkills.shieldwork || 0;
 
   return (
-    calculateSkillBonus(swordfighting) +
-    calculateSkillBonus(archery) +
+    calculateSkillBonus(swords) +
+    calculateSkillBonus(greatSwords) +
+    calculateSkillBonus(axes) +
+    calculateSkillBonus(greatAxes) +
     calculateSkillBonus(polearms) +
-    calculateSkillBonus(unarmed) +
-    calculateSkillBonus(shieldwork)
+    calculateSkillBonus(hammers) +
+    calculateSkillBonus(greatHammers) +
+    calculateSkillBonus(bows) +
+    calculateSkillBonus(crossbows) +
+    calculateSkillBonus(throwing) +
+    calculateSkillBonus(shields) +
+    calculateSkillBonus(greatShields) +
+    calculateSkillBonus(unarmed)
   );
 }
 

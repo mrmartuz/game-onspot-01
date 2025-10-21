@@ -48,25 +48,52 @@ function getPrimaryWeaponSkill(character) {
   const skills = character.skills || {};
   const weapon = character.equipment?.weapon || "";
 
-  if (
-    weapon.includes("sword") ||
-    weapon.includes("dagger") ||
-    weapon.includes("rapier")
-  ) {
-    return skills.swordfighting || 0;
-  } else if (weapon.includes("bow") || weapon.includes("crossbow")) {
-    return skills.archery || 0;
-  } else if (
-    weapon.includes("spear") ||
-    weapon.includes("halberd") ||
-    weapon.includes("staff")
-  ) {
-    return skills.polearms || 0;
-  } else if (weapon.includes("unarmed") || weapon === "") {
-    return skills.unarmed || 0;
-  }
+  const weaponType = weapon.toLowerCase();
 
-  return skills.swordfighting || 0;
+  // Map weapon types to specific skills - order matters for overlapping names
+  if (
+    weaponType.includes("greatsword") ||
+    weaponType.includes("claymore") ||
+    weaponType.includes("zweihander")
+  )
+    return skills.great_swords || 0;
+  if (weaponType.includes("sword")) return skills.swords || 0;
+  if (weaponType.includes("greataxe") || weaponType.includes("battleaxe") || weaponType.includes("vrakgul-axe"))
+    return skills.great_axes || 0;
+  if (weaponType.includes("axe")) return skills.axes || 0;
+  if (
+    weaponType.includes("spear") ||
+    weaponType.includes("halberd") ||
+    weaponType.includes("polearm") ||
+    weaponType.includes("staff") ||
+    weaponType.includes("quarterstaff") ||
+    weaponType.includes("scythe") ||
+    weaponType.includes("pike") ||
+    weaponType.includes("glaive")
+  )
+    return skills.polearms || 0;
+  if (weaponType.includes("maul") || weaponType.includes("great-hammer") || weaponType.includes("gormith-hammer"))
+    return skills.great_hammers || 0;
+  if (
+    weaponType.includes("mace") ||
+    weaponType.includes("club") ||
+    weaponType.includes("warhammer") ||
+    weaponType.includes("flail") ||
+    weaponType.includes("morningstar")
+  )
+    return skills.hammers || 0;
+  if (weaponType.includes("crossbow")) return skills.crossbows || 0;
+  if (weaponType.includes("bow")) return skills.bows || 0;
+  if (
+    weaponType.includes("dagger") ||
+    weaponType.includes("javelin") ||
+    weaponType.includes("throwing") ||
+    weaponType.includes("sling") || weaponType.includes("skrith-nedle")
+  )
+    return skills.throwing || 0;
+  if (weaponType.includes("shield")) return skills.shields || 0;
+
+  return skills.unarmed || 0;
 }
 
 function getEquipmentDamageBonus(character) {

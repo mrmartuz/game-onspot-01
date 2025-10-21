@@ -227,11 +227,19 @@ export const characterGeneration = {
   getSkillKitForSkill: function (skillName) {
     const skillKits = {
       // Combat Skills
-      swordfighting: "sword_kit",
-      archery: "archery_kit",
+      swords: "sword_kit",
+      great_swords: "greatsword_kit",
+      axes: "axe_kit",
+      great_axes: "greataxe_kit",
       polearms: "polearm_kit",
+      hammers: "hammer_kit",
+      great_hammers: "greathammer_kit",
+      bows: "archery_kit",
+      crossbows: "crossbow_kit",
+      throwing: "throwing_kit",
+      shields: "shield_kit",
+      great_shields: "greatshield_kit",
       unarmed: "training_weights",
-      shieldwork: "shield_kit",
       tactics: "tactics_manual",
       intimidation: "intimidation_tools",
       divine_magic: "holy_symbol",
