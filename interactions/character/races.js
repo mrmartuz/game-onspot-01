@@ -31,7 +31,7 @@ export const raceDatabase = {
     rarity: "common",
     description: "Graceful and wise, elves have enhanced dexterity and wisdom",
     statBonuses: { STR: -1, DEX: 2, CON: -1, INT: 1, WIS: 2, CHA: 1, LUCK: 0 },
-    skillBonuses: { archery: 1, meditation: 1, nature_magic: 1 },
+    skillBonuses: { bows: 1, meditation: 1, nature_magic: 1 },
     genderBonuses: {
       male: { DEX: 1, INT: 1, CON: -1 },
       female: { WIS: 1, CHA: 1, STR: -1 },
@@ -55,7 +55,7 @@ export const raceDatabase = {
     rarity: "uncommon",
     description: "Avian beings with enhanced dexterity and flight abilities",
     statBonuses: { STR: -1, DEX: 3, CON: 0, INT: 0, WIS: 1, CHA: 0, LUCK: 1 },
-    skillBonuses: { acrobatics: 2, scouting: 1, archery: 1 },
+    skillBonuses: { acrobatics: 2, scouting: 1, bows: 1 },
     genderBonuses: {
       male: { DEX: 1, LUCK: 1, CON: -1 },
       female: { DEX: 1, WIS: 1, STR: -1 },
@@ -239,4 +239,3 @@ export function isCreatureRace(raceName) {
   const raceData = raceDatabase[raceName];
   return raceData ? raceData.rarity === "creature" : false;
 }
-

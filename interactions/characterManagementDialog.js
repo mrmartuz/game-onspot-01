@@ -528,88 +528,33 @@ async function showSkillsDialog(character, title, returnContext) {
         );
   }
 
-  // Group skills by category
-  const skillCategories = {
-    Combat: [
-      "swordfighting",
-      "archery",
-      "polearms",
-      "unarmed",
-      "shieldwork",
-      "tactics",
-      "intimidation",
-    ],
-    Magic: [
-      "divine_magic",
-      "fire_magic",
-      "ice_magic",
-      "earth_magic",
-      "death_magic",
-      "nature_magic",
-    ],
-    Exploration: [
-      "navigation",
-      "tracking",
-      "cartography",
-      "survival",
-      "climbing",
-      "swimming",
-      "scouting",
-      "stealth",
-    ],
-    Crafting: [
-      "blacksmithing",
-      "alchemy",
-      "leatherworking",
-      "tailoring",
-      "cooking",
-      "jewelcrafting",
-      "enchanting",
-      "herbalism",
-      "carpentry",
-      "scribing",
-    ],
-    Social: [
-      "diplomacy",
-      "bartering",
-      "persuasion",
-      "animal_handling",
-      "lockpicking",
-      "trap_disarming",
-      "lore_knowledge",
-      "arcana",
-      "investigation",
-      "insight",
-      "performance",
-      "deception",
-      "sleight_of_hand",
-    ],
-    Other: ["meditation", "mining", "stonework", "acrobatics"],
-  };
-
   let message = `📈 **${title.toUpperCase()}**\n\n`;
 
-  Object.entries(skillCategories).forEach(([category, skills]) => {
-    const categorySkills = skills.filter(
-      (skill) => character.skills[skill] && character.skills[skill] > 0
-    );
-    if (categorySkills.length > 0) {
-      message += `**${category}:**\n`;
-      categorySkills.forEach((skill) => {
-        const level = character.skills[skill];
-        const levelText =
-          level >= 10
-            ? "Master"
-            : level >= 7
-            ? "Expert"
-            : level >= 4
-            ? "Good"
-            : "Novice";
-        message += `  ${skill}: ${level.toFixed(2)} (${levelText})\n`;
-      });
-      message += "\n";
-    }
-  });
+  // Get all skills the character has (including those with 0 value)
+  const allSkills = Object.entries(character.skills);
+
+  if (allSkills.length === 0) {
+    message += "No skills available for this character.\n\n";
+  } else {
+    // Sort skills by level (highest first)
+    const sortedSkills = allSkills.sort(([, a], [, b]) => b - a);
+
+    message += `**All Skills:**\n`;
+    sortedSkills.forEach(([skill, level]) => {
+      const levelText =
+        level >= 10
+          ? "Master"
+          : level >= 7
+          ? "Expert"
+          : level >= 4
+          ? "Good"
+          : level > 0
+          ? "Novice"
+          : "Untrained";
+      message += `  ${skill}: ${level.toFixed(2)} (${levelText})\n`;
+    });
+    message += "\n";
+  }
 
   const components = [
     {

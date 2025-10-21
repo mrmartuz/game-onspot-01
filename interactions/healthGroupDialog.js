@@ -350,8 +350,8 @@ function getSkillBasedBonus(type) {
     case "combat":
       skillBonus = allCharacters.reduce((total, char) => {
         const combatSkills = [
-          "swordfighting",
-          "archery",
+          "swords",
+          "bows",
           "polearms",
           "unarmed",
           "shieldwork",

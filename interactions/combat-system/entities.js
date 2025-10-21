@@ -208,7 +208,7 @@ export class Monster extends CombatEntity {
     if (!this.skills) return 0;
 
     // Get relevant combat skills
-    const combatSkills = ["swordfighting", "archery", "polearms", "unarmed"];
+    const combatSkills = ["swords", "bows", "polearms", "unarmed"];
     let totalBonus = 0;
 
     combatSkills.forEach((skill) => {
@@ -239,7 +239,7 @@ export class Monster extends CombatEntity {
     if (!this.skills) return 0;
 
     // Get relevant accuracy skills
-    const accuracySkills = ["swordfighting", "archery", "polearms", "unarmed"];
+    const accuracySkills = ["swords", "bows", "polearms", "unarmed"];
     let totalBonus = 0;
 
     accuracySkills.forEach((skill) => {

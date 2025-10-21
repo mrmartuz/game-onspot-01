@@ -19,7 +19,7 @@ export const classDatabase = {
       LUCK: 0, // No Luck bonus
     },
     startingSkills: {
-      swordfighting: 2.0,
+      swords: 2.0,
       shieldwork: 1.5,
       intimidation: 1.0,
       tactics: 1.0,
@@ -50,7 +50,7 @@ export const classDatabase = {
       LUCK: 0,
     },
     startingSkills: {
-      archery: 2.0,
+      bows: 2.0,
       tracking: 1.5,
       scouting: 1.0,
       survival: 1.0,
@@ -305,7 +305,7 @@ export const classDatabase = {
     },
     startingSkills: {
       tracking: 2.0,
-      archery: 1.5,
+      bows: 1.5,
       survival: 1.0,
       animal_handling: 1.0,
     },
@@ -361,7 +361,7 @@ export const classDatabase = {
     },
     startingSkills: {
       divine_magic: 2.0,
-      swordfighting: 1.5,
+      swords: 1.5,
       healing: 1.0,
       persuasion: 1.0,
     },
@@ -445,7 +445,7 @@ export const classDatabase = {
     },
     startingSkills: {
       tracking: 2.0,
-      archery: 1.5,
+      bows: 1.5,
       survival: 1.0,
       animal_handling: 1.0,
     },
@@ -741,7 +741,7 @@ export const classDatabase = {
       LUCK: 0,
     },
     startingSkills: {
-      swordfighting: 2.0,
+      swords: 2.0,
       intimidation: 2.0,
       survival: 1.0,
     },
@@ -770,7 +770,7 @@ export const classDatabase = {
       LUCK: 0,
     },
     startingSkills: {
-      swordfighting: 3.0,
+      swords: 3.0,
       intimidation: 3.0,
       tactics: 2.0,
       survival: 2.0,
@@ -800,7 +800,7 @@ export const classDatabase = {
       LUCK: 1,
     },
     startingSkills: {
-      swordfighting: 4.0,
+      swords: 4.0,
       intimidation: 4.0,
       tactics: 3.0,
       survival: 2.0,

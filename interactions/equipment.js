@@ -880,7 +880,7 @@ export const equipmentTypes = {
     statusType: "weapons",
     description: "Ranged weapons for combat",
     skillBonuses: {
-      archery: 1.5,
+      bows: 1.5,
       tracking: 0.5,
     },
     items: [
@@ -1265,11 +1265,11 @@ export const equipmentDatabase = {
     baseWeight: 3,
     baseCost: 15,
     skillBonuses: {
-      swordfighting: 2,
+      swords: 2,
       tactics: 1,
     },
     materials: ["leather", "iron", "steel"],
-    description: "Training equipment for swordfighting practice",
+    description: "Training equipment for swords practice",
   },
   archery_kit: {
     name: "Archery Kit",
@@ -1278,11 +1278,11 @@ export const equipmentDatabase = {
     baseWeight: 2,
     baseCost: 20,
     skillBonuses: {
-      archery: 2,
+      bows: 2,
       tracking: 1,
     },
     materials: ["leather", "iron"],
-    description: "Equipment for archery training and practice",
+    description: "Equipment for bows training and practice",
   },
   polearm_kit: {
     name: "Polearm Training Kit",
@@ -1951,7 +1951,7 @@ export const equipmentSetBonuses = {
     name: "Warrior's Set",
     pieces: ["plate", "longsword", "shield"],
     bonus: {
-      swordfighting: 2,
+      swords: 2,
       shieldwork: 2,
       tactics: 1,
     },
@@ -1971,7 +1971,7 @@ export const equipmentSetBonuses = {
     name: "Ranger's Set",
     pieces: ["leather", "longbow", "backpack"],
     bonus: {
-      archery: 2,
+      bows: 2,
       tracking: 2,
       survival: 1,
     },

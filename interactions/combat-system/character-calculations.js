@@ -376,8 +376,8 @@ export function progressSkill(
 
     // Apply skill level bonuses
     if (
-      skillName === "swordfighting" ||
-      skillName === "archery" ||
+      skillName === "swords" ||
+      skillName === "bows" ||
       skillName === "polearms"
     ) {
       // Combat skills give damage bonus

@@ -21,7 +21,7 @@ export const creatureTemplates = {
       stealth: 2,
       lockpicking: 1,
       bartering: 1,
-      swordfighting: 1,
+      swords: 1,
     },
     equipment: {
       weapon: "poor bronze [dagger]",
@@ -63,7 +63,7 @@ export const creatureTemplates = {
       intimidation: 3,
       unarmed: 2,
       survival: 1,
-      swordfighting: 2,
+      swords: 2,
     },
     equipment: {
       weapon: "fair iron [axe]",
