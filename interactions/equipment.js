@@ -600,6 +600,7 @@ export const equipmentTypes = {
       "shortsword",
       "warhammer",
       "flail",
+      "sickle",
     ],
   },
   weapon2h: {

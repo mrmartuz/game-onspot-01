@@ -176,10 +176,12 @@ export function generateEquipmentItem(equipmentType, itemType) {
   const materialWeights = allowedMaterials.map(() => 1); // Equal weight for all allowed materials
   const randomMaterial = weightedRandom(allowedMaterials, materialWeights);
 
-  // Random rarity (weighted toward common rarity)
+  // Random rarity (weighted toward common rarity, capped at common, floored at scrap)
   const rarities = Object.keys(equipmentRarity);
-  const rarityWeights = [0.1, 0.2, 0.3, 0.3, 0.08, 0.015, 0.004, 0.001]; // Weighted toward common
-  const randomRarity = weightedRandom(rarities, rarityWeights);
+  // Only allow scrap, improvised, poor, and common rarities for creature equipment
+  const allowedRarities = ["scrap", "improvised", "poor", "common"];
+  const rarityWeights = [0.15, 0.25, 0.35, 0.25]; // Weighted toward poor/common
+  const randomRarity = weightedRandom(allowedRarities, rarityWeights);
 
   // Format: "status material rarity [itemType]"
   return `${randomStatus.name.toLowerCase()} ${randomMaterial} ${randomRarity} [${itemType}]`;

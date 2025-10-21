@@ -71,7 +71,7 @@ export const equipmentAssignment = {
       equipment.armor = this.generateEquipmentItem("armor", armorType);
     }
 
-    // Generate weapon (1h)
+    // Generate weapon (1h) - ALWAYS generate a weapon for all characters
     if (
       classData.equipmentPreferences.weapon &&
       classData.equipmentPreferences.weapon.length > 0
@@ -83,6 +83,9 @@ export const equipmentAssignment = {
           )
         ];
       equipment.weapon = this.generateEquipmentItem("weapon1h", weaponType);
+    } else {
+      // Fallback weapon if no preferences defined
+      equipment.weapon = this.generateEquipmentItem("weapon1h", "sword");
     }
 
     // Generate shield or second weapon
@@ -200,9 +203,12 @@ export const equipmentAssignment = {
       "commoner-clothes"
     );
 
-    // Randomly decide which additional equipment slots to fill (1-3 more items)
-    const slots = ["armor", "weapon", "secondHand", "back", "tool"];
-    const numSlots = 1 + Math.floor(Math.random() * 3);
+    // ALWAYS generate weapon - this is critical for all characters
+    equipment.weapon = this.generateEquipmentItem("weapon1h", "sword");
+
+    // Randomly decide which additional equipment slots to fill (0-2 more items)
+    const slots = ["armor", "secondHand", "back", "tool"];
+    const numSlots = Math.floor(Math.random() * 3); // 0-2 additional items
     const selectedSlots = slots
       .sort(() => 0.5 - Math.random())
       .slice(0, numSlots);
@@ -214,9 +220,6 @@ export const equipmentAssignment = {
       switch (slot) {
         case "armor":
           equipmentType = "armor";
-          break;
-        case "weapon":
-          equipmentType = "weapon1h";
           break;
         case "secondHand":
           equipmentType = "shield";
@@ -280,10 +283,12 @@ export const equipmentAssignment = {
       materialWeights
     );
 
-    // Random rarity (weighted toward common rarity)
+    // Random rarity (weighted toward common rarity, capped at common, floored at scrap)
     const rarities = Object.keys(equipmentRarity);
-    const rarityWeights = [0.05, 0.1, 0.15, 0.5, 0.15, 0.03, 0.015, 0.005]; // Weighted toward common
-    const randomRarity = this.weightedRandom(rarities, rarityWeights);
+    // Only allow scrap, improvised, poor, and common rarities for starting equipment
+    const allowedRarities = ["scrap", "improvised", "poor", "common"];
+    const rarityWeights = [0.1, 0.2, 0.3, 0.4]; // Weighted toward common
+    const randomRarity = this.weightedRandom(allowedRarities, rarityWeights);
 
     // Format: "status material rarity [itemType]"
     return `${randomStatus.name.toLowerCase()} ${randomMaterial} ${randomRarity} [${itemType}]`;

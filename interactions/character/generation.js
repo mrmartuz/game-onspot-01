@@ -116,18 +116,24 @@ export const characterGeneration = {
     return character;
   },
 
-  // Generate player starting equipment (clothes, weapon, 1 skill kit)
+  // Generate player starting equipment (clothes, weapon, shield/tool based on class)
   generatePlayerStartingEquipment: async function (className) {
     const equipment = {
+      clothes: null,
       armor: null,
       weapon: null,
+      secondHand: null,
+      back: null,
       tool: null,
     };
 
-    // Always give clothes (basic armor)
-    equipment.armor = this.generateEquipmentItem("armor", "simple");
+    // ALWAYS generate clothes for all characters
+    equipment.clothes = this.generateEquipmentItem(
+      "clothes",
+      "commoner-clothes"
+    );
 
-    // Give weapon based on class preferences
+    // Give weapon based on class preferences with specific requirements
     const { classDatabase } = await import("../combat/classes.js");
     const classData = classDatabase[className];
     if (
@@ -135,16 +141,71 @@ export const characterGeneration = {
       classData.equipmentPreferences &&
       classData.equipmentPreferences.weapon
     ) {
-      const weaponType =
-        classData.equipmentPreferences.weapon[
-          Math.floor(
-            Math.random() * classData.equipmentPreferences.weapon.length
-          )
-        ];
-      equipment.weapon = this.generateEquipmentItem("weapon", weaponType);
+      let weaponType;
+
+      // Specific weapon requirements for certain classes
+      if (className === "archer") {
+        // Archers get a bow in the back slot, and a melee weapon in weapon slot
+        const bowType = classData.equipmentPreferences.back
+          ? classData.equipmentPreferences.back.find((item) =>
+              item.includes("bow")
+            ) || "shortbow"
+          : "shortbow";
+        equipment.back = this.generateEquipmentItem("ranged", bowType);
+        weaponType = "dagger"; // Backup melee weapon
+      } else if (className === "ranger") {
+        weaponType = "axe";
+      } else if (className === "brute") {
+        weaponType = "axe";
+      } else if (className === "herbalist") {
+        weaponType = "sickle";
+      } else if (className === "craftsman") {
+        weaponType = "hammer";
+      } else {
+        // For other classes, pick from their preferences
+        weaponType =
+          classData.equipmentPreferences.weapon[
+            Math.floor(
+              Math.random() * classData.equipmentPreferences.weapon.length
+            )
+          ];
+      }
+
+      equipment.weapon = this.generateEquipmentItem("weapon1h", weaponType);
     } else {
       // Default weapon
-      equipment.weapon = this.generateEquipmentItem("weapon", "sword");
+      equipment.weapon = this.generateEquipmentItem("weapon1h", "sword");
+    }
+
+    // Give shield for fighter class
+    if (className === "fighter") {
+      equipment.secondHand = this.generateEquipmentItem("shield", "shield");
+    }
+
+    // Give armor for martial classes
+    const martialClasses = [
+      "fighter",
+      "archer",
+      "brute",
+      "martial_artist",
+      "paladin",
+      "cleric",
+      "ranger",
+      "hunter",
+      "dungeondiver",
+    ];
+    if (
+      martialClasses.includes(className) &&
+      classData.equipmentPreferences.armor &&
+      classData.equipmentPreferences.armor.length > 0
+    ) {
+      const armorType =
+        classData.equipmentPreferences.armor[
+          Math.floor(
+            Math.random() * classData.equipmentPreferences.armor.length
+          )
+        ];
+      equipment.armor = this.generateEquipmentItem("armor", armorType);
     }
 
     // Give 1 skill kit based on class starting skills
