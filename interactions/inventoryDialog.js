@@ -49,15 +49,14 @@ export async function showInventoryDialog() {
   const storageBreakdown = getStorageBreakdown();
   const maxStorage = getMaxStorage();
 
-  // Calculate daily consumption rates (now consumed in specific meals/drinks)
-  const dailyFoodConsumption =
-    gameState.group.length * (1 - getGroupBonus("food"));
-  const dailyWaterConsumption = gameState.group.length;
+  // Calculate daily consumption rates (3 meals/drinks per day, 1 unit per character each)
+  const dailyFoodConsumption = gameState.group.length * 3;
+  const dailyWaterConsumption = gameState.group.length * 3;
   const dailyGoldExpense = gameState.group.length * 0.5;
 
   // Calculate per-meal and per-drink amounts
-  const foodPerMeal = dailyFoodConsumption / 3;
-  const waterPerDrink = dailyWaterConsumption / 3;
+  const foodPerMeal = gameState.group.length;
+  const waterPerDrink = gameState.group.length;
 
   // Calculate how long supplies will last
   const daysOfFood =

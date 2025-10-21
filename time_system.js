@@ -43,20 +43,11 @@ export function timeConsumption() {
       (lastHour < foodHour && currentHour >= foodHour) ||
       (lastHour === foodHour && lastMinute < 0 && currentMinute >= 0)
     ) {
-      // Apply food bonus to reduce consumption (food bonus makes food last longer)
-      let foodBonus = getGroupBonus("food");
-      let consumptionReduction = Math.min(0.5, foodBonus * 0.8); // Up to 50% reduction
-      const foodPerMeal =
-        (gameState.group.length * (1 - consumptionReduction)) / 3;
+      // Each character consumes 1 unit per meal
+      const foodPerMeal = gameState.group.length;
       gameState.food = Math.max(0, gameState.food - foodPerMeal);
       if (gameState.food < 0) {
-        logEvent(
-          `🍞 You are starving! Consumed ${foodPerMeal.toFixed(
-            1
-          )} food for meal (${Math.floor(
-            consumptionReduction * 100
-          )}% reduction applied)`
-        );
+        logEvent(`🍞 You are starving! Consumed ${foodPerMeal} food for meal`);
       }
     }
   });
@@ -69,14 +60,11 @@ export function timeConsumption() {
       (lastHour < waterHour && currentHour >= waterHour) ||
       (lastHour === waterHour && lastMinute < 0 && currentMinute >= 0)
     ) {
-      const waterPerDrink = gameState.group.length / 3;
+      // Each character consumes 1 unit per drink
+      const waterPerDrink = gameState.group.length;
       gameState.water = Math.max(0, gameState.water - waterPerDrink);
       if (gameState.water < 0) {
-        logEvent(
-          `💧 You are dying of thirst! Consumed ${waterPerDrink.toFixed(
-            1
-          )} water`
-        );
+        logEvent(`💧 You are dying of thirst! Consumed ${waterPerDrink} water`);
       }
     }
   });
