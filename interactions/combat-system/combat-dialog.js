@@ -41,6 +41,13 @@ const raceEmoji = {
   Draconic: "🐉",
   Fishman: "🐠",
   Birdman: "🦅",
+  // Beast races
+  Wolf: "🐺",
+  Bear: "🐻",
+  MountainLion: "🦁",
+  // Monster races
+  Troll: "👹",
+  Dragon: "🐉",
 };
 
 // Helper function to get race emoji
@@ -87,9 +94,39 @@ export async function handleEnhancedCombatDialog(ex, ey, isOnTile = false) {
 
   // Generate combatants
   combatState.allies = await generateAllies();
+
+  // Generate monsters with random selection
+  const monsterCount = Math.floor(Math.random() * 3) + 1; // 1-3 monsters
+  const monsterTypes = [
+    "goblin",
+    "goblin_scout",
+    "goblin_shaman",
+    "orc",
+    "orc_scout",
+    "orc_warrior",
+    "orc_raider",
+    "wolf",
+    "wolf_young",
+    "wolf_alpha",
+    "bear",
+    "bear_black",
+    "bear_grizzly",
+    "troll",
+    "troll_warrior",
+    "mountainLion",
+    "mountain_lion_young",
+    "mountain_lion_adult",
+    "mountain_lion_hunter",
+    "screamer",
+    "stalker",
+  ];
+  const selectedTypes = monsterTypes
+    .sort(() => 0.5 - Math.random())
+    .slice(0, monsterCount);
+
   combatState.monsters = await generateMonsters(
-    Math.floor(Math.random() * 3) + 1, // 1-3 monsters
-    "goblin", // Default monster type
+    monsterCount,
+    selectedTypes[0],
     ex,
     ey
   );

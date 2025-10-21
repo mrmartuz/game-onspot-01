@@ -68,7 +68,29 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
 
   // Generate monsters based on location and detection
   const monsterCount = Math.floor(Math.random() * 3) + 1; // 1-3 monsters
-  const monsterTypes = ["goblin", "orc", "wolf", "bear"];
+  const monsterTypes = [
+    "goblin",
+    "goblin_scout",
+    "goblin_shaman",
+    "orc",
+    "orc_scout",
+    "orc_warrior",
+    "orc_raider",
+    "wolf",
+    "wolf_young",
+    "wolf_alpha",
+    "bear",
+    "bear_black",
+    "bear_grizzly",
+    "troll",
+    "troll_warrior",
+    "mountainLion",
+    "mountain_lion_young",
+    "mountain_lion_adult",
+    "mountain_lion_hunter",
+    "screamer",
+    "stalker",
+  ];
   const selectedTypes = monsterTypes
     .sort(() => 0.5 - Math.random())
     .slice(0, monsterCount);
