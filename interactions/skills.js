@@ -2,24 +2,95 @@
 // Skills range from 0.01 to 99.99 with difficulty scaling and synergies
 
 export const skillDatabase = {
-  // COMBAT SKILLS (12 weapon skills + 4 combat skills)
+  // WEAPON SKILLS - Based on equipment.js weapon types
+  // One-handed melee weapons
   swords: {
     name: "Swords",
-    category: "combat",
+    category: "weapons",
+    subcategory: "melee_one_handed",
     description: "The art of wielding one-handed swords in combat.",
     maxLevel: 99.99,
     difficulty: "medium",
     primaryStat: "STR",
     secondaryStat: "DEX",
     prerequisites: [],
-    synergies: ["shields", "tactics"],
+    synergies: ["shields", "tactics", "shieldwork"],
     bonusCalculation: "linear",
     experienceMultiplier: 1.0,
+    equipmentTypes: ["swords"],
   },
 
+  axes: {
+    name: "Axes",
+    category: "weapons",
+    subcategory: "melee_one_handed",
+    description: "The skill of wielding one-handed axes and hatchets.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "STR",
+    secondaryStat: "DEX",
+    prerequisites: [],
+    synergies: ["shields", "intimidation", "shieldwork"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+    equipmentTypes: ["axes"],
+  },
+
+  hammers: {
+    name: "Hammers",
+    category: "weapons",
+    subcategory: "melee_one_handed",
+    description: "The skill of wielding one-handed hammers and maces.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "STR",
+    secondaryStat: "CON",
+    prerequisites: [],
+    synergies: ["shields", "intimidation", "shieldwork"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+    equipmentTypes: ["hammers"],
+  },
+
+  throwing: {
+    name: "Throwing",
+    category: "weapons",
+    subcategory: "ranged_one_handed",
+    description:
+      "The art of throwing weapons like daggers, javelins, and stones.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "DEX",
+    secondaryStat: "STR",
+    prerequisites: [],
+    synergies: ["scouting", "tactics", "stealth"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+    equipmentTypes: ["throwing"],
+  },
+
+  shields: {
+    name: "Shields",
+    category: "weapons",
+    subcategory: "defensive_one_handed",
+    description:
+      "The defensive art of using one-handed shields for protection.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "CON",
+    secondaryStat: "STR",
+    prerequisites: [],
+    synergies: ["swords", "axes", "hammers", "tactics"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+    equipmentTypes: ["shields"],
+  },
+
+  // Two-handed melee weapons
   great_swords: {
     name: "Great Swords",
-    category: "combat",
+    category: "weapons",
+    subcategory: "melee_two_handed",
     description: "Mastery of two-handed swords and greatswords.",
     maxLevel: 99.99,
     difficulty: "medium",
@@ -29,25 +100,13 @@ export const skillDatabase = {
     synergies: ["tactics", "intimidation"],
     bonusCalculation: "linear",
     experienceMultiplier: 1.0,
-  },
-
-  axes: {
-    name: "Axes",
-    category: "combat",
-    description: "The skill of wielding one-handed axes and hatchets.",
-    maxLevel: 99.99,
-    difficulty: "medium",
-    primaryStat: "STR",
-    secondaryStat: "DEX",
-    prerequisites: [],
-    synergies: ["shields", "intimidation"],
-    bonusCalculation: "linear",
-    experienceMultiplier: 1.0,
+    equipmentTypes: ["great_swords"],
   },
 
   great_axes: {
     name: "Great Axes",
-    category: "combat",
+    category: "weapons",
+    subcategory: "melee_two_handed",
     description: "Mastery of two-handed axes and greataxes.",
     maxLevel: 99.99,
     difficulty: "medium",
@@ -57,11 +116,29 @@ export const skillDatabase = {
     synergies: ["tactics", "intimidation"],
     bonusCalculation: "linear",
     experienceMultiplier: 1.0,
+    equipmentTypes: ["great_axes"],
+  },
+
+  great_hammers: {
+    name: "Great Hammers",
+    category: "weapons",
+    subcategory: "melee_two_handed",
+    description: "Mastery of two-handed hammers and mauls.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "STR",
+    secondaryStat: "CON",
+    prerequisites: [],
+    synergies: ["tactics", "intimidation"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+    equipmentTypes: ["great_hammers"],
   },
 
   polearms: {
     name: "Polearms",
-    category: "combat",
+    category: "weapons",
+    subcategory: "melee_two_handed",
     description:
       "Mastery of long weapons like spears, halberds, pikes, and staffs.",
     maxLevel: 99.99,
@@ -72,97 +149,13 @@ export const skillDatabase = {
     synergies: ["tactics", "intimidation"],
     bonusCalculation: "linear",
     experienceMultiplier: 1.0,
-  },
-
-  hammers: {
-    name: "Hammers",
-    category: "combat",
-    description: "The skill of wielding one-handed hammers and maces.",
-    maxLevel: 99.99,
-    difficulty: "medium",
-    primaryStat: "STR",
-    secondaryStat: "CON",
-    prerequisites: [],
-    synergies: ["shields", "intimidation"],
-    bonusCalculation: "linear",
-    experienceMultiplier: 1.0,
-  },
-
-  great_hammers: {
-    name: "Great Hammers",
-    category: "combat",
-    description: "Mastery of two-handed hammers and mauls.",
-    maxLevel: 99.99,
-    difficulty: "medium",
-    primaryStat: "STR",
-    secondaryStat: "CON",
-    prerequisites: [],
-    synergies: ["tactics", "intimidation"],
-    bonusCalculation: "linear",
-    experienceMultiplier: 1.0,
-  },
-
-  bows: {
-    name: "Bows",
-    category: "combat",
-    description: "The skill of using bows with deadly accuracy.",
-    maxLevel: 99.99,
-    difficulty: "medium",
-    primaryStat: "DEX",
-    secondaryStat: "WIS",
-    prerequisites: [],
-    synergies: ["tracking", "scouting"],
-    bonusCalculation: "linear",
-    experienceMultiplier: 1.0,
-  },
-
-  crossbows: {
-    name: "Crossbows",
-    category: "combat",
-    description: "The skill of using crossbows and mechanical ranged weapons.",
-    maxLevel: 99.99,
-    difficulty: "medium",
-    primaryStat: "DEX",
-    secondaryStat: "INT",
-    prerequisites: [],
-    synergies: ["tracking", "tactics"],
-    bonusCalculation: "linear",
-    experienceMultiplier: 1.0,
-  },
-
-  throwing: {
-    name: "Throwing",
-    category: "combat",
-    description:
-      "The art of throwing weapons like daggers, javelins, and stones.",
-    maxLevel: 99.99,
-    difficulty: "medium",
-    primaryStat: "DEX",
-    secondaryStat: "STR",
-    prerequisites: [],
-    synergies: ["scouting", "tactics"],
-    bonusCalculation: "linear",
-    experienceMultiplier: 1.0,
-  },
-
-  shields: {
-    name: "Shields",
-    category: "combat",
-    description:
-      "The defensive art of using shields to protect oneself and allies.",
-    maxLevel: 99.99,
-    difficulty: "medium",
-    primaryStat: "CON",
-    secondaryStat: "STR",
-    prerequisites: [],
-    synergies: ["swords", "axes", "hammers"],
-    bonusCalculation: "linear",
-    experienceMultiplier: 1.0,
+    equipmentTypes: ["polearms"],
   },
 
   great_shields: {
     name: "Great Shields",
-    category: "combat",
+    category: "weapons",
+    subcategory: "defensive_two_handed",
     description:
       "Mastery of large shields and tower shields for maximum protection.",
     maxLevel: 99.99,
@@ -173,11 +166,47 @@ export const skillDatabase = {
     synergies: ["tactics", "intimidation"],
     bonusCalculation: "linear",
     experienceMultiplier: 1.0,
+    equipmentTypes: ["great_shields"],
   },
 
+  // Ranged weapons
+  bows: {
+    name: "Bows",
+    category: "weapons",
+    subcategory: "ranged_two_handed",
+    description: "The skill of using bows with deadly accuracy.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "DEX",
+    secondaryStat: "WIS",
+    prerequisites: [],
+    synergies: ["tracking", "scouting", "survival"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+    equipmentTypes: ["bows"],
+  },
+
+  crossbows: {
+    name: "Crossbows",
+    category: "weapons",
+    subcategory: "ranged_two_handed",
+    description: "The skill of using crossbows and mechanical ranged weapons.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "DEX",
+    secondaryStat: "INT",
+    prerequisites: [],
+    synergies: ["tracking", "tactics", "investigation"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+    equipmentTypes: ["crossbows"],
+  },
+
+  // Specialized combat skills
   unarmed: {
     name: "Unarmed Combat",
-    category: "combat",
+    category: "weapons",
+    subcategory: "specialized",
     description:
       "Fighting without weapons using fists, kicks, and martial arts.",
     maxLevel: 99.99,
@@ -185,29 +214,17 @@ export const skillDatabase = {
     primaryStat: "DEX",
     secondaryStat: "STR",
     prerequisites: [],
-    synergies: ["acrobatics", "meditation"],
+    synergies: ["acrobatics", "meditation", "intimidation"],
     bonusCalculation: "linear",
     experienceMultiplier: 1.2,
+    equipmentTypes: [],
   },
 
-  shieldwork: {
-    name: "Shieldwork",
-    category: "combat",
-    description:
-      "The defensive art of using shields to protect oneself and allies.",
-    maxLevel: 99.99,
-    difficulty: "medium",
-    primaryStat: "CON",
-    secondaryStat: "STR",
-    prerequisites: [],
-    synergies: ["swordfighting", "tactics"],
-    bonusCalculation: "linear",
-    experienceMultiplier: 1.0,
-  },
-
+  // COMBAT SUPPORT SKILLS
   tactics: {
     name: "Tactics",
     category: "combat",
+    subcategory: "strategy",
     description:
       "Strategic thinking and battlefield awareness in combat situations.",
     maxLevel: 99.99,
@@ -215,14 +232,22 @@ export const skillDatabase = {
     primaryStat: "INT",
     secondaryStat: "WIS",
     prerequisites: [],
-    synergies: ["swordfighting", "polearms", "shieldwork"],
+    synergies: [
+      "swords",
+      "great_swords",
+      "polearms",
+      "shields",
+      "great_shields",
+    ],
     bonusCalculation: "linear",
     experienceMultiplier: 1.3,
+    equipmentTypes: [],
   },
 
   intimidation: {
     name: "Intimidation",
     category: "combat",
+    subcategory: "psychological",
     description:
       "Using fear and psychological pressure to gain advantage in combat.",
     maxLevel: 99.99,
@@ -230,14 +255,33 @@ export const skillDatabase = {
     primaryStat: "CHA",
     secondaryStat: "STR",
     prerequisites: [],
-    synergies: ["polearms", "unarmed"],
+    synergies: ["polearms", "great_axes", "great_hammers", "unarmed"],
     bonusCalculation: "linear",
     experienceMultiplier: 0.8,
+    equipmentTypes: [],
+  },
+
+  shieldwork: {
+    name: "Shieldwork",
+    category: "combat",
+    subcategory: "defensive",
+    description:
+      "Advanced defensive techniques using shields and defensive positioning.",
+    maxLevel: 99.99,
+    difficulty: "medium",
+    primaryStat: "CON",
+    secondaryStat: "STR",
+    prerequisites: [],
+    synergies: ["swords", "axes", "hammers", "tactics"],
+    bonusCalculation: "linear",
+    experienceMultiplier: 1.0,
+    equipmentTypes: [],
   },
 
   divine_magic: {
     name: "Divine Magic",
-    category: "combat",
+    category: "magic",
+    subcategory: "divine",
     description:
       "Channeling divine power for healing, protection, and smiting enemies.",
     maxLevel: 99.99,
@@ -245,9 +289,10 @@ export const skillDatabase = {
     primaryStat: "WIS",
     secondaryStat: "CHA",
     prerequisites: [],
-    synergies: ["healing", "persuasion"],
+    synergies: ["healing", "persuasion", "meditation"],
     bonusCalculation: "linear",
     experienceMultiplier: 1.4,
+    equipmentTypes: [],
   },
 
   // EXPLORATION SKILLS (8 skills)
@@ -843,28 +888,85 @@ export const skillDatabase = {
 
 // Skill categories for organization
 export const skillCategories = {
-  combat: {
-    name: "Combat",
-    description: "Skills related to fighting and warfare",
+  weapons: {
+    name: "Weapons",
+    description: "Skills for wielding weapons and combat equipment",
     color: "#ff4444",
+    subcategories: {
+      melee_one_handed: {
+        name: "One-Handed Melee",
+        description: "Swords, axes, hammers, and other one-handed weapons",
+        skills: ["swords", "axes", "hammers"],
+      },
+      melee_two_handed: {
+        name: "Two-Handed Melee",
+        description: "Great swords, axes, hammers, and polearms",
+        skills: ["great_swords", "great_axes", "great_hammers", "polearms"],
+      },
+      ranged_one_handed: {
+        name: "One-Handed Ranged",
+        description: "Throwing weapons and projectiles",
+        skills: ["throwing"],
+      },
+      ranged_two_handed: {
+        name: "Two-Handed Ranged",
+        description: "Bows, crossbows, and other ranged weapons",
+        skills: ["bows", "crossbows"],
+      },
+      defensive_one_handed: {
+        name: "One-Handed Defense",
+        description: "Shields and defensive equipment",
+        skills: ["shields"],
+      },
+      defensive_two_handed: {
+        name: "Two-Handed Defense",
+        description: "Large shields and defensive equipment",
+        skills: ["great_shields"],
+      },
+      specialized: {
+        name: "Specialized Combat",
+        description: "Unarmed combat and other specialized techniques",
+        skills: ["unarmed"],
+      },
+    },
     skills: [
       "swords",
-      "great_swords",
       "axes",
-      "great_axes",
-      "polearms",
       "hammers",
-      "great_hammers",
-      "bows",
-      "crossbows",
       "throwing",
       "shields",
+      "great_swords",
+      "great_axes",
+      "great_hammers",
+      "polearms",
       "great_shields",
+      "bows",
+      "crossbows",
       "unarmed",
-      "tactics",
-      "intimidation",
-      "divine_magic",
     ],
+  },
+  combat: {
+    name: "Combat",
+    description: "Strategic and tactical combat skills",
+    color: "#ff8844",
+    subcategories: {
+      strategy: {
+        name: "Strategy",
+        description: "Tactical thinking and battlefield awareness",
+        skills: ["tactics"],
+      },
+      psychological: {
+        name: "Psychological",
+        description: "Intimidation and psychological warfare",
+        skills: ["intimidation"],
+      },
+      defensive: {
+        name: "Defensive",
+        description: "Advanced defensive techniques",
+        skills: ["shieldwork"],
+      },
+    },
+    skills: ["tactics", "intimidation", "shieldwork"],
   },
   exploration: {
     name: "Exploration",
@@ -921,7 +1023,30 @@ export const skillCategories = {
     name: "Magic",
     description: "Skills for channeling magical energies",
     color: "#ff44ff",
-    skills: ["fire_magic", "ice_magic", "earth_magic", "death_magic"],
+    subcategories: {
+      divine: {
+        name: "Divine Magic",
+        description: "Channeling divine power and holy magic",
+        skills: ["divine_magic"],
+      },
+      elemental: {
+        name: "Elemental Magic",
+        description: "Commanding the forces of nature",
+        skills: ["fire_magic", "ice_magic", "earth_magic"],
+      },
+      dark: {
+        name: "Dark Magic",
+        description: "Forbidden and necromantic arts",
+        skills: ["death_magic"],
+      },
+    },
+    skills: [
+      "divine_magic",
+      "fire_magic",
+      "ice_magic",
+      "earth_magic",
+      "death_magic",
+    ],
   },
   specialized: {
     name: "Specialized",
@@ -1094,6 +1219,9 @@ export function getCombatBonus(characterSkills) {
   const shields = characterSkills.shields || 0;
   const greatShields = characterSkills.great_shields || 0;
   const unarmed = characterSkills.unarmed || 0;
+  const tactics = characterSkills.tactics || 0;
+  const intimidation = characterSkills.intimidation || 0;
+  const shieldwork = characterSkills.shieldwork || 0;
 
   return (
     calculateSkillBonus(swords) +
@@ -1108,7 +1236,10 @@ export function getCombatBonus(characterSkills) {
     calculateSkillBonus(throwing) +
     calculateSkillBonus(shields) +
     calculateSkillBonus(greatShields) +
-    calculateSkillBonus(unarmed)
+    calculateSkillBonus(unarmed) +
+    calculateSkillBonus(tactics) +
+    calculateSkillBonus(intimidation) +
+    calculateSkillBonus(shieldwork)
   );
 }
 
@@ -1171,4 +1302,98 @@ export function getViewBonus(characterSkills) {
   const tracking = characterSkills.tracking || 0;
 
   return Math.max(calculateSkillBonus(scouting), calculateSkillBonus(tracking));
+}
+
+// New helper functions for equipment-based skills
+export function getWeaponSkillBonus(characterSkills, weaponType) {
+  const skillLevel = characterSkills[weaponType] || 0;
+  return calculateSkillBonus(skillLevel);
+}
+
+export function getWeaponSkillsBySubcategory(subcategory) {
+  const category = skillCategories.weapons;
+  if (
+    !category ||
+    !category.subcategories ||
+    !category.subcategories[subcategory]
+  ) {
+    return [];
+  }
+  return category.subcategories[subcategory].skills;
+}
+
+export function getEquipmentTypeSkillBonus(characterSkills, equipmentType) {
+  // Find the skill that corresponds to this equipment type
+  for (const [skillName, skillData] of Object.entries(skillDatabase)) {
+    if (
+      skillData.equipmentTypes &&
+      skillData.equipmentTypes.includes(equipmentType)
+    ) {
+      return getWeaponSkillBonus(characterSkills, skillName);
+    }
+  }
+  return 0;
+}
+
+export function getMeleeWeaponBonus(characterSkills) {
+  const oneHandedSkills = getWeaponSkillsBySubcategory("melee_one_handed");
+  const twoHandedSkills = getWeaponSkillsBySubcategory("melee_two_handed");
+
+  let maxOneHanded = 0;
+  let maxTwoHanded = 0;
+
+  oneHandedSkills.forEach((skill) => {
+    const bonus = getWeaponSkillBonus(characterSkills, skill);
+    maxOneHanded = Math.max(maxOneHanded, bonus);
+  });
+
+  twoHandedSkills.forEach((skill) => {
+    const bonus = getWeaponSkillBonus(characterSkills, skill);
+    maxTwoHanded = Math.max(maxTwoHanded, bonus);
+  });
+
+  return maxOneHanded + maxTwoHanded;
+}
+
+export function getRangedWeaponBonus(characterSkills) {
+  const oneHandedSkills = getWeaponSkillsBySubcategory("ranged_one_handed");
+  const twoHandedSkills = getWeaponSkillsBySubcategory("ranged_two_handed");
+
+  let maxOneHanded = 0;
+  let maxTwoHanded = 0;
+
+  oneHandedSkills.forEach((skill) => {
+    const bonus = getWeaponSkillBonus(characterSkills, skill);
+    maxOneHanded = Math.max(maxOneHanded, bonus);
+  });
+
+  twoHandedSkills.forEach((skill) => {
+    const bonus = getWeaponSkillBonus(characterSkills, skill);
+    maxTwoHanded = Math.max(maxTwoHanded, bonus);
+  });
+
+  return maxOneHanded + maxTwoHanded;
+}
+
+export function getDefensiveBonus(characterSkills) {
+  const shieldSkills = getWeaponSkillsBySubcategory("defensive_one_handed");
+  const greatShieldSkills = getWeaponSkillsBySubcategory(
+    "defensive_two_handed"
+  );
+  const shieldwork = characterSkills.shieldwork || 0;
+
+  let maxShield = 0;
+  let maxGreatShield = 0;
+
+  shieldSkills.forEach((skill) => {
+    const bonus = getWeaponSkillBonus(characterSkills, skill);
+    maxShield = Math.max(maxShield, bonus);
+  });
+
+  greatShieldSkills.forEach((skill) => {
+    const bonus = getWeaponSkillBonus(characterSkills, skill);
+    maxGreatShield = Math.max(maxGreatShield, bonus);
+  });
+
+  return maxShield + maxGreatShield + calculateSkillBonus(shieldwork);
 }

@@ -737,6 +737,9 @@ async function handleResolutionPhase(status) {
     // Show harvest dialog after victory
     await handleHarvestDialog();
 
+    // Sync all skill changes back to gameState
+    syncSkillsToGameState();
+
     // Update status display to reflect skill progression
     updateStatus();
 
@@ -747,6 +750,9 @@ async function handleResolutionPhase(status) {
       [{ type: "button", label: "Continue", value: "ok" }]
     );
 
+    // Sync skills even after defeat
+    syncSkillsToGameState();
+
     // Update status display even after defeat
     updateStatus();
 
@@ -754,6 +760,33 @@ async function handleResolutionPhase(status) {
   }
 
   return "unknown";
+}
+
+// Sync skills from combat entities back to gameState
+function syncSkillsToGameState() {
+  // Sync player character skills
+  const playerAlly = combatState.allies.find((ally) => ally.isPlayer);
+  if (playerAlly && playerAlly.character && gameState.playerCharacter) {
+    gameState.playerCharacter.skills = { ...playerAlly.character.skills };
+    console.log(
+      "[SKILL SYNC] Synced player skills:",
+      gameState.playerCharacter.skills
+    );
+  }
+
+  // Sync group member skills
+  combatState.allies.forEach((ally) => {
+    if (!ally.isPlayer && ally.character && ally.id) {
+      const groupMember = gameState.group.find((char) => char.id === ally.id);
+      if (groupMember) {
+        groupMember.skills = { ...ally.character.skills };
+        console.log(
+          `[SKILL SYNC] Synced ${ally.name} skills:`,
+          groupMember.skills
+        );
+      }
+    }
+  });
 }
 
 // Handle harvest dialog after combat victory
@@ -940,8 +973,13 @@ function getPrimaryWeaponSkill(character) {
     weaponType.includes("zweihander")
   )
     return "great_swords";
-  if (weaponType.includes("sword") || weaponType.includes("skrith-blade")) return "swords";
-  if (weaponType.includes("greataxe") || weaponType.includes("battleaxe") || weaponType.includes("vrakgul-axe"))
+  if (weaponType.includes("sword") || weaponType.includes("skrith-blade"))
+    return "swords";
+  if (
+    weaponType.includes("greataxe") ||
+    weaponType.includes("battleaxe") ||
+    weaponType.includes("vrakgul-axe")
+  )
     return "great_axes";
   if (weaponType.includes("axe")) return "axes";
   if (
@@ -955,7 +993,11 @@ function getPrimaryWeaponSkill(character) {
     weaponType.includes("glaive")
   )
     return "polearms";
-  if (weaponType.includes("maul") || weaponType.includes("great-hammer") || weaponType.includes("gormith-hammer"))
+  if (
+    weaponType.includes("maul") ||
+    weaponType.includes("great-hammer") ||
+    weaponType.includes("gormith-hammer")
+  )
     return "great_hammers";
   if (
     weaponType.includes("mace") ||
@@ -965,16 +1007,23 @@ function getPrimaryWeaponSkill(character) {
     weaponType.includes("morningstar")
   )
     return "hammers";
-  if (weaponType.includes("crossbow") || weaponType.includes("gormith-crossbow")) return "crossbows";
-  if (weaponType.includes("bow") || weaponType.includes("lyssarion-bow")) return "bows";
+  if (
+    weaponType.includes("crossbow") ||
+    weaponType.includes("gormith-crossbow")
+  )
+    return "crossbows";
+  if (weaponType.includes("bow") || weaponType.includes("lyssarion-bow"))
+    return "bows";
   if (
     weaponType.includes("dagger") ||
     weaponType.includes("javelin") ||
     weaponType.includes("throwing") ||
-    weaponType.includes("sling") || weaponType.includes("skrith-nedle")
+    weaponType.includes("sling") ||
+    weaponType.includes("skrith-nedle")
   )
     return "throwing";
-  if (weaponType.includes("shield") || weaponType.includes("aurethine-shield")) return "shields";
+  if (weaponType.includes("shield") || weaponType.includes("aurethine-shield"))
+    return "shields";
 
   return "unarmed";
 }
