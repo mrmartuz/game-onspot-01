@@ -419,7 +419,6 @@ async function showGroupOverviewDialog() {
     "resource",
     "plant",
     "interact",
-    "carry",
     "health",
     "view",
   ];
@@ -458,10 +457,6 @@ async function showGroupOverviewDialog() {
         case "interact":
           emoji = "🤝";
           description = "Better trade prices";
-          break;
-        case "carry":
-          emoji = "📦";
-          description = "Increased storage";
           break;
         case "health":
           emoji = "❤️";

@@ -19,11 +19,11 @@ export const gameState = {
   cooldown: false,
   health: 100,
   gold: 20 + Math.floor(Math.random() * 10),
-  food: 20 + Math.floor(Math.random() * 10),
-  water: 20 + Math.floor(Math.random() * 10),
-  tents: 2,
+  food: 10 + Math.floor(Math.random() * 5),
+  water: 10 + Math.floor(Math.random() * 5),
+  tents: 0,
   building_mats: 0,
-  wood: 5,
+  wood: 0,
   carts: 0,
 
   // Character System - Phase 2.1 Migration

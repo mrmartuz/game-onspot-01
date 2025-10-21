@@ -1,7 +1,7 @@
 import { gameState } from "../gamestate/game_variables.js";
 import { getMaxStorage } from "../utils.js";
 import { getGroupBonus } from "../utils.js";
-import { getNumCarriers } from "../utils.js";
+import { getStorageBreakdown } from "../utils.js";
 import { getShowChoiceDialog } from "../interactions.js";
 import { getCurrentGameDate } from "../time_system.js";
 import { getTotalHeadSpace, getAllHeadsForDisplay } from "./loot-system.js";
@@ -46,6 +46,7 @@ function getNextConsumptionTimes() {
 }
 
 export async function showInventoryDialog() {
+  const storageBreakdown = getStorageBreakdown();
   const maxStorage = getMaxStorage();
 
   // Calculate daily consumption rates (now consumed in specific meals/drinks)
@@ -73,15 +74,30 @@ export async function showInventoryDialog() {
     getNextConsumptionTimes();
 
   const totalHeadSpace = getTotalHeadSpace();
-  const availableSpace = maxStorage - totalHeadSpace;
+
+  // Calculate total storage used by all items
+  const goldSpace = Math.ceil(gameState.gold / 25);
+  const foodSpace = gameState.food;
+  const waterSpace = gameState.water;
+  const headSpace = getTotalHeadSpace();
+  const woodSpace = gameState.wood;
+  const tentSpace = gameState.tents;
+  const buildingMatSpace = gameState.building_mats;
+
+  const totalUsedSpace =
+    goldSpace +
+    foodSpace +
+    waterSpace +
+    headSpace +
+    woodSpace +
+    tentSpace +
+    buildingMatSpace;
+  const availableSpace = maxStorage - totalUsedSpace;
 
   let message =
-    `📦 **Party Inventory**\n` +
-    `🛒: ${gameState.carts}*100 + 📦: ${getNumCarriers()}*24 + 👥: ${
-      gameState.group.length - getNumCarriers() - gameState.carts
-    }*10\n` +
+    `🛒: ${storageBreakdown.carts}*100 + 📦: ${storageBreakdown.backpacks}*24 + 👥: ${storageBreakdown.regular}*10 + 💪: ${storageBreakdown.strTotal}\n` +
     `📦 Max Storage: ${maxStorage}\n` +
-    `🏺 Monster Heads: ${gameState.monsterHeads.length} (${totalHeadSpace} space)\n` +
+    `📦 Used Space: ${totalUsedSpace}\n` +
     `📦 Available Space: ${availableSpace}\n\n` +
     `🪙 Gold: ${gameState.gold}\n` +
     `🍞 Food: ${gameState.food.toFixed(1)} -${dailyFoodConsumption.toFixed(
@@ -90,6 +106,7 @@ export async function showInventoryDialog() {
     `💧 Water: ${gameState.water.toFixed(1)} -${dailyWaterConsumption.toFixed(
       1
     )}/day\n` +
+    `🏺🐺 Monster Heads: ${gameState.monsterHeads.length} per ${totalHeadSpace} space\n` +
     `🪵 Wood: ${gameState.wood}\n` +
     `⛺ Tents: ${gameState.tents}\n` +
     `🧱 Building Materials: ${gameState.building_mats}\n` +
@@ -101,62 +118,13 @@ export async function showInventoryDialog() {
       .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}\n` +
     `**Storage Capacity:** ${maxStorage}`;
 
-  // Add monster heads section
-  if (gameState.monsterHeads.length > 0) {
-    message += `\n\n🏺 **MONSTER HEADS:**\n`;
-    const headsForDisplay = getAllHeadsForDisplay();
-    headsForDisplay.forEach((headData, index) => {
-      message += `  ${headData.text}\n`;
-    });
-  }
-
-  // Add character equipment section
-  message += `\n\n⚔️ **CHARACTER EQUIPMENT:**\n`;
-
-  // Player character equipment
-  if (gameState.playerCharacter && gameState.playerCharacter.equipment) {
-    const player = gameState.playerCharacter;
-    message += `👤 **${player.firstName} ${player.lastName}:**\n`;
-
-    if (player.equipment.armor) {
-      message += `  Armor: ${player.equipment.armor}\n`;
-    }
-    if (player.equipment.weapon) {
-      message += `  Weapon: ${player.equipment.weapon}\n`;
-    }
-    if (player.equipment.tool) {
-      message += `  Tool: ${player.equipment.tool}\n`;
-    }
-    message += `\n`;
-  }
-
-  // Group member equipment
-  if (gameState.group.length > 0) {
-    gameState.group.forEach((member, index) => {
-      if (member.equipment) {
-        message += `👥 **${member.firstName} ${member.lastName}:**\n`;
-
-        if (member.equipment.armor) {
-          message += `  Armor: ${member.equipment.armor}\n`;
-        }
-        if (member.equipment.weapon) {
-          message += `  Weapon: ${member.equipment.weapon}\n`;
-        }
-        if (member.equipment.tool) {
-          message += `  Tool: ${member.equipment.tool}\n`;
-        }
-        message += `\n`;
-      }
-    });
-  }
-
   const components = [
     { type: "message", label: message, value: "" },
     { type: "button", label: "👥 Character Management", value: "char_mgmt" },
     { type: "button", label: "❌ Close", value: "close" },
   ];
 
-  const choice = await getShowChoiceDialog("Party Inventory", components);
+  const choice = await getShowChoiceDialog("📦 Party Inventory", components);
 
   if (choice === "char_mgmt") {
     const { showCharacterManagementDialog } = await import(

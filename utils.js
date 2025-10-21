@@ -179,8 +179,8 @@ export function getGroupBonus(type) {
   return total;
 }
 
-export function getNumCarriers() {
-  // Phase 2.1 Migration: Calculate carriers based on STR stats instead of roles
+export function getStorageBreakdown() {
+  // Get detailed storage breakdown for display
   const allCharacters = [];
 
   // Include player character if it exists
@@ -191,12 +191,29 @@ export function getNumCarriers() {
   // Include all group members (NPCs)
   allCharacters.push(...gameState.group);
 
-  // Count characters with STR >= 12 as carriers
-  return allCharacters.filter((char) => (char.stats?.STR || 8) >= 12).length;
+  let strTotal = 0;
+  let backpackCount = 0;
+  let regularCount = 0;
+
+  allCharacters.forEach((char) => {
+    strTotal += char.stats?.STR || 8;
+    if (char.equipment?.tool && char.equipment.tool.includes("backpack")) {
+      backpackCount++;
+    } else {
+      regularCount++;
+    }
+  });
+
+  return {
+    carts: gameState.carts,
+    backpacks: backpackCount,
+    regular: regularCount,
+    strTotal: strTotal,
+  };
 }
 
 export function getMaxStorage() {
-  // Phase 2.1 Migration: Calculate storage based on STR stats instead of roles
+  // New storage calculation: STR×2 + Backpacks×24 + Regular Members×10 + Carts×100
   const allCharacters = [];
 
   // Include player character if it exists
@@ -207,20 +224,30 @@ export function getMaxStorage() {
   // Include all group members (NPCs)
   allCharacters.push(...gameState.group);
 
-  // Base storage: STR stat * 2 per character + 200 per cart
-  let baseStorage = allCharacters.reduce(
-    (total, char) => total + (char.stats?.STR || 8) * 2,
-    0
-  );
+  // Calculate storage components
+  let strStorage = 0;
+  let backpackStorage = 0;
+  let regularStorage = 0;
+  let cartStorage = 0;
 
-  // Add cart storage
-  baseStorage += 200 * gameState.carts;
+  // STR storage: Plain sum of STR stats (no multiplication)
+  allCharacters.forEach((char) => {
+    strStorage += char.stats?.STR || 8;
+  });
 
-  // Apply carry bonus for additional storage capacity
-  let carryBonus = gameState.groupBonus.carry || 0;
-  let bonusStorage = Math.floor(carryBonus);
+  // Backpack storage: +24 per character with backpack tool
+  allCharacters.forEach((char) => {
+    if (char.equipment?.tool && char.equipment.tool.includes("backpack")) {
+      backpackStorage += 24;
+    } else {
+      regularStorage += 10; // +10 for characters without backpacks
+    }
+  });
 
-  return baseStorage + bonusStorage;
+  // Cart storage: +100 per cart
+  cartStorage = gameState.carts * 100;
+
+  return strStorage + backpackStorage + regularStorage + cartStorage;
 }
 
 // Get available storage space accounting for monster heads
