@@ -1152,7 +1152,6 @@ export const nameDatabase = {
         "Soulfrost",
         "Deathchill",
         "Gravefrost",
-        "Tombchill",
       ],
     },
     female: {
@@ -1228,7 +1227,6 @@ export const nameDatabase = {
         "Soulfrost",
         "Deathchill",
         "Gravefrost",
-        "Tombfrost",
       ],
     },
   },
@@ -2339,5 +2337,3 @@ export const nameDatabase = {
     },
   },
 };
-
-
