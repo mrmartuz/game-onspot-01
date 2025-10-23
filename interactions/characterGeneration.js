@@ -432,6 +432,112 @@ export const proceduralGeneration = {
 
 // Equipment assignment system
 export const equipmentAssignment = {
+  // Helper function to determine if a weapon is 2-handed
+  is2HandedWeapon: function (weaponType) {
+    const twoHandedWeapons = [
+      "greatsword",
+      "claymore",
+      "zweihander",
+      "bastard-sword",
+      "greataxe",
+      "battleaxe",
+      "war-axe",
+      "vrakgul-axe",
+      "maul",
+      "great-hammer",
+      "war-hammer",
+      "gormith-hammer",
+      "spear",
+      "halberd",
+      "poleaxe",
+      "staff",
+      "quarterstaff",
+      "scythe",
+      "pike",
+      "glaive",
+      "bow",
+      "longbow",
+      "shortbow",
+      "composite-bow",
+      "recurve-bow",
+      "lyssarion-bow",
+      "crossbow",
+      "heavy-crossbow",
+      "light-crossbow",
+      "gormith-crossbow",
+    ];
+    return twoHandedWeapons.includes(weaponType.toLowerCase());
+  },
+
+  getWeaponCategory: function (weaponName) {
+    const weaponType = weaponName.toLowerCase();
+
+    // Map weapon types to specific categories - order matters for overlapping names
+    if (
+      weaponType.includes("greatsword") ||
+      weaponType.includes("claymore") ||
+      weaponType.includes("zweihander")
+    )
+      return "great_swords";
+    if (weaponType.includes("sword") || weaponType.includes("skrith-blade"))
+      return "swords";
+    if (
+      weaponType.includes("greataxe") ||
+      weaponType.includes("battleaxe") ||
+      weaponType.includes("vrakgul-axe")
+    )
+      return "great_axes";
+    if (weaponType.includes("axe")) return "axes";
+    if (
+      weaponType.includes("spear") ||
+      weaponType.includes("halberd") ||
+      weaponType.includes("polearm") ||
+      weaponType.includes("staff") ||
+      weaponType.includes("quarterstaff") ||
+      weaponType.includes("scythe") ||
+      weaponType.includes("pike") ||
+      weaponType.includes("glaive")
+    )
+      return "polearms";
+    if (
+      weaponType.includes("maul") ||
+      weaponType.includes("great-hammer") ||
+      weaponType.includes("gormith-hammer")
+    )
+      return "great_hammers";
+    if (
+      weaponType.includes("mace") ||
+      weaponType.includes("club") ||
+      weaponType.includes("warhammer") ||
+      weaponType.includes("flail") ||
+      weaponType.includes("morningstar")
+    )
+      return "hammers";
+    if (
+      weaponType.includes("crossbow") ||
+      weaponType.includes("gormith-crossbow")
+    )
+      return "crossbows";
+    if (weaponType.includes("bow") || weaponType.includes("lyssarion-bow"))
+      return "bows";
+    if (
+      weaponType.includes("dagger") ||
+      weaponType.includes("javelin") ||
+      weaponType.includes("throwing") ||
+      weaponType.includes("sling") ||
+      weaponType.includes("skrith-nedle")
+    )
+      return "throwing";
+    if (
+      weaponType.includes("shield") ||
+      weaponType.includes("aurethine-shield")
+    )
+      return "shields";
+
+    // Default fallback
+    return "swords";
+  },
+
   // Generate starting equipment based on class preferences
   generateStartingEquipment: function (className) {
     const classData = classDatabase[className];
@@ -506,13 +612,19 @@ export const equipmentAssignment = {
           )
         ];
       equipment.weapon = this.generateEquipmentItem("weapon1h", weaponType);
+
+      // If it's a 2-handed weapon, set secondHand to indicate occupation
+      if (this.is2HandedWeapon(weaponType)) {
+        equipment.secondHand = "(2h-grip)";
+      }
     } else {
       // Fallback weapon if no preferences defined
       equipment.weapon = this.generateEquipmentItem("weapon1h", "sword");
     }
 
-    // Generate shield or second weapon
+    // Generate shield or second weapon (only if weapon is not 2-handed)
     if (
+      equipment.secondHand !== "(2h-grip)" &&
       classData.equipmentPreferences.shield &&
       classData.equipmentPreferences.shield.length > 0
     ) {
@@ -525,7 +637,7 @@ export const equipmentAssignment = {
       equipment.secondHand = this.generateEquipmentItem("shield", shieldType);
     }
 
-    // Generate 2h weapon or container for back slot
+    // Generate container for back slot (only containers when weapon is 2h)
     if (
       classData.equipmentPreferences.back &&
       classData.equipmentPreferences.back.length > 0
@@ -535,16 +647,36 @@ export const equipmentAssignment = {
           Math.floor(Math.random() * classData.equipmentPreferences.back.length)
         ];
       // Determine if it's a weapon or container
-      const weapon2hItems = equipmentTypes.weapon2h.items;
-      const rangedItems = equipmentTypes.ranged.items;
-      const containerItems = equipmentTypes.container.items;
+      const weapon2hItems = equipmentTypes.great_swords?.items || [];
+      const weapon2hAxes = equipmentTypes.great_axes?.items || [];
+      const weapon2hHammers = equipmentTypes.great_hammers?.items || [];
+      const polearmItems = equipmentTypes.polearms?.items || [];
+      const rangedItems = equipmentTypes.bows?.items || [];
+      const crossbowItems = equipmentTypes.crossbows?.items || [];
+      const containerItems = equipmentTypes.container?.items || [];
 
-      if (weapon2hItems.includes(backType)) {
-        equipment.back = this.generateEquipmentItem("weapon2h", backType);
-      } else if (rangedItems.includes(backType)) {
-        equipment.back = this.generateEquipmentItem("ranged", backType);
-      } else if (containerItems.includes(backType)) {
-        equipment.back = this.generateEquipmentItem("container", backType);
+      // If weapon is 2-handed, only allow containers in back slot
+      if (equipment.secondHand === "(2h-grip)") {
+        if (containerItems.includes(backType)) {
+          equipment.back = this.generateEquipmentItem("container", backType);
+        }
+      } else {
+        // For 1-handed weapons, allow weapons, ranged, or containers
+        if (
+          weapon2hItems.includes(backType) ||
+          weapon2hAxes.includes(backType) ||
+          weapon2hHammers.includes(backType) ||
+          polearmItems.includes(backType)
+        ) {
+          equipment.back = this.generateEquipmentItem("weapon2h", backType);
+        } else if (
+          rangedItems.includes(backType) ||
+          crossbowItems.includes(backType)
+        ) {
+          equipment.back = this.generateEquipmentItem("ranged", backType);
+        } else if (containerItems.includes(backType)) {
+          equipment.back = this.generateEquipmentItem("container", backType);
+        }
       }
     }
 
@@ -627,7 +759,13 @@ export const equipmentAssignment = {
     );
 
     // ALWAYS generate weapon - this is critical for all characters
-    equipment.weapon = this.generateEquipmentItem("weapon1h", "sword");
+    const weaponType = "sword"; // Default fallback
+    equipment.weapon = this.generateEquipmentItem("weapon1h", weaponType);
+
+    // If it's a 2-handed weapon, set secondHand to indicate occupation
+    if (this.is2HandedWeapon(weaponType)) {
+      equipment.secondHand = "(2h-grip)";
+    }
 
     // Randomly decide which additional equipment slots to fill (0-2 more items)
     const slots = ["armor", "secondHand", "back", "tool"];
@@ -645,13 +783,22 @@ export const equipmentAssignment = {
           equipmentType = "armor";
           break;
         case "secondHand":
+          // Skip if weapon is 2-handed
+          if (equipment.secondHand === "(2h-grip)") {
+            return;
+          }
           equipmentType = "shield";
           break;
         case "back":
-          // Randomly choose between 2h weapon, ranged, or container
-          const backTypes = ["weapon2h", "ranged", "container"];
-          equipmentType =
-            backTypes[Math.floor(Math.random() * backTypes.length)];
+          // If weapon is 2-handed, only allow containers
+          if (equipment.secondHand === "(2h-grip)") {
+            equipmentType = "container";
+          } else {
+            // Randomly choose between 2h weapon, ranged, or container
+            const backTypes = ["weapon2h", "ranged", "container"];
+            equipmentType =
+              backTypes[Math.floor(Math.random() * backTypes.length)];
+          }
           break;
         case "tool":
           equipmentType = "tool";
@@ -735,6 +882,112 @@ export const equipmentAssignment = {
 
 // Main character generation functions
 export const characterGeneration = {
+  // Helper function to determine if a weapon is 2-handed
+  is2HandedWeapon: function (weaponType) {
+    const twoHandedWeapons = [
+      "greatsword",
+      "claymore",
+      "zweihander",
+      "bastard-sword",
+      "greataxe",
+      "battleaxe",
+      "war-axe",
+      "vrakgul-axe",
+      "maul",
+      "great-hammer",
+      "war-hammer",
+      "gormith-hammer",
+      "spear",
+      "halberd",
+      "poleaxe",
+      "staff",
+      "quarterstaff",
+      "scythe",
+      "pike",
+      "glaive",
+      "bow",
+      "longbow",
+      "shortbow",
+      "composite-bow",
+      "recurve-bow",
+      "lyssarion-bow",
+      "crossbow",
+      "heavy-crossbow",
+      "light-crossbow",
+      "gormith-crossbow",
+    ];
+    return twoHandedWeapons.includes(weaponType.toLowerCase());
+  },
+
+  getWeaponCategory: function (weaponName) {
+    const weaponType = weaponName.toLowerCase();
+
+    // Map weapon types to specific categories - order matters for overlapping names
+    if (
+      weaponType.includes("greatsword") ||
+      weaponType.includes("claymore") ||
+      weaponType.includes("zweihander")
+    )
+      return "great_swords";
+    if (weaponType.includes("sword") || weaponType.includes("skrith-blade"))
+      return "swords";
+    if (
+      weaponType.includes("greataxe") ||
+      weaponType.includes("battleaxe") ||
+      weaponType.includes("vrakgul-axe")
+    )
+      return "great_axes";
+    if (weaponType.includes("axe")) return "axes";
+    if (
+      weaponType.includes("spear") ||
+      weaponType.includes("halberd") ||
+      weaponType.includes("polearm") ||
+      weaponType.includes("staff") ||
+      weaponType.includes("quarterstaff") ||
+      weaponType.includes("scythe") ||
+      weaponType.includes("pike") ||
+      weaponType.includes("glaive")
+    )
+      return "polearms";
+    if (
+      weaponType.includes("maul") ||
+      weaponType.includes("great-hammer") ||
+      weaponType.includes("gormith-hammer")
+    )
+      return "great_hammers";
+    if (
+      weaponType.includes("mace") ||
+      weaponType.includes("club") ||
+      weaponType.includes("warhammer") ||
+      weaponType.includes("flail") ||
+      weaponType.includes("morningstar")
+    )
+      return "hammers";
+    if (
+      weaponType.includes("crossbow") ||
+      weaponType.includes("gormith-crossbow")
+    )
+      return "crossbows";
+    if (weaponType.includes("bow") || weaponType.includes("lyssarion-bow"))
+      return "bows";
+    if (
+      weaponType.includes("dagger") ||
+      weaponType.includes("javelin") ||
+      weaponType.includes("throwing") ||
+      weaponType.includes("sling") ||
+      weaponType.includes("skrith-nedle")
+    )
+      return "throwing";
+    if (
+      weaponType.includes("shield") ||
+      weaponType.includes("aurethine-shield")
+    )
+      return "shields";
+
+    // Default fallback
+    return "swords";
+  },
+
   // Generate a complete character with all components
   generateCharacter: function (options = {}) {
     const {
@@ -872,19 +1125,28 @@ export const characterGeneration = {
       let weaponType;
 
       // Specific weapon requirements for certain classes
+      let weaponEquipmentType = "swords"; // Default to swords
       if (className === "archer") {
-        // Archers get a bow in the back slot, and a melee weapon in weapon slot
+        // Archers get a bow in the weapon slot (2h weapon)
         const bowType = classData.equipmentPreferences.back
           ? classData.equipmentPreferences.back.find((item) =>
               item.includes("bow")
             ) || "shortbow"
           : "shortbow";
-        equipment.back = this.generateEquipmentItem("ranged", bowType);
-        weaponType = "dagger"; // Backup melee weapon
+        weaponType = bowType;
+        weaponEquipmentType = "bows";
       } else if (className === "ranger") {
         weaponType = "axe";
+        weaponEquipmentType = "axes";
       } else if (className === "brute") {
-        weaponType = "axe";
+        // Brute gets 2h weapons
+        const weapon2hType = classData.equipmentPreferences.weapon
+          ? classData.equipmentPreferences.weapon.find((item) =>
+              this.is2HandedWeapon(item)
+            ) || "greatsword"
+          : "greatsword";
+        weaponType = weapon2hType;
+        weaponEquipmentType = this.getWeaponCategory(weaponType);
       } else {
         // For other classes, pick from their preferences
         weaponType =
@@ -893,16 +1155,25 @@ export const characterGeneration = {
               Math.random() * classData.equipmentPreferences.weapon.length
             )
           ];
+        weaponEquipmentType = this.getWeaponCategory(weaponType);
       }
 
-      equipment.weapon = this.generateEquipmentItem("weapon1h", weaponType);
+      equipment.weapon = this.generateEquipmentItem(
+        weaponEquipmentType,
+        weaponType
+      );
+
+      // If it's a 2-handed weapon, set secondHand to indicate occupation
+      if (this.is2HandedWeapon(weaponType)) {
+        equipment.secondHand = "(2h-grip)";
+      }
     } else {
       // Default weapon
-      equipment.weapon = this.generateEquipmentItem("weapon1h", "sword");
+      equipment.weapon = this.generateEquipmentItem("swords", "sword");
     }
 
-    // Give shield for fighter class
-    if (className === "fighter") {
+    // Give shield for fighter class (only if weapon is not 2-handed)
+    if (className === "fighter" && equipment.secondHand !== "(2h-grip)") {
       equipment.secondHand = this.generateEquipmentItem("shield", "shield");
     }
 

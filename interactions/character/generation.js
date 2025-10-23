@@ -10,6 +10,43 @@ import { equipmentAssignment } from "./equipment-assignment.js";
 
 // Main character generation functions
 export const characterGeneration = {
+  // Helper function to determine if a weapon is 2-handed
+  is2HandedWeapon: function (weaponType) {
+    const twoHandedWeapons = [
+      "greatsword",
+      "claymore",
+      "zweihander",
+      "bastard-sword",
+      "greataxe",
+      "battleaxe",
+      "war-axe",
+      "vrakgul-axe",
+      "maul",
+      "great-hammer",
+      "war-hammer",
+      "gormith-hammer",
+      "spear",
+      "halberd",
+      "poleaxe",
+      "staff",
+      "quarterstaff",
+      "scythe",
+      "pike",
+      "glaive",
+      "bow",
+      "longbow",
+      "shortbow",
+      "composite-bow",
+      "recurve-bow",
+      "lyssarion-bow",
+      "crossbow",
+      "heavy-crossbow",
+      "light-crossbow",
+      "gormith-crossbow",
+    ];
+    return twoHandedWeapons.includes(weaponType.toLowerCase());
+  },
+
   // Generate a complete character with all components
   generateCharacter: async function (options = {}) {
     const {
@@ -145,22 +182,21 @@ export const characterGeneration = {
 
       // Specific weapon requirements for certain classes
       if (className === "archer") {
-        // Archers get a bow in the back slot, and a melee weapon in weapon slot
+        // Archers get a bow in the weapon slot (2h weapon)
         const bowType = classData.equipmentPreferences.back
           ? classData.equipmentPreferences.back.find((item) =>
               item.includes("bow")
             ) || "shortbow"
           : "shortbow";
-        equipment.back = this.generateEquipmentItem("ranged", bowType);
-        weaponType = "dagger"; // Backup melee weapon
+        weaponType = bowType;
       } else if (className === "ranger") {
         weaponType = "axe";
       } else if (className === "brute") {
         weaponType = "axe";
       } else if (className === "herbalist") {
-        weaponType = "sickle";
+        weaponType = "dagger"; // Use dagger instead of sickle
       } else if (className === "craftsman") {
-        weaponType = "hammer";
+        weaponType = "mace"; // Use mace instead of hammer
       } else {
         // For other classes, pick from their preferences
         weaponType =
@@ -171,15 +207,47 @@ export const characterGeneration = {
           ];
       }
 
-      equipment.weapon = this.generateEquipmentItem("weapon1h", weaponType);
+      // Determine the correct equipment type for the weapon
+      let weaponEquipmentType = "swords"; // Default
+      if (["axe", "hatchet", "hand-axe", "tomahawk"].includes(weaponType)) {
+        weaponEquipmentType = "axes";
+      } else if (
+        [
+          "dagger",
+          "javelin",
+          "throwing-axe",
+          "throwing-knife",
+          "sling",
+          "sling-stone",
+          "skrith-nedle",
+        ].includes(weaponType)
+      ) {
+        weaponEquipmentType = "throwing";
+      } else if (
+        ["mace", "club", "warhammer", "flail", "morningstar"].includes(
+          weaponType
+        )
+      ) {
+        weaponEquipmentType = "hammers";
+      }
+
+      equipment.weapon = this.generateEquipmentItem(
+        weaponEquipmentType,
+        weaponType
+      );
+
+      // If it's a 2-handed weapon, set secondHand to indicate occupation
+      if (this.is2HandedWeapon(weaponType)) {
+        equipment.secondHand = "(2h-grip)";
+      }
     } else {
       // Default weapon
-      equipment.weapon = this.generateEquipmentItem("weapon1h", "sword");
+      equipment.weapon = this.generateEquipmentItem("swords", "sword");
     }
 
-    // Give shield for fighter class
-    if (className === "fighter") {
-      equipment.secondHand = this.generateEquipmentItem("shield", "shield");
+    // Give shield for fighter class (only if weapon is not 2-handed)
+    if (className === "fighter" && equipment.secondHand !== "(2h-grip)") {
+      equipment.secondHand = this.generateEquipmentItem("shields", "shield");
     }
 
     // Give armor for martial classes

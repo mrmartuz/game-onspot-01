@@ -137,6 +137,12 @@ async function showPlayerCharacterDialog() {
     if (player.equipment.weapon) {
       message += `Weapon: ${player.equipment.weapon}\n`;
     }
+    if (player.equipment.secondHand) {
+      message += `Second Hand: ${player.equipment.secondHand}\n`;
+    }
+    if (player.equipment.back) {
+      message += `Back: ${player.equipment.back}\n`;
+    }
     if (player.equipment.tool) {
       message += `Tool: ${player.equipment.tool}\n`;
     }
@@ -325,6 +331,12 @@ async function showMemberDetailsDialog(member, memberIndex) {
     }
     if (member.equipment.weapon) {
       message += `Weapon: ${member.equipment.weapon}\n`;
+    }
+    if (member.equipment.secondHand) {
+      message += `Second Hand: ${member.equipment.secondHand}\n`;
+    }
+    if (member.equipment.back) {
+      message += `Back: ${member.equipment.back}\n`;
     }
     if (member.equipment.tool) {
       message += `Tool: ${member.equipment.tool}\n`;
@@ -624,6 +636,14 @@ async function showEquipmentDialog(character, title, returnContext) {
     message += `**Weapon:**\n${character.equipment.weapon}\n\n`;
   }
 
+  if (character.equipment.secondHand) {
+    message += `**Second Hand:**\n${character.equipment.secondHand}\n\n`;
+  }
+
+  if (character.equipment.back) {
+    message += `**Back:**\n${character.equipment.back}\n\n`;
+  }
+
   if (character.equipment.tool) {
     message += `**Tool:**\n${character.equipment.tool}\n\n`;
   }
@@ -631,6 +651,8 @@ async function showEquipmentDialog(character, title, returnContext) {
   if (
     !character.equipment.armor &&
     !character.equipment.weapon &&
+    !character.equipment.secondHand &&
+    !character.equipment.back &&
     !character.equipment.tool
   ) {
     message += "No equipment equipped.\n\n";

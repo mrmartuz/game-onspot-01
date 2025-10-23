@@ -20,6 +20,8 @@ export const classDatabase = {
     },
     startingSkills: {
       swords: 2.0,
+      hammers: 2.0,
+      axes: 2.0,
       shieldwork: 1.5,
       intimidation: 1.0,
       tactics: 1.0,
@@ -28,8 +30,8 @@ export const classDatabase = {
       clothes: ["commoner-clothes", "work-clothes"],
       armor: ["chainmail-armor", "plate-armor"],
       weapon: ["sword", "axe", "mace"],
-      shield: ["shield", "buckler"],
-      back: ["greatsword", "spear", "backpack"],
+      secondHand: ["shield", "buckler"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["rope", "general-tools"],
     },
   },
@@ -51,6 +53,8 @@ export const classDatabase = {
     },
     startingSkills: {
       bows: 2.0,
+      swords: 1.5,
+      throwing: 1.0,
       tracking: 1.5,
       scouting: 1.0,
       survival: 1.0,
@@ -58,8 +62,8 @@ export const classDatabase = {
     equipmentPreferences: {
       clothes: ["traveler-clothes", "work-clothes"],
       armor: ["leather-armor", "studded-armor"],
-      weapon: ["shortsword", "dagger"],
-      back: ["longbow", "shortbow", "backpack"],
+      weapon: ["shortsword", "dagger", "longbow", "shortbow"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["quiver", "arrows"],
     },
   },
@@ -81,13 +85,16 @@ export const classDatabase = {
     },
     startingSkills: {
       intimidation: 2.0,
+      great_swords: 1.5,
+      great_axes: 1.5,
+      hammers: 1.0,
       unarmed: 1.5,
-      polearms: 1.0,
       survival: 1.0,
     },
     equipmentPreferences: {
       armor: ["leather", "chainmail"],
       weapon: ["greatsword", "greataxe", "club"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["rope", "grappling"],
     },
   },
@@ -109,6 +116,7 @@ export const classDatabase = {
     },
     startingSkills: {
       unarmed: 2.0,
+      polearms: 1.5,
       meditation: 1.5,
       acrobatics: 1.0,
       healing: 1.0,
@@ -116,6 +124,7 @@ export const classDatabase = {
     equipmentPreferences: {
       armor: ["robes", "simple"],
       weapon: ["quarterstaff", "nunchaku", "sai"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["prayer_beads", "incense"],
     },
   },
@@ -137,6 +146,7 @@ export const classDatabase = {
     },
     startingSkills: {
       healing: 2.0,
+      hammers: 1.5,
       divine_magic: 1.5,
       lore_knowledge: 1.0,
       persuasion: 1.0,
@@ -144,6 +154,7 @@ export const classDatabase = {
     equipmentPreferences: {
       armor: ["chainmail", "plate"],
       weapon: ["mace", "warhammer", "flail"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["holy_symbol", "prayer_book"],
     },
   },
@@ -165,6 +176,8 @@ export const classDatabase = {
     },
     startingSkills: {
       earth_magic: 2.0,
+      polearms: 1.5,
+      hammers: 1.0,
       mining: 1.5,
       stonework: 1.0,
       meditation: 1.0,
@@ -172,6 +185,7 @@ export const classDatabase = {
     equipmentPreferences: {
       armor: ["stone", "metal"],
       weapon: ["staff", "hammer"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["crystals", "mining_pick"],
     },
   },
@@ -193,6 +207,7 @@ export const classDatabase = {
     },
     startingSkills: {
       fire_magic: 2.0,
+      polearms: 1.5,
       alchemy: 1.5,
       intimidation: 1.0,
       survival: 1.0,
@@ -200,6 +215,7 @@ export const classDatabase = {
     equipmentPreferences: {
       armor: ["robes", "fire_resistant"],
       weapon: ["staff", "wand"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["phoenix_feathers", "fire_crystals"],
     },
   },
@@ -221,6 +237,7 @@ export const classDatabase = {
     },
     startingSkills: {
       death_magic: 2.0,
+      polearms: 1.5,
       lore_knowledge: 1.5,
       investigation: 1.0,
       intimidation: 1.0,
@@ -228,6 +245,7 @@ export const classDatabase = {
     equipmentPreferences: {
       armor: ["robes", "bone"],
       weapon: ["staff", "scythe"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["skull", "bone_chalk"],
     },
   },
@@ -249,6 +267,8 @@ export const classDatabase = {
     },
     startingSkills: {
       ice_magic: 2.0,
+      polearms: 1.5,
+      swords: 1.0,
       meditation: 1.5,
       survival: 1.0,
       investigation: 1.0,
@@ -256,6 +276,7 @@ export const classDatabase = {
     equipmentPreferences: {
       armor: ["robes", "ice_resistant"],
       weapon: ["staff", "ice_blade"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["ice_crystals", "frost_gem"],
     },
   },
@@ -284,6 +305,7 @@ export const classDatabase = {
     equipmentPreferences: {
       armor: ["simple", "robes"],
       weapon: ["fists", "nunchaku"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["training_weights", "meditation_mat"],
     },
   },
@@ -292,7 +314,7 @@ export const classDatabase = {
     name: "Ranger",
     rarity: "common",
     description:
-      "A skilled tracker and wilderness warrior who combines combat prowess with nature magic. Rangers are independent, resourceful, and at home in the wild.",
+      "A skilled tracker and wilderness warrior who combines combat prowess and survival skills. Rangers are independent, resourceful, and at home in the wild.",
     lore: "Rangers are the guardians of the wilderness, trained to survive in the harshest environments and protect nature from those who would harm it.",
     statBonuses: {
       STR: 1, // +1 Strength per level
@@ -305,13 +327,17 @@ export const classDatabase = {
     },
     startingSkills: {
       tracking: 2.0,
-      bows: 1.5,
+      bows: 2.0,
+      swords: 2.0,
+      polearms: 1.0,
+      axes: 2.0,
       survival: 1.0,
       animal_handling: 1.0,
     },
     equipmentPreferences: {
       armor: ["leather", "studded"],
-      weapon: ["bow", "sword", "spear"],
+      weapon: ["bow", "sword", "spear", "hatchet"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["tracking_kit", "survival_gear"],
     },
   },
@@ -333,13 +359,17 @@ export const classDatabase = {
     },
     startingSkills: {
       navigation: 2.0,
+      swords: 1.5,
+      crossbows: 1.5,
+      axes: 1.0,
       investigation: 1.5,
       survival: 1.0,
       lore_knowledge: 1.0,
     },
     equipmentPreferences: {
       armor: ["leather", "studded"],
-      weapon: ["sword", "crossbow"],
+      weapon: ["sword", "crossbow", "hatchet"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["map", "compass", "journal"],
     },
   },
@@ -362,12 +392,15 @@ export const classDatabase = {
     startingSkills: {
       divine_magic: 2.0,
       swords: 1.5,
+      hammers: 1.5,
       healing: 1.0,
       persuasion: 1.0,
     },
     equipmentPreferences: {
       armor: ["plate", "chainmail"],
       weapon: ["longsword", "warhammer"],
+      secondHand: ["shield", "buckler"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["holy_symbol", "blessed_water"],
     },
   },
@@ -389,6 +422,8 @@ export const classDatabase = {
     },
     startingSkills: {
       alchemy: 2.0,
+      polearms: 1.5,
+      crossbows: 1.5,
       investigation: 1.5,
       lore_knowledge: 1.0,
       healing: 1.0,
@@ -396,6 +431,7 @@ export const classDatabase = {
     equipmentPreferences: {
       armor: ["robes", "leather"],
       weapon: ["staff", "crossbow"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["alchemy_kit", "potion_belt"],
     },
   },
@@ -417,6 +453,8 @@ export const classDatabase = {
     },
     startingSkills: {
       herbalism: 2.0,
+      polearms: 1.5,
+      throwing: 1.0,
       healing: 1.5,
       survival: 1.0,
       nature_magic: 1.0,
@@ -424,6 +462,7 @@ export const classDatabase = {
     equipmentPreferences: {
       armor: ["leather", "robes"],
       weapon: ["staff", "sling"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["herb_pouch", "gardening_tools"],
     },
   },
@@ -444,14 +483,18 @@ export const classDatabase = {
       LUCK: 0,
     },
     startingSkills: {
+      axes: 2.0,
       tracking: 2.0,
       bows: 1.5,
+      crossbows: 1.5,
+      polearms: 1.0,
       survival: 1.0,
       animal_handling: 1.0,
     },
     equipmentPreferences: {
       armor: ["leather", "studded"],
-      weapon: ["bow", "crossbow", "spear"],
+      weapon: ["bow", "crossbow", "spear", "hand-axe", "tomahawk"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["tracking_kit", "traps"],
     },
   },
@@ -472,6 +515,8 @@ export const classDatabase = {
       LUCK: 0,
     },
     startingSkills: {
+      swords: 2.0,
+      crossbows: 1.5,
       lockpicking: 2.0,
       trap_disarming: 1.5,
       investigation: 1.0,
@@ -480,6 +525,7 @@ export const classDatabase = {
     equipmentPreferences: {
       armor: ["leather", "studded"],
       weapon: ["sword", "crossbow"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["lockpicks", "rope", "torch"],
     },
   },
@@ -500,6 +546,7 @@ export const classDatabase = {
       LUCK: 0,
     },
     startingSkills: {
+      hammers: 2.0,
       blacksmithing: 2.0,
       carpentry: 1.5,
       leatherworking: 1.0,
@@ -507,7 +554,8 @@ export const classDatabase = {
     },
     equipmentPreferences: {
       armor: ["leather", "chainmail"],
-      weapon: ["hammer", "sword"],
+      weapon: ["hammer"],
+      back: ["coin-purse", "belt-pouch", "satchel", "sack"],
       tool: ["smithing_tools", "workshop_kit"],
     },
   },

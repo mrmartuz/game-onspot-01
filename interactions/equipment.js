@@ -736,7 +736,7 @@ export const equipmentTypes = {
   },
   great_swords: {
     name: "Great Swords",
-    slot: "back",
+    slot: "weapon",
     statusType: "weapons",
     description: "Two-handed swords for combat",
     skillBonuses: {
@@ -756,7 +756,7 @@ export const equipmentTypes = {
   },
   great_axes: {
     name: "Great Axes",
-    slot: "back",
+    slot: "weapon",
     statusType: "weapons",
     description: "Two-handed axes for combat",
     skillBonuses: {
@@ -766,7 +766,7 @@ export const equipmentTypes = {
   },
   polearms: {
     name: "Polearms",
-    slot: "back",
+    slot: "weapon",
     statusType: "weapons",
     description: "Long weapons including spears, halberds, and staffs",
     skillBonuses: {
@@ -795,7 +795,7 @@ export const equipmentTypes = {
   },
   great_hammers: {
     name: "Great Hammers",
-    slot: "back",
+    slot: "weapon",
     statusType: "weapons",
     description: "Two-handed hammers and mauls",
     skillBonuses: {
@@ -805,7 +805,7 @@ export const equipmentTypes = {
   },
   bows: {
     name: "Bows",
-    slot: "back",
+    slot: "weapon",
     statusType: "weapons",
     description: "Bows for ranged combat",
     skillBonuses: {
@@ -822,7 +822,7 @@ export const equipmentTypes = {
   },
   crossbows: {
     name: "Crossbows",
-    slot: "back",
+    slot: "weapon",
     statusType: "weapons",
     description: "Crossbows and mechanical ranged weapons",
     skillBonuses: {
@@ -850,7 +850,7 @@ export const equipmentTypes = {
   },
   shields: {
     name: "Shields",
-    slot: "shield",
+    slot: "secondHand",
     statusType: "armor",
     description: "One-handed shields for defense",
     skillBonuses: {
@@ -866,7 +866,7 @@ export const equipmentTypes = {
   },
   great_shields: {
     name: "Great Shields",
-    slot: "shield",
+    slot: "secondHand",
     statusType: "armor",
     description: "Large shields for maximum protection",
     skillBonuses: {
@@ -876,7 +876,7 @@ export const equipmentTypes = {
   },
   ranged: {
     name: "Ranged Weapon",
-    slot: "back",
+    slot: "weapon",
     statusType: "weapons",
     description: "Ranged weapons for combat",
     skillBonuses: {
@@ -893,17 +893,7 @@ export const equipmentTypes = {
       "throwing-knife",
     ],
   },
-  shield: {
-    name: "Shield",
-    slot: "secondHand",
-    statusType: "armor",
-    description: "Protective shields",
-    skillBonuses: {
-      shieldwork: 2,
-      tactics: 0.5,
-    },
-    items: ["buckler", "shield", "tower-shield", "kite-shield", "round-shield"],
-  },
+
   container: {
     name: "Container",
     slot: "back",

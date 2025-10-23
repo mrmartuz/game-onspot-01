@@ -956,11 +956,20 @@ async function showCharacterPreview(character, generationMethod) {
   equipmentSlots.forEach(({ key, label }) => {
     const item = character.equipment[key];
     if (item) {
-      components.push({
-        type: "message",
-        label: `${label}: ${item}`,
-        value: "",
-      });
+      // Special handling for secondHand to show "(2h-grip)" properly
+      if (key === "secondHand" && item === "(2h-grip)") {
+        components.push({
+          type: "message",
+          label: `${label}: ${item}`,
+          value: "",
+        });
+      } else {
+        components.push({
+          type: "message",
+          label: `${label}: ${item}`,
+          value: "",
+        });
+      }
     } else {
       components.push({
         type: "message",
