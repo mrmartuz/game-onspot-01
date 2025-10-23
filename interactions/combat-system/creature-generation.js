@@ -55,8 +55,6 @@ function determineAIBehavior(template, monster) {
   // Determine behavior based on race
   switch (raceName) {
     case "goblin":
-    case "kobold":
-    case "imp":
       return "cowardly";
 
     case "orc":
@@ -69,16 +67,9 @@ function determineAIBehavior(template, monster) {
       return "defensive";
 
     case "demon":
-    case "devil":
-      return "aggressive";
-
-    case "undead":
-    case "skeleton":
-    case "zombie":
       return "aggressive";
 
     case "dragon":
-    case "wyvern":
       return "aggressive";
 
     default:

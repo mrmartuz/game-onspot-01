@@ -130,42 +130,26 @@ function generateRandomGroupName() {
 
 export async function showGroupCreationDialog() {
   let groupName = gameState.groupName || "";
+
+  // Generate a random name if no group name exists
+  if (!groupName) {
+    groupName = generateRandomGroupName();
+    gameState.groupName = groupName;
+  }
+
   const message = "GROUP CREATION";
   let components = [];
 
-  if (groupName) {
-    components.push({
-      type: "message",
-      label: `Your group is called ${groupName}`,
-      value: groupName,
-    });
-    components.push({
-      type: "button",
-      label: "🎲 Generate Another Random Name",
-      value: "random-name",
-    });
-    components.push({
-      type: "input",
-      label: "group-name",
-      value: "group-name",
-    });
-  } else {
-    components.push({
-      type: "message",
-      label: "How is it called your group?",
-      value: "",
-    });
-    components.push({
-      type: "button",
-      label: "🎲 Random Name",
-      value: "random-name",
-    });
-    components.push({
-      type: "input",
-      label: "group-name",
-      value: "group-name",
-    });
-  }
+  components.push({
+    type: "message",
+    label: `Your group is called ${groupName}`,
+    value: groupName,
+  });
+  components.push({
+    type: "button",
+    label: "🎲 Generate Another Random Name",
+    value: "random-name",
+  });
 
   // Show current group members
   if (gameState.group.length > 1) {
@@ -213,14 +197,6 @@ export async function showGroupCreationDialog() {
 
     gameState.groupName = randomName;
     // Return to the same dialog to show the new name and allow generating another
-    return "group-name";
-  } else if (
-    choice !== "create" &&
-    choice !== "group-name" &&
-    choice !== "back"
-  ) {
-    gameState.groupName =
-      choice.charAt(0).toUpperCase() + choice.slice(1).toLowerCase();
     return "group-name";
   } else if (choice === "create") {
     return choice;

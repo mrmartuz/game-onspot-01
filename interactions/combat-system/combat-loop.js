@@ -67,7 +67,12 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
   `Detection bonus: ${detectionBonus}`;
 
   // Generate monsters based on location and detection
-  const monsterCount = Math.floor(Math.random() * 3) + 1; // 1-3 monsters
+  const baseMonsterCount = Math.floor(Math.random() * 3) + 1; // 1-3 monsters
+  const groupMemberCount = gameState.group ? gameState.group.length : 1;
+  const monsterCount =
+    baseMonsterCount + Math.min(1, Math.floor(groupMemberCount / 2));
+
+  console.log("monsterCount", monsterCount);
   const monsterTypes = [
     "goblin",
     "goblin_scout",

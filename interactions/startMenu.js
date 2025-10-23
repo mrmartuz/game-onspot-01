@@ -11,21 +11,6 @@ export async function startMenu() {
       label: `This game offers you to explore the world, hire new members, gain renown, become the greatest explorer of all`,
       value: "",
     },
-    {
-      type: "squaregrid",
-      showCoordinates: false,
-      tiles: {
-        "0-0": { emoji: "🛡️", name: "Sir Galahad", backgroundColor: "#e8f4fd" },
-        "9-9": { emoji: "🧙", name: "Syn Copperhammer" },
-        "4-4": { emoji: "🌳", name: "Ancient Oak", backgroundColor: "#e8f4fd" },
-        "2-7": { emoji: "⚔️", name: "Legendary Sword", backgroundColor: "#e8f4fd" },
-        "5-3": { emoji: "💎", name: "Dragon's Hoard", backgroundColor: "blue" },
-        "1-1": { emoji: "🧙‍♂️", name: "Wizard", backgroundColor: "red" }, // Wizard
-        "8-8": { emoji: "🐉", name: "Dragon", backgroundColor: "#e8f4fd" }, // Dragon
-        "3-5": { emoji: "🏰", name: "Castle wall", backgroundColor: "#e8f4fd" }, // Castle wall
-        "6-2": { emoji: "⚡", name: "Lightning", backgroundColor: "#e8f4fd" }, // Lightning
-      },
-    },
     { type: "message", label: `Are you ready to start a new game?`, value: "" },
     { type: "button", label: `⏫ Explore! ⏫`, value: "explore" },
     {

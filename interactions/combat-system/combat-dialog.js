@@ -96,7 +96,12 @@ export async function handleEnhancedCombatDialog(ex, ey, isOnTile = false) {
   combatState.allies = await generateAllies();
 
   // Generate monsters with random selection
-  const monsterCount = Math.floor(Math.random() * 3) + 1; // 1-3 monsters
+  const baseMonsterCount = Math.floor(Math.random() * 3) + 1; // 1-3 monsters
+  const groupMemberCount = gameState.group ? gameState.group.length : 1;
+  const bonusMonsterCount = Math.max(1, Math.floor(groupMemberCount / 2));
+  const monsterCount = baseMonsterCount + bonusMonsterCount;
+
+  console.log("monsterCount", monsterCount);
   const monsterTypes = [
     "goblin",
     "goblin_scout",
@@ -704,7 +709,7 @@ async function handleInitiativeCombat() {
 
 // Phase 3: Combat
 async function handleCombatPhase() {
-  ("=== COMBAT PHASE ===");
+  console.log("=== COMBAT PHASE ===");
 
   while (combatState.combatActive) {
     combatState.turnCount++;
@@ -739,7 +744,7 @@ async function handleCombatPhase() {
 
 // Player turn handler
 async function handlePlayerTurn(player) {
-  `Player turn: ${player.name}`;
+  console.log(`Player turn: ${player.name}`);
 
   const aliveMonsters = combatState.monsters.filter(
     (m) => !m.isDead() && !m.isFleeing()
@@ -749,8 +754,7 @@ async function handlePlayerTurn(player) {
     return; // No targets
   }
 
-  let combatMessage = `⚔️ YOUR TURN\n\n`;
-  combatMessage += `Health: ${player.currentHealth}/${player.maxHealth}\n\n`;
+  let combatMessage = `⚔️ YOUR TURN\n\nHealth: ${player.currentHealth}/${player.maxHealth}\n\n`;
   // Allies status
   if (combatState.allies && combatState.allies.length > 0) {
     combatMessage += `Allies:\n`;
