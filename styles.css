@@ -10,10 +10,10 @@ body {
 #game-canvas {
     position: absolute;
     top: 50px;
-    left: 0;
-    width: 100%;
-    height: calc(100vh - 80px);
+    left: 50%;
+    transform: translateX(-50%);
     background-color: black;
+    display: block;
 }
 
 #btn-n,
@@ -307,7 +307,7 @@ body {
 }
 
 @media (max-width: 600px) {
-
+    /* Mobile-specific adjustments */
     #gold-button,
     #inventory-button,
     #group-button,
@@ -317,7 +317,64 @@ body {
     }
 
     #game-dialog {
-        width: 80%;
+        width: 90%;
+        max-height: calc(100vh - 120px);
+        padding: 15px;
+    }
+
+    /* Make movement buttons larger and more touch-friendly */
+    #btn-n,
+    #btn-ne,
+    #btn-e,
+    #btn-se,
+    #btn-s,
+    #btn-sw,
+    #btn-w,
+    #btn-nw {
+        width: 60px;
+        height: 60px;
+        font-size: 28px;
+    }
+
+    /* Adjust button positions for larger buttons */
+    #btn-n {
+        top: 55px;
+        left: calc(50% - 30px);
+    }
+
+    #btn-ne {
+        top: 55px;
+        right: 5px;
+    }
+
+    #btn-e {
+        top: calc(50% + 5px);
+        right: 5px;
+    }
+
+    #btn-se {
+        bottom: 55px;
+        right: 5px;
+    }
+
+    #btn-s {
+        bottom: 55px;
+        left: calc(50% - 30px);
+    }
+
+    #btn-sw {
+        bottom: 55px;
+        left: 5px;
+    }
+
+    #btn-w {
+        top: calc(50% + 5px);
+        left: 5px;
+    }
+
+    #btn-nw {
+        top: 55px;
+        left: 5px;
     }
 }
 
