@@ -35,13 +35,11 @@ export class CombatEntity {
       const tacticsProgress = Math.max(0.001, 0.015 - tacticsSkill * 0.002);
       progressSkill(this.character, "tactics", tacticsProgress);
 
-      console.log(
-        `[SKILL PROGRESS] ${this.name} gained ${shieldProgress.toFixed(
-          4
-        )} shieldwork and ${tacticsProgress.toFixed(
-          4
-        )} tactics experience from taking damage`
-      );
+      `[SKILL PROGRESS] ${this.name} gained ${shieldProgress.toFixed(
+        4
+      )} shieldwork and ${tacticsProgress.toFixed(
+        4
+      )} tactics experience from taking damage`;
     }
 
     if (this.currentHealth <= 0) {
@@ -109,23 +107,19 @@ export class Monster extends CombatEntity {
     const actualDamage = this.calculateActualDamage(amount);
     const damageApplied = super.takeDamage(actualDamage);
 
-    console.log(
-      `[MONSTER DAMAGE] ${this.name} (${
-        this.race || "unknown"
-      }) takes ${damageApplied} damage. Health: ${this.currentHealth}/${
-        this.maxHealth
-      }`
-    );
+    `[MONSTER DAMAGE] ${this.name} (${
+      this.race || "unknown"
+    }) takes ${damageApplied} damage. Health: ${this.currentHealth}/${
+      this.maxHealth
+    }`;
 
     // Check for unconsciousness (at 0 HP) - let base class handle death status
     if (this.currentHealth <= 0 && !this.unconscious && !this.isDead()) {
       this.unconscious = true;
       // Don't set status here, let base class handle it
-      console.log(
-        `[MONSTER UNCONSCIOUS] ${this.name} (${
-          this.race || "unknown"
-        }) becomes unconscious! Health: ${this.currentHealth}/${this.maxHealth}`
-      );
+      `[MONSTER UNCONSCIOUS] ${this.name} (${
+        this.race || "unknown"
+      }) becomes unconscious! Health: ${this.currentHealth}/${this.maxHealth}`;
     }
 
     return damageApplied;
@@ -298,13 +292,11 @@ export class Ally extends CombatEntity {
     const actualDamage = this.calculateActualDamage(amount);
     const damageApplied = super.takeDamage(actualDamage);
 
-    console.log(
-      `[ALLY DAMAGE] ${this.name} (${
-        this.character?.race || "unknown"
-      }) takes ${damageApplied} damage. Health: ${this.currentHealth}/${
-        this.maxHealth
-      }`
-    );
+    `[ALLY DAMAGE] ${this.name} (${
+      this.character?.race || "unknown"
+    }) takes ${damageApplied} damage. Health: ${this.currentHealth}/${
+      this.maxHealth
+    }`;
 
     // Update character health
     this.character.health.current = this.currentHealth;
@@ -313,11 +305,9 @@ export class Ally extends CombatEntity {
     if (this.currentHealth <= 0 && !this.unconscious) {
       this.unconscious = true;
       // Don't set status here, let base class handle it
-      console.log(
-        `[ALLY UNCONSCIOUS] ${this.name} (${
-          this.character?.race || "unknown"
-        }) becomes unconscious! Health: ${this.currentHealth}/${this.maxHealth}`
-      );
+      `[ALLY UNCONSCIOUS] ${this.name} (${
+        this.character?.race || "unknown"
+      }) becomes unconscious! Health: ${this.currentHealth}/${this.maxHealth}`;
     }
 
     return damageApplied;

@@ -263,7 +263,7 @@ export function getAvailableStorage() {
 // Phase 2.1 Migration: Removed getBonusForRole() - now using skill-based calculations
 
 export function updateGroupBonus() {
-  console.log("updateGroupBonus called - Phase 2.1 Migration");
+  ("updateGroupBonus called - Phase 2.1 Migration");
 
   // Reset all bonuses
   Object.keys(gameState.groupBonus).forEach((key) => {
@@ -358,7 +358,7 @@ export function updateGroupBonus() {
     }
   }
 
-  console.log("Updated groupBonus:", gameState.groupBonus);
+  "Updated groupBonus:", gameState.groupBonus;
 }
 
 // Phase 2.1 Migration: Removed ensureGroupBonuses() - no longer needed with character objects

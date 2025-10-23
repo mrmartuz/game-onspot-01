@@ -1012,7 +1012,7 @@ export const characterGeneration = {
       // Fallback to Human if race not found
       const fallbackRace = "Human";
       const fallbackRaceData = raceDatabase[fallbackRace];
-      console.log(`Using fallback race: ${fallbackRace}`);
+      `Using fallback race: ${fallbackRace}`;
       return this.generateCharacter({ ...options, raceName: fallbackRace });
     }
 

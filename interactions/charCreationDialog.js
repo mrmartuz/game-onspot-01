@@ -1028,7 +1028,7 @@ async function showCharacterPreview(character, generationMethod) {
 // Helper function to add character to group
 export function addCharacterToGroup(character) {
   // This will be integrated with the game state in Phase 2
-  console.log("Adding character to group:", character);
+  "Adding character to group:", character;
   return character;
 }
 

@@ -54,7 +54,7 @@ export function getCombatStatus(allies, monsters, turnCount = 0) {
 
 export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
   // Main combat handler function
-  console.log(`Starting enhanced combat at (${ex}, ${ey})`);
+  `Starting enhanced combat at (${ex}, ${ey})`;
 
   // Use the real game state
   if (!gameState) {
@@ -64,7 +64,7 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
 
   // Calculate detection bonus
   const detectionBonus = calculateDetectionBonus();
-  console.log(`Detection bonus: ${detectionBonus}`);
+  `Detection bonus: ${detectionBonus}`;
 
   // Generate monsters based on location and detection
   const monsterCount = Math.floor(Math.random() * 3) + 1; // 1-3 monsters
@@ -101,19 +101,19 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
     ex,
     ey
   );
-  console.log(`Generated ${monsters.length} monsters`);
+  `Generated ${monsters.length} monsters`;
 
   // Generate allies
   const allies = await generateAllies();
-  console.log(`Generated ${allies.length} allies`);
+  `Generated ${allies.length} allies`;
 
   // Calculate stealth modifier
   const stealthModifier = calculateStealthModifier();
-  console.log(`Stealth modifier: ${stealthModifier}`);
+  `Stealth modifier: ${stealthModifier}`;
 
   // Generate detection message
   const detectionMessage = generateDetectionMessage(monsters);
-  console.log(detectionMessage);
+  detectionMessage;
 
   // Combat loop
   let turnCount = 0;
@@ -121,35 +121,35 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
 
   while (combatActive) {
     turnCount++;
-    console.log(`\n--- Turn ${turnCount} ---`);
+    `\n--- Turn ${turnCount} ---`;
 
     // Check combat status
     const status = getCombatStatus(allies, monsters, turnCount);
 
     if (status.victory) {
-      console.log("Victory! All monsters defeated.");
+      ("Victory! All monsters defeated.");
       combatActive = false;
       break;
     }
 
     if (status.defeat) {
-      console.log("Defeat! All allies defeated.");
+      ("Defeat! All allies defeated.");
       combatActive = false;
       break;
     }
 
     // Player turn (simplified for this example)
-    console.log("Player turn - choosing action...");
+    ("Player turn - choosing action...");
 
     // Simulate player choice
     const playerChoices = ["attack", "defend", "flee", "stealth"];
     const playerChoice =
       playerChoices[Math.floor(Math.random() * playerChoices.length)];
-    console.log(`Player chooses: ${playerChoice}`);
+    `Player chooses: ${playerChoice}`;
 
     // Calculate initiative
     const initiative = calculateInitiative(playerChoice, stealthModifier);
-    console.log(`Initiative: ${initiative}`);
+    `Initiative: ${initiative}`;
 
     // Execute player action
     if (playerChoice === "attack") {
@@ -157,56 +157,50 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
       if (target && gameState.playerCharacter) {
         const damage = calculateCharacterDamage(gameState.playerCharacter);
         const actualDamage = target.takeDamage(damage);
-        console.log(
-          `Player attacks ${target.name} for ${actualDamage} damage!`
-        );
+        `Player attacks ${target.name} for ${actualDamage} damage!`;
 
         // Progress combat skills
         const primarySkill = getPrimaryWeaponSkill(gameState.playerCharacter);
         progressSkill(gameState.playerCharacter, primarySkill, 0.1);
       }
     } else if (playerChoice === "defend") {
-      console.log("Player takes a defensive stance!");
+      ("Player takes a defensive stance!");
     } else if (playerChoice === "flee") {
-      console.log("Player attempts to flee!");
+      ("Player attempts to flee!");
       // Implement flee logic
       combatActive = false;
       break;
     } else if (playerChoice === "stealth") {
-      console.log("Player attempts to hide!");
+      ("Player attempts to hide!");
     }
 
     // Log creature status before AI turns
-    console.log(
-      `[TURN ${turnCount} STATUS] Allies: ${allies
-        .map(
-          (a) =>
-            `${a.name}(${a.status},${
-              a.unconscious ? "unconscious" : "conscious"
-            })`
-        )
-        .join(", ")}`
-    );
-    console.log(
-      `[TURN ${turnCount} STATUS] Monsters: ${monsters
-        .map(
-          (m) =>
-            `${m.name}(${m.status},${
-              m.unconscious ? "unconscious" : "conscious"
-            })`
-        )
-        .join(", ")}`
-    );
+    `[TURN ${turnCount} STATUS] Allies: ${allies
+      .map(
+        (a) =>
+          `${a.name}(${a.status},${
+            a.unconscious ? "unconscious" : "conscious"
+          })`
+      )
+      .join(", ")}`;
+    `[TURN ${turnCount} STATUS] Monsters: ${monsters
+      .map(
+        (m) =>
+          `${m.name}(${m.status},${
+            m.unconscious ? "unconscious" : "conscious"
+          })`
+      )
+      .join(", ")}`;
 
     // Ally AI turn
     if (allies.length > 0) {
-      console.log("Ally AI turn...");
+      ("Ally AI turn...");
       allyAI(allies, monsters, turnCount);
     }
 
     // Monster AI turn
     if (monsters.length > 0) {
-      console.log("Monster AI turn...");
+      ("Monster AI turn...");
       monsterAI(monsters, allies, turnCount);
     }
 
@@ -218,7 +212,7 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
 
     // Prevent infinite loops
     if (turnCount > 50) {
-      console.log("Combat timeout - ending combat");
+      ("Combat timeout - ending combat");
       combatActive = false;
     }
   }
@@ -227,7 +221,7 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
   const finalStatus = getCombatStatus(allies, monsters, turnCount);
 
   if (finalStatus.victory) {
-    console.log("\n=== VICTORY ===");
+    ("\n=== VICTORY ===");
 
     // Calculate experience and loot
     let totalExp = 0;
@@ -240,13 +234,13 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
       }
     });
 
-    console.log(`Experience gained: ${totalExp}`);
-    console.log(`Loot found:`, totalLoot);
+    `Experience gained: ${totalExp}`;
+    `Loot found:`, totalLoot;
 
     // Distribute experience
     if (gameState.playerCharacter) {
       gameState.playerCharacter.experience += totalExp;
-      console.log(`Player experience: ${gameState.playerCharacter.experience}`);
+      `Player experience: ${gameState.playerCharacter.experience}`;
     }
 
     // Progress skills for surviving allies
@@ -257,17 +251,17 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
       }
     });
   } else if (finalStatus.defeat) {
-    console.log("\n=== DEFEAT ===");
+    ("\n=== DEFEAT ===");
 
     // Handle defeat logic
-    console.log("All allies have been defeated!");
+    ("All allies have been defeated!");
   } else {
-    console.log("\n=== COMBAT ENDED ===");
-    console.log("Combat ended without clear victory or defeat");
+    ("\n=== COMBAT ENDED ===");
+    ("Combat ended without clear victory or defeat");
   }
 
   // Update game state (experience and skills already updated above)
-  console.log("Combat completed - game state updated");
+  ("Combat completed - game state updated");
 
   return finalStatus;
 }

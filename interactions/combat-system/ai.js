@@ -46,11 +46,9 @@ export function allyAI(allies, monsters, turnCount = 0) {
   allies.forEach((ally) => {
     if (ally.isDead() || ally.isFleeing() || ally.isUnconscious()) {
       if (ally.isUnconscious()) {
-        console.log(
-          `[ALLY AI] ${ally.name} (${
-            ally.character?.race || "unknown"
-          }) is unconscious - skipping turn`
-        );
+        `[ALLY AI] ${ally.name} (${
+          ally.character?.race || "unknown"
+        }) is unconscious - skipping turn`;
       }
       return; // Skip dead, fleeing, or unconscious allies
     }
@@ -97,11 +95,9 @@ export function monsterAI(monsters, allies, turnCount = 0) {
   monsters.forEach((monster) => {
     if (monster.isDead() || monster.isFleeing() || monster.isUnconscious()) {
       if (monster.isUnconscious()) {
-        console.log(
-          `[MONSTER AI] ${monster.name} (${
-            monster.race || "unknown"
-          }) is unconscious - skipping turn`
-        );
+        `[MONSTER AI] ${monster.name} (${
+          monster.race || "unknown"
+        }) is unconscious - skipping turn`;
       }
       return; // Skip dead, fleeing, or unconscious monsters
     }
@@ -224,19 +220,15 @@ function calculateThreatLevel(entity) {
 
 function executeAttack(attacker, target) {
   // Execute attack action
-  console.log(
-    `[ATTACK] ${attacker.name} (${
-      attacker.race || attacker.character?.race || "unknown"
-    }) attempting to attack ${target.name} (${
-      target.race || target.character?.race || "unknown"
-    })`
-  );
+  `[ATTACK] ${attacker.name} (${
+    attacker.race || attacker.character?.race || "unknown"
+  }) attempting to attack ${target.name} (${
+    target.race || target.character?.race || "unknown"
+  })`;
 
   // Check attacker status before attack
   if (attacker.isUnconscious()) {
-    console.log(
-      `[ATTACK ERROR] ${attacker.name} is unconscious but still attempting to attack! Status: ${attacker.status}, Unconscious: ${attacker.unconscious}`
-    );
+    `[ATTACK ERROR] ${attacker.name} is unconscious but still attempting to attack! Status: ${attacker.status}, Unconscious: ${attacker.unconscious}`;
     return;
   }
 
@@ -261,13 +253,11 @@ function executeAttack(attacker, target) {
     const actualDamage = target.takeDamage(damage);
     attacker.damageDealt += actualDamage;
 
-    console.log(
-      `[ATTACK HIT] ${attacker.name} (${
-        attacker.race || attacker.character?.race || "unknown"
-      }) attacks ${target.name} (${
-        target.race || target.character?.race || "unknown"
-      }) for ${actualDamage} damage!`
-    );
+    `[ATTACK HIT] ${attacker.name} (${
+      attacker.race || attacker.character?.race || "unknown"
+    }) attacks ${target.name} (${
+      target.race || target.character?.race || "unknown"
+    }) for ${actualDamage} damage!`;
 
     // Progress combat skills
     if (attacker.character) {
@@ -276,13 +266,11 @@ function executeAttack(attacker, target) {
     }
   } else {
     // Miss!
-    console.log(
-      `[ATTACK MISS] ${attacker.name} (${
-        attacker.race || attacker.character?.race || "unknown"
-      }) attacks ${target.name} (${
-        target.race || target.character?.race || "unknown"
-      }) but misses!`
-    );
+    `[ATTACK MISS] ${attacker.name} (${
+      attacker.race || attacker.character?.race || "unknown"
+    }) attacks ${target.name} (${
+      target.race || target.character?.race || "unknown"
+    }) but misses!`;
   }
 }
 
@@ -295,7 +283,7 @@ function executeDefend(entity) {
   // Defend action provides temporary defense bonus
   entity.temporaryDefenseBonus = Math.floor(defense * 0.5);
 
-  console.log(`${entity.name} takes a defensive stance!`);
+  `${entity.name} takes a defensive stance!`;
 }
 
 function getPrimaryWeaponSkill(character) {
@@ -312,8 +300,13 @@ function getPrimaryWeaponSkill(character) {
     weaponType.includes("zweihander")
   )
     return "great_swords";
-  if (weaponType.includes("sword") || weaponType.includes("skrith-blade")) return "swords";
-  if (weaponType.includes("greataxe") || weaponType.includes("battleaxe") || weaponType.includes("vrakgul-axe"))
+  if (weaponType.includes("sword") || weaponType.includes("skrith-blade"))
+    return "swords";
+  if (
+    weaponType.includes("greataxe") ||
+    weaponType.includes("battleaxe") ||
+    weaponType.includes("vrakgul-axe")
+  )
     return "great_axes";
   if (weaponType.includes("axe")) return "axes";
   if (
@@ -327,7 +320,11 @@ function getPrimaryWeaponSkill(character) {
     weaponType.includes("glaive")
   )
     return "polearms";
-  if (weaponType.includes("maul") || weaponType.includes("great-hammer") || weaponType.includes("gormith-hammer"))
+  if (
+    weaponType.includes("maul") ||
+    weaponType.includes("great-hammer") ||
+    weaponType.includes("gormith-hammer")
+  )
     return "great_hammers";
   if (
     weaponType.includes("mace") ||
@@ -337,16 +334,23 @@ function getPrimaryWeaponSkill(character) {
     weaponType.includes("morningstar")
   )
     return "hammers";
-  if (weaponType.includes("crossbow") || weaponType.includes("gormith-crossbow")) return "crossbows";
-  if (weaponType.includes("bow") || weaponType.includes("lyssarion-bow")) return "bows";
+  if (
+    weaponType.includes("crossbow") ||
+    weaponType.includes("gormith-crossbow")
+  )
+    return "crossbows";
+  if (weaponType.includes("bow") || weaponType.includes("lyssarion-bow"))
+    return "bows";
   if (
     weaponType.includes("dagger") ||
     weaponType.includes("javelin") ||
     weaponType.includes("throwing") ||
-    weaponType.includes("sling") || weaponType.includes("skrith-nedle")
+    weaponType.includes("sling") ||
+    weaponType.includes("skrith-nedle")
   )
     return "throwing";
-  if (weaponType.includes("shield") || weaponType.includes("aurethine-shield")) return "shields";
+  if (weaponType.includes("shield") || weaponType.includes("aurethine-shield"))
+    return "shields";
 
   return "unarmed";
 }

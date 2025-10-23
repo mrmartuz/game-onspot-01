@@ -186,7 +186,7 @@ async function processRecruitment(character, cost) {
   if (cost.items.length > 0) {
     // TODO: Implement item checking logic
     // For now, assume player has items
-    console.log(`Required items: ${cost.items.join(", ")}`);
+    `Required items: ${cost.items.join(", ")}`;
   }
 
   // Deduct gold

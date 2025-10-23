@@ -492,7 +492,7 @@
 //   );
 //   character.skills[skillName] = newLevel;
 
-//   console.log(
+//   (
 //     `${character.firstName} ${
 //       character.lastName
 //     }'s ${skillName} increased from ${currentLevel.toFixed(
@@ -609,7 +609,7 @@
 //   const playerRoll = Math.random() * 10 + baseInitiative;
 //   const monsterRoll = Math.random() * 10 + 5; // Base monster initiative
 
-//   console.log(
+//   (
 //     `Initiative Debug - Player Initiative: ${playerInitiative}, Base: ${baseInitiative}, Player Roll: ${playerRoll.toFixed(
 //       2
 //     )}, Monster Roll: ${monsterRoll.toFixed(2)}, Player Wins: ${
@@ -1249,12 +1249,12 @@
 //     (monster) => !monster.isDead() && !monster.isFleeing()
 //   );
 
-//   console.log(
+//   (
 //     `Round ${turnCount} - Ally AI: ${activeAllies.length} active allies, ${activeMonsters.length} active monsters`
 //   );
 
 //   if (activeMonsters.length === 0) {
-//     console.log("Round ${turnCount} - Ally AI: No monsters to attack");
+//     ("Round ${turnCount} - Ally AI: No monsters to attack");
 //     return;
 //   }
 
@@ -1274,7 +1274,7 @@
 //       target.takeDamage(damage);
 //       const newHealth = target.currentHealth;
 
-//       console.log(
+//       (
 //         `Round ${turnCount} - ${ally.name} attacks ${target.name}: ${damage} damage (${oldHealth} → ${newHealth} HP)`
 //       );
 //       logEvent(`${ally.name} attacks ${target.name} for ${damage} damage!`);
@@ -1283,7 +1283,7 @@
 //       const weaponSkill = getPrimaryWeaponSkill(ally.character);
 //       progressSkill(ally.character, weaponSkill);
 //     } else {
-//       console.log(
+//       (
 //         `Round ${turnCount} - ${ally.name} misses ${
 //           target.name
 //         } (${hitRoll.toFixed(1)} > ${accuracy})`
@@ -1298,7 +1298,7 @@
 
 //     if (ally.wounds >= 3 && Math.random() < fleeThreshold) {
 //       ally.flee();
-//       console.log(`Round ${turnCount} - ${ally.name} flees from combat!`);
+//       (`Round ${turnCount} - ${ally.name} flees from combat!`);
 //       logEvent(`${ally.name} flees from combat!`);
 //     }
 //   });
@@ -1313,12 +1313,12 @@
 //   );
 //   const unconsciousAllies = allies.filter((ally) => ally.isUnconscious());
 
-//   console.log(
+//   (
 //     `Round ${turnCount} - Monster AI: ${activeMonsters.length} active monsters, ${activeAllies.length} active allies, ${unconsciousAllies.length} unconscious allies`
 //   );
 
 //   if (activeAllies.length === 0 && unconsciousAllies.length === 0) {
-//     console.log(`Round ${turnCount} - Monster AI: No allies to attack`);
+//     (`Round ${turnCount} - Monster AI: No allies to attack`);
 //     return;
 //   }
 
@@ -1345,14 +1345,14 @@
 //     const newHealth = target.currentHealth;
 
 //     if (wasUnconscious) {
-//       console.log(
+//       (
 //         `Round ${turnCount} - ${monster.name} finishes off unconscious ${target.name}: ${finalDamage} damage (${oldHealth} → ${newHealth} HP) - ${target.name} is now DEAD`
 //       );
 //       logEvent(
 //         `${monster.name} finishes off unconscious ${target.name}! ${target.name} is dead!`
 //       );
 //     } else {
-//       console.log(
+//       (
 //         `Round ${turnCount} - ${monster.name} attacks ${target.name}: ${finalDamage} damage (${oldHealth} → ${newHealth} HP)`
 //       );
 //       logEvent(
@@ -1367,7 +1367,7 @@
 //     // Chance to flee if heavily wounded
 //     if (monster.wounds >= 2 && Math.random() < 0.2) {
 //       monster.flee();
-//       console.log(`Round ${turnCount} - ${monster.name} flees from combat!`);
+//       (`Round ${turnCount} - ${monster.name} flees from combat!`);
 //       logEvent(`${monster.name} flees from combat!`);
 //     }
 //   });
@@ -1431,7 +1431,7 @@
 //   const playerGoesFirst = calculateInitiative(choice, stealthModifier);
 
 //   // Debug logging
-//   console.log(
+//   (
 //     `Combat Debug - Choice: ${choice}, Stealth Modifier: ${stealthModifier}, Player Goes First: ${playerGoesFirst}`
 //   );
 
@@ -1463,10 +1463,10 @@
 //     ]);
 //   }
 
-//   console.log(
+//   (
 //     `Combat Setup - Monsters: ${monsters.length}, Allies: ${allies.length}`
 //   );
-//   console.log(
+//   (
 //     `Monster health: ${monsters.map(
 //       (m) => m.maxHealth
 //     )}, Ally health: ${allies.map((a) => a.maxHealth)}`
@@ -1509,7 +1509,7 @@
 //   while (combatActive && turnCount < 20) {
 //     // Prevent infinite loops
 //     turnCount++;
-//     console.log(`Combat Turn ${turnCount}`);
+//     (`Combat Turn ${turnCount}`);
 
 //     const activeAllies = allies.filter(
 //       (ally) => !ally.isDead() && !ally.isFleeing()
@@ -1520,7 +1520,7 @@
 
 //     // Check win conditions
 //     if (activeMonsters.length === 0) {
-//       console.log(`Round ${turnCount} - VICTORY! All monsters defeated`);
+//       (`Round ${turnCount} - VICTORY! All monsters defeated`);
 //       await showChoiceDialog("Victory! All enemies defeated! 🏆", [
 //         { type: "button", label: "OK", value: "ok" },
 //       ]);
@@ -1532,7 +1532,7 @@
 //     }
 
 //     if (activeAllies.length === 0) {
-//       console.log(`Round ${turnCount} - DEFEAT! All allies fallen`);
+//       (`Round ${turnCount} - DEFEAT! All allies fallen`);
 //       // Player takes damage based on character stats
 //       const playerDefense = gameState.playerCharacter
 //         ? calculateCharacterDefense(gameState.playerCharacter)
@@ -1567,7 +1567,7 @@
 
 //     // Determine turn order based on initiative
 //     if (playerGoesFirst || turnCount === 1) {
-//       console.log(
+//       (
 //         `Round ${turnCount} - Player goes first (initiative won: ${playerGoesFirst})`
 //       );
 
@@ -1587,7 +1587,7 @@
 //         ]
 //       );
 
-//       console.log(`Round ${turnCount} - Player chose: ${playerAction}`);
+//       (`Round ${turnCount} - Player chose: ${playerAction}`);
 
 //       // Resolve player action
 //       switch (playerAction) {
@@ -1609,7 +1609,7 @@
 //             target.takeDamage(damage);
 //             const newHealth = target.currentHealth;
 
-//             console.log(
+//             (
 //               `Round ${turnCount} - Player attacks ${target.name}: ${damage} damage (${oldHealth} → ${newHealth} HP)`
 //             );
 //             logEvent(`You attack ${target.name} for ${damage} damage!`);
@@ -1622,7 +1622,7 @@
 //               progressSkill(gameState.playerCharacter, weaponSkill);
 //             }
 //           } else {
-//             console.log(
+//             (
 //               `Round ${turnCount} - Player misses ${
 //                 target.name
 //               } (${hitRoll.toFixed(1)} > ${playerAccuracy})`
@@ -1632,14 +1632,14 @@
 //           break;
 
 //         case "rally_attack":
-//           console.log(`Round ${turnCount} - Player rallies allies`);
+//           (`Round ${turnCount} - Player rallies allies`);
 //           // Boost ally attack power for this turn
 //           allies.forEach((ally) => {
 //             if (!ally.isDead() && !ally.isFleeing()) {
 //               const oldHealth = ally.currentHealth;
 //               ally.takeDamage(-1); // Heal 1 HP as rally effect
 //               const newHealth = ally.currentHealth;
-//               console.log(
+//               (
 //                 `Round ${turnCount} - ${ally.name} healed by rally: ${oldHealth} → ${newHealth} HP`
 //               );
 //             }
@@ -1648,23 +1648,23 @@
 //           break;
 
 //         case "call_help":
-//           console.log(`Round ${turnCount} - Player calls for help`);
+//           (`Round ${turnCount} - Player calls for help`);
 //           // Chance to call for reinforcements (if any available)
 //           if (Math.random() < 0.3) {
 //             const newAlly = new Ally("Reinforcement", "guard");
 //             allies.push(newAlly);
-//             console.log(
+//             (
 //               `Round ${turnCount} - Reinforcement joined! Total allies: ${allies.length}`
 //             );
 //             logEvent("A reinforcement joins your group!");
 //           } else {
-//             console.log(`Round ${turnCount} - No help arrived`);
+//             (`Round ${turnCount} - No help arrived`);
 //             logEvent("No help arrives...");
 //           }
 //           break;
 
 //         case "order_retreat":
-//           console.log(`Round ${turnCount} - Player orders retreat`);
+//           (`Round ${turnCount} - Player orders retreat`);
 //           // Order allies to retreat
 //           let retreatedCount = 0;
 //           allies.forEach((ally) => {
@@ -1673,19 +1673,19 @@
 //               retreatedCount++;
 //             }
 //           });
-//           console.log(
+//           (
 //             `Round ${turnCount} - ${retreatedCount} allies retreated`
 //           );
 //           logEvent("You order your allies to retreat!");
 //           break;
 
 //         case "run_away":
-//           console.log(`Round ${turnCount} - Player attempts to flee`);
+//           (`Round ${turnCount} - Player attempts to flee`);
 
 //           // Check if player is unconscious
 //           const player = allies[0]; // Player is first ally
 //           if (player && player.isUnconscious()) {
-//             console.log(
+//             (
 //               `Round ${turnCount} - Player cannot flee while unconscious`
 //             );
 //             logEvent("You cannot flee while unconscious!");
@@ -1699,29 +1699,29 @@
 //             : 16;
 //           const fleeChance = Math.min(0.8, 0.4 + (playerSpeed - 16) * 0.02); // Higher speed = better flee chance
 //           const fleeRoll = Math.random();
-//           console.log(
+//           (
 //             `Round ${turnCount} - Flee chance: ${fleeChance.toFixed(
 //               2
 //             )}, Roll: ${fleeRoll.toFixed(2)}`
 //           );
 
 //           if (fleeRoll < fleeChance) {
-//             console.log(`Round ${turnCount} - Player successfully fled!`);
+//             (`Round ${turnCount} - Player successfully fled!`);
 //             await showChoiceDialog("You successfully flee! 🏃", [
 //               { type: "button", label: "OK", value: "ok" },
 //             ]);
 //             return false;
 //           } else {
-//             console.log(`Round ${turnCount} - Player failed to flee`);
+//             (`Round ${turnCount} - Player failed to flee`);
 //             logEvent("You fail to flee!");
 //           }
 //           break;
 //       }
 
 //       // AI turns
-//       console.log(`Round ${turnCount} - Ally AI turn`);
+//       (`Round ${turnCount} - Ally AI turn`);
 //       allyAI(allies, monsters, turnCount);
-//       console.log(`Round ${turnCount} - Monster AI turn`);
+//       (`Round ${turnCount} - Monster AI turn`);
 //       monsterAI(monsters, allies, turnCount);
 
 //       // Check for immediate victory/defeat after AI turns
@@ -1733,7 +1733,7 @@
 //       );
 
 //       if (currentActiveMonsters.length === 0) {
-//         console.log(`Round ${turnCount} - VICTORY! All monsters defeated`);
+//         (`Round ${turnCount} - VICTORY! All monsters defeated`);
 //         await showChoiceDialog("Victory! All enemies defeated! 🏆", [
 //           { type: "button", label: "OK", value: "ok" },
 //         ]);
@@ -1745,7 +1745,7 @@
 //       }
 
 //       if (currentActiveAllies.length === 0) {
-//         console.log(`Round ${turnCount} - DEFEAT! All allies fallen`);
+//         (`Round ${turnCount} - DEFEAT! All allies fallen`);
 //         const playerDefense = gameState.playerCharacter
 //           ? calculateCharacterDefense(gameState.playerCharacter)
 //           : 0;
@@ -1775,11 +1775,11 @@
 //       }
 //     } else {
 //       // Monsters go first
-//       console.log(`Round ${turnCount} - Monsters go first (initiative lost)`);
+//       (`Round ${turnCount} - Monsters go first (initiative lost)`);
 
-//       console.log(`Round ${turnCount} - Monster AI turn`);
+//       (`Round ${turnCount} - Monster AI turn`);
 //       monsterAI(monsters, allies, turnCount);
-//       console.log(`Round ${turnCount} - Ally AI turn`);
+//       (`Round ${turnCount} - Ally AI turn`);
 //       allyAI(allies, monsters, turnCount);
 
 //       // Player turn
@@ -1798,7 +1798,7 @@
 //         ]
 //       );
 
-//       console.log(`Round ${turnCount} - Player chose: ${playerAction}`);
+//       (`Round ${turnCount} - Player chose: ${playerAction}`);
 
 //       // Resolve player action (same as above)
 //       switch (playerAction) {
@@ -1819,7 +1819,7 @@
 //             target.takeDamage(damage);
 //             const newHealth = target.currentHealth;
 
-//             console.log(
+//             (
 //               `Round ${turnCount} - Player attacks ${target.name}: ${damage} damage (${oldHealth} → ${newHealth} HP)`
 //             );
 //             logEvent(`You attack ${target.name} for ${damage} damage!`);
@@ -1831,7 +1831,7 @@
 //               progressSkill(gameState.playerCharacter, weaponSkill);
 //             }
 //           } else {
-//             console.log(
+//             (
 //               `Round ${turnCount} - Player misses ${
 //                 target.name
 //               } (${hitRoll.toFixed(1)} > ${playerAccuracy})`
@@ -1841,13 +1841,13 @@
 //           break;
 
 //         case "rally_attack":
-//           console.log(`Round ${turnCount} - Player rallies allies`);
+//           (`Round ${turnCount} - Player rallies allies`);
 //           allies.forEach((ally) => {
 //             if (!ally.isDead() && !ally.isFleeing()) {
 //               const oldHealth = ally.currentHealth;
 //               ally.takeDamage(-1);
 //               const newHealth = ally.currentHealth;
-//               console.log(
+//               (
 //                 `Round ${turnCount} - ${ally.name} healed by rally: ${oldHealth} → ${newHealth} HP`
 //               );
 //             }
@@ -1856,22 +1856,22 @@
 //           break;
 
 //         case "call_help":
-//           console.log(`Round ${turnCount} - Player calls for help`);
+//           (`Round ${turnCount} - Player calls for help`);
 //           if (Math.random() < 0.3) {
 //             const newAlly = new Ally("Reinforcement", "guard");
 //             allies.push(newAlly);
-//             console.log(
+//             (
 //               `Round ${turnCount} - Reinforcement joined! Total allies: ${allies.length}`
 //             );
 //             logEvent("A reinforcement joins your group!");
 //           } else {
-//             console.log(`Round ${turnCount} - No help arrived`);
+//             (`Round ${turnCount} - No help arrived`);
 //             logEvent("No help arrives...");
 //           }
 //           break;
 
 //         case "order_retreat":
-//           console.log(`Round ${turnCount} - Player orders retreat`);
+//           (`Round ${turnCount} - Player orders retreat`);
 //           let retreatedCount = 0;
 //           allies.forEach((ally) => {
 //             if (!ally.isDead() && Math.random() < 0.7) {
@@ -1879,18 +1879,18 @@
 //               retreatedCount++;
 //             }
 //           });
-//           console.log(
+//           (
 //             `Round ${turnCount} - ${retreatedCount} allies retreated`
 //           );
 //           logEvent("You order your allies to retreat!");
 //           break;
 
 //         case "run_away":
-//           console.log(`Round ${turnCount} - Player attempts to flee`);
+//           (`Round ${turnCount} - Player attempts to flee`);
 
 //           const player = allies[0];
 //           if (player && player.isUnconscious()) {
-//             console.log(
+//             (
 //               `Round ${turnCount} - Player cannot flee while unconscious`
 //             );
 //             logEvent("You cannot flee while unconscious!");
@@ -1903,20 +1903,20 @@
 //             : 16;
 //           const fleeChance = Math.min(0.8, 0.4 + (playerSpeed - 16) * 0.02);
 //           const fleeRoll = Math.random();
-//           console.log(
+//           (
 //             `Round ${turnCount} - Flee chance: ${fleeChance.toFixed(
 //               2
 //             )}, Roll: ${fleeRoll.toFixed(2)}`
 //           );
 
 //           if (fleeRoll < fleeChance) {
-//             console.log(`Round ${turnCount} - Player successfully fled!`);
+//             (`Round ${turnCount} - Player successfully fled!`);
 //             await showChoiceDialog("You successfully flee! 🏃", [
 //               { type: "button", label: "OK", value: "ok" },
 //             ]);
 //             return false;
 //           } else {
-//             console.log(`Round ${turnCount} - Player failed to flee`);
+//             (`Round ${turnCount} - Player failed to flee`);
 //             logEvent("You fail to flee!");
 //           }
 //           break;
@@ -1931,7 +1931,7 @@
 //       );
 
 //       if (currentActiveMonsters.length === 0) {
-//         console.log(`Round ${turnCount} - VICTORY! All monsters defeated`);
+//         (`Round ${turnCount} - VICTORY! All monsters defeated`);
 //         await showChoiceDialog("Victory! All enemies defeated! 🏆", [
 //           { type: "button", label: "OK", value: "ok" },
 //         ]);
@@ -1943,7 +1943,7 @@
 //       }
 
 //       if (currentActiveAllies.length === 0) {
-//         console.log(`Round ${turnCount} - DEFEAT! All allies fallen`);
+//         (`Round ${turnCount} - DEFEAT! All allies fallen`);
 //         const playerDefense = gameState.playerCharacter
 //           ? calculateCharacterDefense(gameState.playerCharacter)
 //           : 0;
@@ -1981,12 +1981,12 @@
 //       (monster) => !monster.isDead() && !monster.isFleeing()
 //     );
 
-//     console.log(
+//     (
 //       `Round ${turnCount} - Combat Status: ${remainingAllies.length} allies, ${remainingMonsters.length} monsters remaining`
 //     );
 
 //     if (remainingAllies.length === 0 || remainingMonsters.length === 0) {
-//       console.log(
+//       (
 //         `Round ${turnCount} - Combat ended! Allies: ${remainingAllies.length}, Monsters: ${remainingMonsters.length}`
 //       );
 //       combatActive = false;
@@ -1994,7 +1994,7 @@
 //   }
 
 //   // Combat timeout
-//   console.log(`Combat timeout after ${turnCount} rounds - Both sides withdraw`);
+//   (`Combat timeout after ${turnCount} rounds - Both sides withdraw`);
 //   await showChoiceDialog("Combat drags on... Both sides withdraw. 🤝", [
 //     { type: "button", label: "OK", value: "ok" },
 //   ]);

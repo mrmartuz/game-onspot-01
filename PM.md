@@ -488,7 +488,6 @@ _Estimated Time: 2-3 days_
 - Equipment-based combat modifiers
 
 **Tasks:**
-
 - [ ] Update combat calculations to use character stats
 - [ ] Add skill-based combat bonuses
 - [ ] Implement equipment combat modifiers

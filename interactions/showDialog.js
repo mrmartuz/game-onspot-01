@@ -107,9 +107,7 @@ export async function showChoiceDialog(message, components) {
             gameDialog.appendChild(selectDiv);
 
             // Debug: Log select element details
-            console.log(
-              `Select created - ID: ${select.id}, Default Value: ${component.defaultValue}, Current Value: ${select.value}`
-            );
+            `Select created - ID: ${select.id}, Default Value: ${component.defaultValue}, Current Value: ${select.value}`;
             break;
           case "checkbox":
             const checkboxDiv = document.createElement("div");
@@ -218,9 +216,7 @@ export async function showChoiceDialog(message, components) {
 
           // Collect select values
           selects.forEach((select) => {
-            console.log(
-              `Select element - ID: ${select.id}, Value: "${select.value}"`
-            );
+            `Select element - ID: ${select.id}, Value: "${select.value}"`;
             result[select.id] = select.value;
           });
 

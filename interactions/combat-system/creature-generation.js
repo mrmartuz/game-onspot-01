@@ -12,6 +12,104 @@ import {
 } from "../equipment.js";
 import { Monster } from "./entities.js";
 
+// Determine AI behavior based on creature template and characteristics
+function determineAIBehavior(template, monster) {
+  const className = template.class?.toLowerCase();
+  const raceName = template.race?.toLowerCase();
+  const creatureName = template.name?.toLowerCase();
+
+  // Determine behavior based on class
+  switch (className) {
+    case "fighter":
+    case "brute":
+    case "warrior":
+    case "berserker":
+      return "aggressive";
+
+    case "scout":
+    case "ranger":
+    case "hunter":
+    case "archer":
+      return "cunning";
+
+    case "rogue":
+    case "assassin":
+    case "thief":
+      return "cunning";
+
+    case "cleric":
+    case "priest":
+    case "healer":
+      return "defensive";
+
+    case "mage":
+    case "wizard":
+    case "sorcerer":
+      return "defensive";
+
+    default:
+      // Determine by race if class is not specific
+      break;
+  }
+
+  // Determine behavior based on race
+  switch (raceName) {
+    case "goblin":
+    case "kobold":
+    case "imp":
+      return "cowardly";
+
+    case "orc":
+    case "troll":
+    case "ogre":
+      return "aggressive";
+
+    case "elf":
+    case "dwarf":
+      return "defensive";
+
+    case "demon":
+    case "devil":
+      return "aggressive";
+
+    case "undead":
+    case "skeleton":
+    case "zombie":
+      return "aggressive";
+
+    case "dragon":
+    case "wyvern":
+      return "aggressive";
+
+    default:
+      // Determine by creature name if race is not specific
+      break;
+  }
+
+  // Determine behavior based on creature name
+  if (creatureName.includes("scout") || creatureName.includes("spy")) {
+    return "cunning";
+  }
+  if (creatureName.includes("guard") || creatureName.includes("soldier")) {
+    return "defensive";
+  }
+  if (creatureName.includes("berserker") || creatureName.includes("warrior")) {
+    return "aggressive";
+  }
+  if (creatureName.includes("coward") || creatureName.includes("weak")) {
+    return "cowardly";
+  }
+
+  // Default behavior based on level
+  if (monster.level <= 2) {
+    return "cowardly";
+  } else if (monster.level >= 8) {
+    return "aggressive";
+  } else {
+    return "balanced";
+  }
+}
+
 // Creature generation functions for combat system
 export async function generateMonsters(count, entityType, x, y) {
   const monsters = [];
@@ -53,7 +151,7 @@ export async function generateCreature(creatureTemplate, x, y, index) {
   monster.detected = false;
   monster.discoveryMessage = "";
   monster.detectionMessage = "";
-  monster.aiBehavior = "aggressive";
+  monster.aiBehavior = determineAIBehavior(template, monster);
   monster.specialAbilities = [];
   monster.resistances = {};
   monster.vulnerabilities = {};
@@ -374,19 +472,19 @@ function weightedRandom(items, weights) {
 
 // Test function for creature generation
 export async function testCreatureGeneration() {
-  console.log("Testing creature generation...");
+  ("Testing creature generation...");
 
   // Test monster generation
   const monsters = await generateMonsters(3, "goblin", 10, 10);
-  console.log("Generated monsters:", monsters);
+  "Generated monsters:", monsters;
 
   // Test beast generation
   const beasts = await generateMonsters(2, "wolf", 15, 15);
-  console.log("Generated beasts:", beasts);
+  "Generated beasts:", beasts;
 
   // Test team composition
   const team = await generateTeamComposition(2, ["goblin", "orc"], 20, 20);
-  console.log("Generated team:", team);
+  "Generated team:", team;
 
-  console.log("Creature generation test complete!");
+  ("Creature generation test complete!");
 }

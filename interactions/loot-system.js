@@ -79,8 +79,8 @@ export function calculateHeadValue(head, locationType, interactBonus = 0) {
  * @returns {boolean} True if successfully added, false if not enough space
  */
 export function addHeadToInventory(head) {
-  console.log("Adding head to inventory:", head);
-  console.log("Current gameState.monsterHeads:", gameState.monsterHeads);
+  "Adding head to inventory:", head;
+  "Current gameState.monsterHeads:", gameState.monsterHeads;
 
   const currentHeadSpace = gameState.monsterHeads.reduce(
     (total, h) => total + h.inventorySize,
@@ -88,20 +88,17 @@ export function addHeadToInventory(head) {
   );
   const maxStorage = getMaxStorage();
 
-  console.log("Current head space:", currentHeadSpace);
-  console.log("Max storage:", maxStorage);
-  console.log("Head inventory size:", head.inventorySize);
+  "Current head space:", currentHeadSpace;
+  "Max storage:", maxStorage;
+  "Head inventory size:", head.inventorySize;
 
   if (currentHeadSpace + head.inventorySize <= maxStorage) {
     gameState.monsterHeads.push(head);
-    console.log(
-      "Successfully added head. New monsterHeads:",
-      gameState.monsterHeads
-    );
+    "Successfully added head. New monsterHeads:", gameState.monsterHeads;
     return true;
   }
 
-  console.log("Not enough space to add head");
+  ("Not enough space to add head");
   return false;
 }
 

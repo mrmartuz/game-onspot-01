@@ -118,7 +118,7 @@ export async function toggleMapType() {
     gameState.mapType = "global";
   }
   setTimeout(() => {
-    console.log("map type changed to", gameState.mapType);
+    "map type changed to", gameState.mapType;
   }, 1000);
   updateStatus();
 }

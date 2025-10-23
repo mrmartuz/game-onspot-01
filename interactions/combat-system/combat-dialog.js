@@ -77,7 +77,7 @@ let combatState = {
 };
 
 export async function handleEnhancedCombatDialog(ex, ey, isOnTile = false) {
-  console.log(`Starting enhanced combat dialog at (${ex}, ${ey})`);
+  `Starting enhanced combat dialog at (${ex}, ${ey})`;
 
   // Reset combat state
   combatState = {
@@ -131,9 +131,7 @@ export async function handleEnhancedCombatDialog(ex, ey, isOnTile = false) {
     ey
   );
 
-  console.log(
-    `Generated ${combatState.allies.length} allies and ${combatState.monsters.length} monsters`
-  );
+  `Generated ${combatState.allies.length} allies and ${combatState.monsters.length} monsters`;
 
   // Start with detection phase
   return await handleDetectionPhase();
@@ -141,7 +139,7 @@ export async function handleEnhancedCombatDialog(ex, ey, isOnTile = false) {
 
 // Phase 1: Detection
 async function handleDetectionPhase() {
-  console.log("=== DETECTION PHASE ===");
+  ("=== DETECTION PHASE ===");
 
   const detectionBonus = calculateDetectionBonus();
   const stealthModifier = calculateStealthModifier();
@@ -189,9 +187,302 @@ async function handleDetectionPhase() {
   return await handleEngagementPhase();
 }
 
+// Enemy engagement decision function
+function determineEnemyEngagementChoice() {
+  // Analyze enemy group composition and behavior
+  const enemyBehavior = analyzeEnemyGroupBehavior();
+
+  // Determine engagement choice based on behavior and random factors
+  const random = Math.random();
+
+  switch (enemyBehavior) {
+    case "aggressive":
+      // Aggressive enemies prefer charge attacks
+      if (random < 0.6) return "charge";
+      if (random < 0.8) return "attack";
+      if (random < 0.9) return "stalk";
+      return "flee";
+
+    case "defensive":
+      // Defensive enemies prefer careful attacks and stalking
+      if (random < 0.4) return "attack";
+      if (random < 0.7) return "stalk";
+      if (random < 0.85) return "charge";
+      return "flee";
+
+    case "cunning":
+      // Cunning enemies prefer stalking and careful attacks
+      if (random < 0.5) return "stalk";
+      if (random < 0.75) return "attack";
+      if (random < 0.9) return "charge";
+      return "flee";
+
+    case "cowardly":
+      // Cowardly enemies prefer fleeing
+      if (random < 0.7) return "flee";
+      if (random < 0.85) return "stalk";
+      if (random < 0.95) return "attack";
+      return "charge";
+
+    default:
+      // Balanced behavior
+      if (random < 0.3) return "charge";
+      if (random < 0.6) return "attack";
+      if (random < 0.8) return "stalk";
+      return "flee";
+  }
+}
+
+function analyzeEnemyGroupBehavior() {
+  if (!combatState.monsters || combatState.monsters.length === 0) {
+    return "balanced";
+  }
+
+  // Analyze the group composition
+  let aggressiveCount = 0;
+  let defensiveCount = 0;
+  let cunningCount = 0;
+  let cowardlyCount = 0;
+
+  combatState.monsters.forEach((monster) => {
+    switch (monster.aiBehavior) {
+      case "aggressive":
+        aggressiveCount++;
+        break;
+      case "defensive":
+        defensiveCount++;
+        break;
+      case "cunning":
+        cunningCount++;
+        break;
+      case "cowardly":
+        cowardlyCount++;
+        break;
+    }
+  });
+
+  const totalMonsters = combatState.monsters.length;
+
+  // Determine dominant behavior
+  if (aggressiveCount / totalMonsters >= 0.5) return "aggressive";
+  if (defensiveCount / totalMonsters >= 0.5) return "defensive";
+  if (cunningCount / totalMonsters >= 0.5) return "cunning";
+  if (cowardlyCount / totalMonsters >= 0.5) return "cowardly";
+
+  // Check for mixed behaviors
+  if (aggressiveCount > defensiveCount && aggressiveCount > cunningCount)
+    return "aggressive";
+  if (defensiveCount > aggressiveCount && defensiveCount > cunningCount)
+    return "defensive";
+  if (cunningCount > aggressiveCount && cunningCount > defensiveCount)
+    return "cunning";
+
+  return "balanced";
+}
+
+function getEngagementChoiceDescription(choice) {
+  switch (choice) {
+    case "charge":
+      return "⚡ Charge Attack - Rush forward aggressively";
+    case "attack":
+      return "🎯 Careful Attack - Approach cautiously";
+    case "stalk":
+      return "🥷 Stalk - Try to gain stealth advantage";
+    case "flee":
+      return "🏃 Run Away - Attempt to escape";
+    default:
+      return "Unknown approach";
+  }
+}
+
+// Handle simultaneous engagement choices
+async function handleSimultaneousEngagement(playerChoice, enemyChoice) {
+  `Simultaneous engagement: Player=${playerChoice}, Enemy=${enemyChoice}`;
+
+  let message = "⚔️ SIMULTANEOUS ENGAGEMENT\n\n";
+  message += `Your choice: ${getEngagementChoiceDescription(playerChoice)}\n`;
+  message += `Enemy choice: ${getEngagementChoiceDescription(enemyChoice)}\n\n`;
+
+  // Determine engagement outcome based on choices
+  const outcome = determineEngagementOutcome(playerChoice, enemyChoice);
+
+  switch (outcome.type) {
+    case "player_advantage":
+      message += `✅ ${outcome.description}\n\n`;
+      break;
+    case "enemy_advantage":
+      message += `❌ ${outcome.description}\n\n`;
+      break;
+    case "balanced":
+      message += `⚖️ ${outcome.description}\n\n`;
+      break;
+    case "both_flee":
+      message += `🏃 ${outcome.description}\n\n`;
+      break;
+  }
+
+  // Handle both sides fleeing
+  if (outcome.endCombat) {
+    await getShowChoiceDialog(message, [
+      { type: "button", label: "Continue", value: "continue" },
+    ]);
+
+    // End combat and return to normal gameplay
+    combatState.combatActive = false;
+    combatState.phase = COMBAT_PHASES.NONE;
+
+    // Log the event
+    logEvent("Both sides fled from combat. No battle occurred.");
+
+    return { success: true, combatEnded: true };
+  }
+
+  message += "Combat begins!";
+
+  await getShowChoiceDialog(message, [
+    { type: "button", label: "Begin Combat", value: "begin" },
+  ]);
+
+  // Apply engagement bonuses/penalties
+  applyEngagementModifiers(outcome);
+
+  // Start combat with modified initiative
+  combatState.initiativeOrder = await calculateInitiativeOrder(
+    outcome.playerInitiativeBonus,
+    outcome.playerStealthBonus || false,
+    outcome.enemyInitiativeBonus || false
+  );
+  combatState.combatActive = true;
+  combatState.phase = COMBAT_PHASES.COMBAT;
+
+  return await handleCombatPhase();
+}
+
+function determineEngagementOutcome(playerChoice, enemyChoice) {
+  // Both flee
+  if (playerChoice === "flee" && enemyChoice === "flee") {
+    return {
+      type: "both_flee",
+      description: "Both sides attempt to flee! Combat is avoided.",
+      playerInitiativeBonus: false,
+      endCombat: true,
+    };
+  }
+
+  // Player flees, enemy doesn't
+  if (playerChoice === "flee" && enemyChoice !== "flee") {
+    return {
+      type: "enemy_advantage",
+      description:
+        "You attempt to flee while enemies pursue! They gain initiative advantage.",
+      playerInitiativeBonus: false,
+      enemyInitiativeBonus: true,
+    };
+  }
+
+  // Enemy flees, player doesn't
+  if (enemyChoice === "flee" && playerChoice !== "flee") {
+    return {
+      type: "player_advantage",
+      description:
+        "Enemies attempt to flee while you pursue! You gain initiative advantage.",
+      playerInitiativeBonus: true,
+    };
+  }
+
+  // Both charge
+  if (playerChoice === "charge" && enemyChoice === "charge") {
+    return {
+      type: "balanced",
+      description: "Both sides charge! Equal initiative bonuses cancel out.",
+      playerInitiativeBonus: false,
+    };
+  }
+
+  // Player charges, enemy doesn't
+  if (playerChoice === "charge" && enemyChoice !== "charge") {
+    return {
+      type: "player_advantage",
+      description:
+        "You charge while enemies are cautious! You gain initiative advantage.",
+      playerInitiativeBonus: true,
+    };
+  }
+
+  // Enemy charges, player doesn't
+  if (enemyChoice === "charge" && playerChoice !== "charge") {
+    return {
+      type: "enemy_advantage",
+      description:
+        "Enemies charge while you're cautious! They gain initiative advantage.",
+      playerInitiativeBonus: false,
+      enemyInitiativeBonus: true,
+    };
+  }
+
+  // Both stalk
+  if (playerChoice === "stalk" && enemyChoice === "stalk") {
+    return {
+      type: "balanced",
+      description: "Both sides attempt to stalk! Stealth bonuses cancel out.",
+      playerInitiativeBonus: false,
+    };
+  }
+
+  // Player stalks, enemy doesn't
+  if (playerChoice === "stalk" && enemyChoice !== "stalk") {
+    return {
+      type: "player_advantage",
+      description:
+        "You stalk while enemies are aggressive! You gain stealth advantage.",
+      playerInitiativeBonus: false,
+      playerStealthBonus: true,
+    };
+  }
+
+  // Enemy stalks, player doesn't
+  if (enemyChoice === "stalk" && playerChoice !== "stalk") {
+    return {
+      type: "enemy_advantage",
+      description:
+        "Enemies stalk while you're aggressive! They gain stealth advantage.",
+      playerInitiativeBonus: false,
+      enemyStealthBonus: true,
+    };
+  }
+
+  // Both careful attack
+  return {
+    type: "balanced",
+    description: "Both sides approach carefully. Normal combat begins.",
+    playerInitiativeBonus: false,
+  };
+}
+
+function applyEngagementModifiers(outcome) {
+  // Apply any temporary modifiers based on engagement outcome
+  // This could affect accuracy, damage, defense, etc.
+
+  if (outcome.type === "player_advantage") {
+    // Player gets small bonuses
+    combatState.playerEngagementBonus = {
+      accuracy: 5,
+      damage: 2,
+      initiative: 10,
+    };
+  } else if (outcome.type === "enemy_advantage") {
+    // Enemies get small bonuses
+    combatState.enemyEngagementBonus = {
+      accuracy: 5,
+      damage: 2,
+      initiative: 10,
+    };
+  }
+}
+
 // Phase 2: Engagement
 async function handleEngagementPhase() {
-  console.log("=== ENGAGEMENT PHASE ===");
+  ("=== ENGAGEMENT PHASE ===");
 
   let engagementMessage = "⚔️ ENGAGEMENT PHASE\n\n";
 
@@ -205,7 +496,22 @@ async function handleEngagementPhase() {
         monster.race
       } ${emoji} ${monster.class} Lv.${monster.level})\n`;
     });
-    engagementMessage += `\nWhat do you want to do?`;
+
+    // Check if enemies also detected the player group
+    if (combatState.playerDetected) {
+      engagementMessage += `\n⚠️ The enemies have also spotted your group!\n`;
+      engagementMessage += `Both sides are aware of each other and must choose their approach.\n\n`;
+
+      // Determine enemy engagement choice
+      const enemyChoice = determineEnemyEngagementChoice();
+      combatState.enemyEngagementChoice = enemyChoice;
+
+      engagementMessage += `The enemies are preparing to: ${getEngagementChoiceDescription(
+        enemyChoice
+      )}\n\n`;
+    }
+
+    engagementMessage += `What do you want to do?`;
 
     const choices = [
       { type: "button", label: "⚡ Charge Attack", value: "charge" },
@@ -215,6 +521,14 @@ async function handleEngagementPhase() {
     ];
 
     const choice = await getShowChoiceDialog(engagementMessage, choices);
+
+    // Handle simultaneous engagement choices
+    if (combatState.playerDetected && combatState.enemyEngagementChoice) {
+      return await handleSimultaneousEngagement(
+        choice,
+        combatState.enemyEngagementChoice
+      );
+    }
 
     switch (choice) {
       case "charge":
@@ -252,10 +566,14 @@ async function handleEngagementPhase() {
 
 // Engagement actions
 async function handleChargeAttack() {
-  console.log("Player chooses: Charge Attack");
+  ("Player chooses: Charge Attack");
 
   // Charge gives initiative bonus but higher risk
-  combatState.initiativeOrder = await calculateInitiativeOrder(true); // Charge bonus
+  combatState.initiativeOrder = await calculateInitiativeOrder(
+    true,
+    false,
+    false
+  ); // Charge bonus
   combatState.combatActive = true;
   combatState.phase = COMBAT_PHASES.COMBAT;
 
@@ -268,10 +586,14 @@ async function handleChargeAttack() {
 }
 
 async function handleCarefulAttack() {
-  console.log("Player chooses: Careful Attack");
+  ("Player chooses: Careful Attack");
 
   // Careful attack - normal initiative
-  combatState.initiativeOrder = await calculateInitiativeOrder(false);
+  combatState.initiativeOrder = await calculateInitiativeOrder(
+    false,
+    false,
+    false
+  );
   combatState.combatActive = true;
   combatState.phase = COMBAT_PHASES.COMBAT;
 
@@ -284,13 +606,17 @@ async function handleCarefulAttack() {
 }
 
 async function handleStalk() {
-  console.log("Player chooses: Stalk");
+  ("Player chooses: Stalk");
 
   // Stalk gives stealth bonus but might fail
   const stalkSuccess = Math.random() < 0.7; // 70% chance of success
 
   if (stalkSuccess) {
-    combatState.initiativeOrder = await calculateInitiativeOrder(false, true); // Stealth bonus
+    combatState.initiativeOrder = await calculateInitiativeOrder(
+      false,
+      true,
+      false
+    ); // Stealth bonus
     combatState.combatActive = true;
     combatState.phase = COMBAT_PHASES.COMBAT;
 
@@ -317,7 +643,7 @@ async function handleStalk() {
 }
 
 async function handleFlee() {
-  console.log("Player chooses: Flee");
+  ("Player chooses: Flee");
 
   // Flee attempt - might succeed or fail
   const fleeSuccess = Math.random() < 0.8; // 80% chance of success
@@ -347,7 +673,7 @@ async function handleFlee() {
 }
 
 async function handleSurpriseAttack() {
-  console.log("Enemies surprise attack");
+  ("Enemies surprise attack");
 
   // Enemies attack first due to surprise
   combatState.initiativeOrder = await calculateInitiativeOrder(
@@ -362,10 +688,14 @@ async function handleSurpriseAttack() {
 }
 
 async function handleInitiativeCombat() {
-  console.log("Initiative-based combat");
+  ("Initiative-based combat");
 
   // Normal initiative rolls
-  combatState.initiativeOrder = await calculateInitiativeOrder(false);
+  combatState.initiativeOrder = await calculateInitiativeOrder(
+    false,
+    false,
+    false
+  );
   combatState.combatActive = true;
   combatState.phase = COMBAT_PHASES.COMBAT;
 
@@ -374,7 +704,7 @@ async function handleInitiativeCombat() {
 
 // Phase 3: Combat
 async function handleCombatPhase() {
-  console.log("=== COMBAT PHASE ===");
+  ("=== COMBAT PHASE ===");
 
   while (combatState.combatActive) {
     combatState.turnCount++;
@@ -409,7 +739,7 @@ async function handleCombatPhase() {
 
 // Player turn handler
 async function handlePlayerTurn(player) {
-  console.log(`Player turn: ${player.name}`);
+  `Player turn: ${player.name}`;
 
   const aliveMonsters = combatState.monsters.filter(
     (m) => !m.isDead() && !m.isFleeing()
@@ -507,33 +837,25 @@ async function handlePlayerAttack(player, targets) {
 }
 
 async function executeAttack(attacker, target) {
-  console.log(
-    `[ATTACK ATTEMPT] ${attacker.name} (${
-      attacker.character?.race || attacker.race || "unknown"
-    }) attempting to attack ${target.name} (${
-      target.character?.race || target.race || "unknown"
-    })`
-  );
-  console.log(
-    `[ATTACKER STATE] ${attacker.name} - Status: ${attacker.status}, Health: ${
-      attacker.currentHealth
-    }/${attacker.maxHealth}, Unconscious: ${
-      attacker.unconscious
-    }, Dead: ${attacker.isDead()}`
-  );
-  console.log(
-    `[TARGET STATE] ${target.name} - Status: ${target.status}, Health: ${
-      target.currentHealth
-    }/${target.maxHealth}, Unconscious: ${
-      target.unconscious
-    }, Dead: ${target.isDead()}`
-  );
+  `[ATTACK ATTEMPT] ${attacker.name} (${
+    attacker.character?.race || attacker.race || "unknown"
+  }) attempting to attack ${target.name} (${
+    target.character?.race || target.race || "unknown"
+  })`;
+  `[ATTACKER STATE] ${attacker.name} - Status: ${attacker.status}, Health: ${
+    attacker.currentHealth
+  }/${attacker.maxHealth}, Unconscious: ${
+    attacker.unconscious
+  }, Dead: ${attacker.isDead()}`;
+  `[TARGET STATE] ${target.name} - Status: ${target.status}, Health: ${
+    target.currentHealth
+  }/${target.maxHealth}, Unconscious: ${
+    target.unconscious
+  }, Dead: ${target.isDead()}`;
 
   // Check if attacker can attack
   if (attacker.isDead() || attacker.isFleeing() || attacker.isUnconscious()) {
-    console.log(
-      `[ATTACK ERROR] ${attacker.name} cannot attack - Status: ${attacker.status}, Unconscious: ${attacker.unconscious}`
-    );
+    `[ATTACK ERROR] ${attacker.name} cannot attack - Status: ${attacker.status}, Unconscious: ${attacker.unconscious}`;
     return;
   }
 
@@ -552,13 +874,11 @@ async function executeAttack(attacker, target) {
   const hitChance = Math.max(5, Math.min(95, accuracy - defense + 50));
   const hitRoll = Math.random() * 100;
 
-  console.log(
-    `[ATTACK CALC] ${
-      attacker.name
-    } - Damage: ${damage}, Accuracy: ${accuracy}, Hit Chance: ${hitChance}%, Roll: ${hitRoll.toFixed(
-      1
-    )}`
-  );
+  `[ATTACK CALC] ${
+    attacker.name
+  } - Damage: ${damage}, Accuracy: ${accuracy}, Hit Chance: ${hitChance}%, Roll: ${hitRoll.toFixed(
+    1
+  )}`;
 
   if (hitRoll <= hitChance) {
     const actualDamage = target.takeDamage(damage);
@@ -566,9 +886,7 @@ async function executeAttack(attacker, target) {
       attacker.character?.race || attacker.race
     );
     const targetEmoji = getRaceEmoji(target.character?.race || target.race);
-    console.log(
-      `[ATTACK HIT] ${attacker.name} hits ${target.name} for ${actualDamage} damage!`
-    );
+    `[ATTACK HIT] ${attacker.name} hits ${target.name} for ${actualDamage} damage!`;
 
     // Progress combat skills for successful attack
     if (attacker.character) {
@@ -576,11 +894,9 @@ async function executeAttack(attacker, target) {
       const skillLevel = attacker.character.skills[primarySkill] || 0;
       const skillProgress = Math.max(0.001, 0.033 - skillLevel * 0.003);
       progressSkill(attacker.character, primarySkill, skillProgress);
-      console.log(
-        `[SKILL PROGRESS] ${attacker.name} gained ${skillProgress.toFixed(
-          4
-        )} ${primarySkill} experience`
-      );
+      `[SKILL PROGRESS] ${attacker.name} gained ${skillProgress.toFixed(
+        4
+      )} ${primarySkill} experience`;
     }
 
     await getShowChoiceDialog(
@@ -592,7 +908,7 @@ async function executeAttack(attacker, target) {
       attacker.character?.race || attacker.race
     );
     const targetEmoji = getRaceEmoji(target.character?.race || target.race);
-    console.log(`[ATTACK MISS] ${attacker.name} misses ${target.name}!`);
+    `[ATTACK MISS] ${attacker.name} misses ${target.name}!`;
     await getShowChoiceDialog(
       `⚔️ ${attacker.name} ${attackerEmoji} attacks ${target.name} ${targetEmoji} but misses!`,
       [{ type: "button", label: "Continue", value: "ok" }]
@@ -616,20 +932,16 @@ async function handlePlayerDefend(player) {
     // Progress shieldwork skill
     const shieldProgress = Math.max(0.001, 0.033 - shieldSkill * 0.003);
     progressSkill(player.character, "shieldwork", shieldProgress);
-    console.log(
-      `[SKILL PROGRESS] ${player.name} gained ${shieldProgress.toFixed(
-        4
-      )} shieldwork experience`
-    );
+    `[SKILL PROGRESS] ${player.name} gained ${shieldProgress.toFixed(
+      4
+    )} shieldwork experience`;
 
     // Progress tactics skill
     const tacticsProgress = Math.max(0.001, 0.033 - tacticsSkill * 0.003);
     progressSkill(player.character, "tactics", tacticsProgress);
-    console.log(
-      `[SKILL PROGRESS] ${player.name} gained ${tacticsProgress.toFixed(
-        4
-      )} tactics experience`
-    );
+    `[SKILL PROGRESS] ${player.name} gained ${tacticsProgress.toFixed(
+      4
+    )} tactics experience`;
   }
 
   await getShowChoiceDialog(
@@ -688,19 +1000,15 @@ async function handlePlayerFlee() {
 
 // Ally turn handler
 async function handleAllyTurn(ally) {
-  console.log(
-    `[ALLY TURN] ${ally.name} (${
-      ally.character?.race || "unknown"
-    }) - Status: ${ally.status}, Health: ${ally.currentHealth}/${
-      ally.maxHealth
-    }, Unconscious: ${ally.unconscious}, Dead: ${ally.isDead()}`
-  );
+  `[ALLY TURN] ${ally.name} (${ally.character?.race || "unknown"}) - Status: ${
+    ally.status
+  }, Health: ${ally.currentHealth}/${ally.maxHealth}, Unconscious: ${
+    ally.unconscious
+  }, Dead: ${ally.isDead()}`;
 
   // Check if ally can act
   if (ally.isDead() || ally.isFleeing() || ally.isUnconscious()) {
-    console.log(
-      `[ALLY TURN] ${ally.name} cannot act - Status: ${ally.status}, Unconscious: ${ally.unconscious}`
-    );
+    `[ALLY TURN] ${ally.name} cannot act - Status: ${ally.status}, Unconscious: ${ally.unconscious}`;
     return;
   }
 
@@ -709,13 +1017,11 @@ async function handleAllyTurn(ally) {
     (m) => !m.isDead() && !m.isFleeing()
   );
 
-  console.log(
-    `[ALLY TARGETS] ${ally.name} can target ${
-      aliveMonsters.length
-    } monsters: ${aliveMonsters
-      .map((m) => `${m.name}(${m.status},${m.currentHealth}/${m.maxHealth})`)
-      .join(", ")}`
-  );
+  `[ALLY TARGETS] ${ally.name} can target ${
+    aliveMonsters.length
+  } monsters: ${aliveMonsters
+    .map((m) => `${m.name}(${m.status},${m.currentHealth}/${m.maxHealth})`)
+    .join(", ")}`;
 
   if (aliveMonsters.length === 0) return;
 
@@ -726,19 +1032,15 @@ async function handleAllyTurn(ally) {
 
 // Monster turn handler
 async function handleMonsterTurn(monster) {
-  console.log(
-    `[MONSTER TURN] ${monster.name} (${monster.race || "unknown"}) - Status: ${
-      monster.status
-    }, Health: ${monster.currentHealth}/${monster.maxHealth}, Unconscious: ${
-      monster.unconscious
-    }, Dead: ${monster.isDead()}`
-  );
+  `[MONSTER TURN] ${monster.name} (${monster.race || "unknown"}) - Status: ${
+    monster.status
+  }, Health: ${monster.currentHealth}/${monster.maxHealth}, Unconscious: ${
+    monster.unconscious
+  }, Dead: ${monster.isDead()}`;
 
   // Check if monster can act
   if (monster.isDead() || monster.isFleeing() || monster.isUnconscious()) {
-    console.log(
-      `[MONSTER TURN] ${monster.name} cannot act - Status: ${monster.status}, Unconscious: ${monster.unconscious}`
-    );
+    `[MONSTER TURN] ${monster.name} cannot act - Status: ${monster.status}, Unconscious: ${monster.unconscious}`;
     return;
   }
 
@@ -747,13 +1049,11 @@ async function handleMonsterTurn(monster) {
     (a) => !a.isDead() && !a.isFleeing()
   );
 
-  console.log(
-    `[MONSTER TARGETS] ${monster.name} can target ${
-      aliveAllies.length
-    } allies: ${aliveAllies
-      .map((a) => `${a.name}(${a.status},${a.currentHealth}/${a.maxHealth})`)
-      .join(", ")}`
-  );
+  `[MONSTER TARGETS] ${monster.name} can target ${
+    aliveAllies.length
+  } allies: ${aliveAllies
+    .map((a) => `${a.name}(${a.status},${a.currentHealth}/${a.maxHealth})`)
+    .join(", ")}`;
 
   if (aliveAllies.length === 0) return;
 
@@ -763,7 +1063,7 @@ async function handleMonsterTurn(monster) {
 
 // Phase 4: Resolution
 async function handleResolutionPhase(status) {
-  console.log("=== RESOLUTION PHASE ===");
+  ("=== RESOLUTION PHASE ===");
 
   if (status.victory) {
     await getShowChoiceDialog(
@@ -805,10 +1105,7 @@ function syncSkillsToGameState() {
   const playerAlly = combatState.allies.find((ally) => ally.isPlayer);
   if (playerAlly && playerAlly.character && gameState.playerCharacter) {
     gameState.playerCharacter.skills = { ...playerAlly.character.skills };
-    console.log(
-      "[SKILL SYNC] Synced player skills:",
-      gameState.playerCharacter.skills
-    );
+    "[SKILL SYNC] Synced player skills:", gameState.playerCharacter.skills;
   }
 
   // Sync group member skills
@@ -817,10 +1114,7 @@ function syncSkillsToGameState() {
       const groupMember = gameState.group.find((char) => char.id === ally.id);
       if (groupMember) {
         groupMember.skills = { ...ally.character.skills };
-        console.log(
-          `[SKILL SYNC] Synced ${ally.name} skills:`,
-          groupMember.skills
-        );
+        `[SKILL SYNC] Synced ${ally.name} skills:`, groupMember.skills;
       }
     }
   });
@@ -877,8 +1171,8 @@ async function handleHarvestDialog() {
     harvestOptions
   );
 
-  console.log("Harvest result:", harvestResult);
-  console.log("Harvest result keys:", Object.keys(harvestResult));
+  "Harvest result:", harvestResult;
+  "Harvest result keys:", Object.keys(harvestResult);
 
   if (harvestResult === "skip") {
     return;
@@ -888,25 +1182,22 @@ async function handleHarvestDialog() {
     let harvestedCount = 0;
     let harvestedItems = [];
 
-    console.log(
-      "Processing harvest, defeatedMonsters.length:",
-      defeatedMonsters.length
-    );
+    "Processing harvest, defeatedMonsters.length:", defeatedMonsters.length;
 
     for (let i = 0; i < defeatedMonsters.length; i++) {
-      console.log(`Checking harvest_${i}:`, harvestResult[`harvest_${i}`]);
+      `Checking harvest_${i}:`, harvestResult[`harvest_${i}`];
       if (harvestResult[`harvest_${i}`]) {
         const monster = defeatedMonsters[i];
         const head = generateMonsterHead(monster);
 
-        console.log("Generated head:", head);
+        "Generated head:", head;
 
         if (addHeadToInventory(head)) {
           harvestedCount++;
           harvestedItems.push(
             `${getLootRaceEmoji(monster.race)} ${monster.race} Head`
           );
-          console.log("Successfully added head to inventory");
+          ("Successfully added head to inventory");
 
           // Progress survival skill for successful harvest
           if (gameState.playerCharacter) {
@@ -917,14 +1208,12 @@ async function handleHarvestDialog() {
               0.033 - survivalSkill * 0.003
             );
             progressSkill(gameState.playerCharacter, "survival", skillProgress);
-            console.log(
-              `[SKILL PROGRESS] Player gained ${skillProgress.toFixed(
-                4
-              )} survival experience from harvesting`
-            );
+            `[SKILL PROGRESS] Player gained ${skillProgress.toFixed(
+              4
+            )} survival experience from harvesting`;
           }
         } else {
-          console.log("Failed to add head to inventory - not enough space");
+          ("Failed to add head to inventory - not enough space");
           await getShowChoiceDialog(
             `❌ Not enough inventory space for ${monster.race} head!`,
             [{ type: "button", label: "OK", value: "ok" }]

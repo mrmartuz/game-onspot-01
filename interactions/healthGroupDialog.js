@@ -65,9 +65,9 @@ export async function showHealthGroupDialog() {
   };
 
   // Debug: Log the current state
-  console.log("Current gameState.playerCharacter:", gameState.playerCharacter);
-  console.log("Current gameState.group:", gameState.group);
-  console.log("Current gameState.groupBonus:", gameState.groupBonus);
+  "Current gameState.playerCharacter:", gameState.playerCharacter;
+  "Current gameState.group:", gameState.group;
+  "Current gameState.groupBonus:", gameState.groupBonus;
 
   // Player character details
   if (gameState.playerCharacter) {

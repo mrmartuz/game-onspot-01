@@ -33,7 +33,7 @@ export function setupInputs() {
       button.addEventListener(
         "click",
         () => {
-          console.log(`Clicked direction: ${dir.id}`); // Debug
+          `Clicked direction: ${dir.id}`; // Debug
           move(dir.dx, dir.dy);
         },
         { passive: true }
@@ -42,7 +42,7 @@ export function setupInputs() {
       console.error(`Button not found: ${dir.id}`);
     }
   });
-  console.log("Directions setup:", directions); // Debug
+  "Directions setup:", directions; // Debug
 
   // Function to handle player interaction (for both touch and click)
   const handlePlayerInteraction = (e) => {
@@ -64,7 +64,7 @@ export function setupInputs() {
     let centerTileY = Math.floor(gameState.viewHeight / 2);
 
     if (vx === centerTileX && vy === centerTileY) {
-      console.log("Player clicked at center tile"); // Debug
+      ("Player clicked at center tile"); // Debug
       getShowMenuDialog();
     }
   };
@@ -106,7 +106,7 @@ export function setupInputs() {
       button.addEventListener(
         "touchstart",
         (e) => {
-          console.log(`Touched button: ${id}`); // Debug
+          `Touched button: ${id}`; // Debug
           e.preventDefault(); // Prevent click event from firing
           handler();
         },
@@ -117,5 +117,5 @@ export function setupInputs() {
     }
   });
 
-  console.log("Input handlers setup complete"); // Debug
+  ("Input handlers setup complete"); // Debug
 }

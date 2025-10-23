@@ -33,20 +33,20 @@ resize();
 let startMenu;
 while (startMenu !== "explore" && startMenu !== "exit") {
   startMenu = await getStartMenuDialog();
-  console.log("Selected option:", startMenu);
+  "Selected option:", startMenu;
   if (startMenu === "title") {
     //TODO: show to player title and close it after pressing
     //TODO: insert info about the game and mechanics
     // await getTitleDialog();
   } else if (startMenu === "load") {
-    console.log(startMenu);
+    startMenu;
     await getLoadGameDialog();
     break;
   } else if (startMenu === "exit") {
     window.close();
   }
 }
-console.log(startMenu);
+startMenu;
 if (startMenu !== "load") {
   // World Generation
   let worldGenerationDialog;
@@ -70,7 +70,7 @@ if (startMenu !== "load") {
       continue;
     } else if (characterCreation && characterCreation.action === "accept") {
       // Character was accepted, store it and continue
-      console.log("Character accepted:", characterCreation.character);
+      "Character accepted:", characterCreation.character;
       gameState.playerCharacter = characterCreation.character; // Store the player character
       characterCreation = "create"; // Set to exit the loop
     }
@@ -89,7 +89,7 @@ if (startMenu !== "load") {
       (companionChoice.action === "alone" ||
         companionChoice.action === "companion_selected")
     ) {
-      console.log("Companion choice result:", companionChoice);
+      "Companion choice result:", companionChoice;
       companionChoice = "continue"; // Set to exit the loop
     }
   }

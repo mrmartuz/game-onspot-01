@@ -590,9 +590,7 @@ function processCharacterMigration(character, currentLocationType, npcData) {
       // Check if character becomes persistent (migrated more than once)
       if (npcData.migrationCount > 1) {
         npcData.isPersistent = true;
-        console.log(
-          `Character ${character.firstName} ${character.lastName} became persistent after ${npcData.migrationCount} migrations`
-        );
+        `Character ${character.firstName} ${character.lastName} became persistent after ${npcData.migrationCount} migrations`;
       }
 
       // Roll for character improvement during migration
@@ -617,17 +615,13 @@ function processCharacterMigration(character, currentLocationType, npcData) {
         isPersistent: npcData.isPersistent,
       });
 
-      console.log(
-        `Character ${character.firstName} migrated from ${currentLocationType} to ${newLocation}`
-      );
+      `Character ${character.firstName} migrated from ${currentLocationType} to ${newLocation}`;
       return null; // Character is no longer at original location
     }
   }
 
   // Character vanishes (doesn't migrate)
-  console.log(
-    `Character ${character.firstName} vanished from ${currentLocationType}`
-  );
+  `Character ${character.firstName} vanished from ${currentLocationType}`;
   return null;
 }
 
@@ -653,7 +647,7 @@ function rollCharacterImprovement(character) {
   // 20% chance to gain a level
   if (Math.random() < 0.2) {
     improvedCharacter.level = (improvedCharacter.level || 1) + 1;
-    console.log(`${character.firstName} gained a level during migration!`);
+    `${character.firstName} gained a level during migration!`;
   }
 
   // 15% chance to improve a random stat by 1
@@ -663,9 +657,7 @@ function rollCharacterImprovement(character) {
     );
     const randomStat = stats[Math.floor(Math.random() * stats.length)];
     improvedCharacter.stats[randomStat]++;
-    console.log(
-      `${character.firstName} improved ${randomStat} during migration!`
-    );
+    `${character.firstName} improved ${randomStat} during migration!`;
   }
 
   // 10% chance to improve a random skill by 0.5
@@ -675,9 +667,7 @@ function rollCharacterImprovement(character) {
       const randomSkill = skills[Math.floor(Math.random() * skills.length)];
       improvedCharacter.skills[randomSkill] =
         (improvedCharacter.skills[randomSkill] || 0) + 0.5;
-      console.log(
-        `${character.firstName} improved ${randomSkill} during migration!`
-      );
+      `${character.firstName} improved ${randomSkill} during migration!`;
     }
   }
 
@@ -930,15 +920,11 @@ export function processCharacterDepartures(locationType) {
             ];
           const migratedCharacter = migrateCharacter(character, newLocation);
           // In a real implementation, this would be stored in the new location's character pool
-          console.log(
-            `Character ${character.firstName} migrated from ${locationType} to ${newLocation}`
-          );
+          `Character ${character.firstName} migrated from ${locationType} to ${newLocation}`;
         }
       }
       // Otherwise, character is removed from the game
-      console.log(
-        `Character ${character.firstName} departed from ${locationType}`
-      );
+      `Character ${character.firstName} departed from ${locationType}`;
     }
   });
 

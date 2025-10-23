@@ -200,7 +200,7 @@ export async function showGroupCreationDialog() {
   });
 
   const choice = await getShowChoiceDialog(message, components);
-  console.log(choice);
+  choice;
 
   if (choice === "random-name") {
     let randomName;

@@ -58,7 +58,11 @@ function getPrimaryWeaponSkill(character) {
   )
     return skills.great_swords || 0;
   if (weaponType.includes("sword")) return skills.swords || 0;
-  if (weaponType.includes("greataxe") || weaponType.includes("battleaxe") || weaponType.includes("vrakgul-axe"))
+  if (
+    weaponType.includes("greataxe") ||
+    weaponType.includes("battleaxe") ||
+    weaponType.includes("vrakgul-axe")
+  )
     return skills.great_axes || 0;
   if (weaponType.includes("axe")) return skills.axes || 0;
   if (
@@ -72,7 +76,11 @@ function getPrimaryWeaponSkill(character) {
     weaponType.includes("glaive")
   )
     return skills.polearms || 0;
-  if (weaponType.includes("maul") || weaponType.includes("great-hammer") || weaponType.includes("gormith-hammer"))
+  if (
+    weaponType.includes("maul") ||
+    weaponType.includes("great-hammer") ||
+    weaponType.includes("gormith-hammer")
+  )
     return skills.great_hammers || 0;
   if (
     weaponType.includes("mace") ||
@@ -88,7 +96,8 @@ function getPrimaryWeaponSkill(character) {
     weaponType.includes("dagger") ||
     weaponType.includes("javelin") ||
     weaponType.includes("throwing") ||
-    weaponType.includes("sling") || weaponType.includes("skrith-nedle")
+    weaponType.includes("sling") ||
+    weaponType.includes("skrith-nedle")
   )
     return skills.throwing || 0;
   if (weaponType.includes("shield")) return skills.shields || 0;
@@ -145,13 +154,11 @@ function progressCombatSkill(skillName) {
 
   gameState.playerCharacter.skills[skillName] = newLevel;
 
-  console.log(
-    `${
-      gameState.playerCharacter.firstName
-    }'s ${skillName} increased from ${currentLevel.toFixed(
-      2
-    )} to ${newLevel.toFixed(2)}`
-  );
+  `${
+    gameState.playerCharacter.firstName
+  }'s ${skillName} increased from ${currentLevel.toFixed(
+    2
+  )} to ${newLevel.toFixed(2)}`;
 }
 
 export async function handleCombat(ex, ey, isOnTile = false) {

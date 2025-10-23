@@ -24,7 +24,7 @@ export async function saveGameDialog() {
 }
 
 function exportSaveGame() {
-  console.log(gameState);
+  gameState;
 
   const saveData = { ...gameState };
   saveData.cachedTiles = new Map();
@@ -47,7 +47,7 @@ function exportSaveGame() {
     },
     2
   );
-  console.log(saveGame);
+  saveGame;
 
   const blob = new Blob([saveGame], { type: "application/json" });
   const url = URL.createObjectURL(blob);

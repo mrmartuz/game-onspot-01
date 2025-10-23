@@ -370,9 +370,7 @@ export function progressSkill(
   const previousLevel = Math.floor(character.skills[skillName] - amount);
 
   if (currentLevel > previousLevel) {
-    console.log(
-      `${character.firstName} ${character.lastName} leveled up ${skillName} to level ${currentLevel}!`
-    );
+    `${character.firstName} ${character.lastName} leveled up ${skillName} to level ${currentLevel}!`;
 
     // Apply skill level bonuses
     if (
@@ -382,18 +380,16 @@ export function progressSkill(
     ) {
       // Combat skills give damage bonus
       const damageBonus = Math.floor(currentLevel / 2);
-      console.log(`+${damageBonus} damage bonus from ${skillName}`);
+      `+${damageBonus} damage bonus from ${skillName}`;
     } else if (skillName === "shieldwork") {
       // Shield skill gives defense bonus
       const defenseBonus = Math.floor(currentLevel / 3);
-      console.log(`+${defenseBonus} defense bonus from ${skillName}`);
+      `+${defenseBonus} defense bonus from ${skillName}`;
     } else if (skillName === "tactics") {
       // Tactics gives defense and accuracy bonus
       const defenseBonus = Math.floor(currentLevel / 4);
       const accuracyBonus = Math.floor(currentLevel / 4);
-      console.log(
-        `+${defenseBonus} defense and +${accuracyBonus} accuracy bonus from ${skillName}`
-      );
+      `+${defenseBonus} defense and +${accuracyBonus} accuracy bonus from ${skillName}`;
     }
   }
 
