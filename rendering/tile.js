@@ -37,23 +37,6 @@ export function getTile(x, y) {
   let biome = getBiome(x, y);
   let change = gameState.changed.find((t) => t.x === x && t.y === y);
 
-  let entity = "none";
-  if (!getKilledTile(key)) {
-    let h3 = hash(x, y, 3);
-    if (h3 < 0.05) {
-      const entities = [
-        "monster",
-        "beast",
-        "animal",
-        "npc",
-        "group",
-        "army",
-        "trader",
-        "caravan",
-      ];
-      entity = entities[Math.floor(hash(x, y, 4) * entities.length)];
-    }
-  }
   // Compute raw height and flora
   let rawHeight = hash(x, y, 5) * 11;
   let rawFlora = hash(x, y, 6) * 11;
@@ -95,6 +78,7 @@ export function getTile(x, y) {
   // Determine terrain based on smoothed height
   let terrain = height < 3 ? "sand" : height < 6 ? "dirt" : "rock";
 
+  // Generate location first
   let location = change ? change.type : "none";
   if (location === "none") {
     let h1 = hash(x, y, 1);
@@ -158,6 +142,25 @@ export function getTile(x, y) {
     }
     if (locations.length > 0) {
       location = locations[Math.floor(hash(x, y, 2) * locations.length)];
+    }
+  }
+
+  // Generate entity only if no location exists and tile is not killed
+  let entity = "none";
+  if (!getKilledTile(key) && location === "none") {
+    let h3 = hash(x, y, 3);
+    if (h3 < 0.05) {
+      const entities = [
+        "monster",
+        "beast",
+        "animal",
+        "npc",
+        "group",
+        "army",
+        "trader",
+        "caravan",
+      ];
+      entity = entities[Math.floor(hash(x, y, 4) * entities.length)];
     }
   }
   // Determine flora type based on biome if flora is present
