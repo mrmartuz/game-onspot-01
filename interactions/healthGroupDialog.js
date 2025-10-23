@@ -9,12 +9,15 @@ import { showCharacterManagementDialog } from "./characterManagementDialog.js";
 
 export async function showHealthGroupDialog() {
   let message = "";
+  let title = "";
+  let groupMembersPositions = {};
 
   // Calculate total group size (player + NPCs)
   const totalGroupSize =
     (gameState.playerCharacter ? 1 : 0) + gameState.group.length;
 
-  message += `🛡️📍The ${gameState.groupName} ${
+  title += `${gameState.groupName}`;
+  title += `\nAn unknown ${
     totalGroupSize < 3
       ? "duo"
       : totalGroupSize < 5
@@ -24,8 +27,7 @@ export async function showHealthGroupDialog() {
       : totalGroupSize < 9
       ? "clan"
       : "tribe"
-  }`;
-  message += `📍🛡️\n`;
+  }\n`;
 
   // Class emoji mapping for display (consistent with character management)
   const classEmoji = {
@@ -216,7 +218,234 @@ export async function showHealthGroupDialog() {
   message += `🍞 **Food:** ${gameState.food}\n`;
   message += `💧 **Water:** ${gameState.water}\n`;
 
+  groupMembersPositions = {
+    group: gameState.group.map((member) => ({
+      position: {
+        x: member.position?.x ?? 0,
+        y: member.position?.y ?? 0,
+      },
+      name: member.firstName + " " + member.lastName,
+      class: member.class,
+      race: member.race,
+      level: member.level,
+      health: member.health,
+      skills: member.skills,
+    })),
+  };
+
+  // Function to populate grid with group members
+  function populateGridWithGroupMembers(groupMembers, gridSize = 10) {
+    const tiles = {};
+
+    // Define emoji mapping for races only
+    const raceEmoji = {
+      Human: "👤",
+      Elf: "🧝",
+      Dwarf: "🧙",
+      Orc: "👹",
+      Goblin: "👺",
+      Demon: "👿",
+      Angel: "👼",
+      Undead: "💀",
+      Draconic: "🐉",
+      Fishman: "🐠",
+      Birdman: "🦅",
+    };
+
+    groupMembers.forEach((member, index) => {
+      // Calculate position starting from center
+      let x, y;
+
+      if (
+        member.position?.x !== undefined &&
+        member.position?.y !== undefined
+      ) {
+        // Use actual position if available
+        x = Math.max(0, Math.min(gridSize - 1, member.position.x));
+        y = Math.max(0, Math.min(gridSize - 1, member.position.y));
+      } else {
+        // Distribute from center in a spiral pattern
+        const centerX = Math.floor(gridSize / 2);
+        const centerY = Math.floor(gridSize / 2);
+
+        // Calculate organic spiral positions - first 5 close, then expanding
+        const spiralPositions = [
+          // Core group - very close together (radius 1)
+          [centerX, centerY], // Center (0) - Player
+          [centerX + 1, centerY], // Right (1)
+          [centerX, centerY + 1], // Down (2)
+          [centerX - 1, centerY], // Left (3)
+          [centerX, centerY - 1], // Up (4)
+
+          // Inner ring - slightly further (radius 1.5)
+          [centerX + 1, centerY + 1], // Down-Right (5)
+          [centerX - 1, centerY + 1], // Down-Left (6)
+          [centerX - 1, centerY - 1], // Up-Left (7)
+          [centerX + 1, centerY - 1], // Up-Right (8)
+
+          // Outer ring - more distance (radius 2)
+          [centerX + 2, centerY], // Further Right (9)
+          [centerX, centerY + 2], // Further Down (10)
+          [centerX - 2, centerY], // Further Left (11)
+          [centerX, centerY - 2], // Further Up (12)
+
+          // Extended positions - even more distance (radius 2.5)
+          [centerX + 2, centerY + 1], // Right-Down (13)
+          [centerX + 2, centerY - 1], // Right-Up (14)
+          [centerX + 1, centerY + 2], // Down-Right-Far (15)
+          [centerX - 1, centerY + 2], // Down-Left-Far (16)
+          [centerX - 2, centerY + 1], // Left-Down (17)
+          [centerX - 2, centerY - 1], // Left-Up (18)
+          [centerX - 1, centerY - 2], // Up-Left-Far (19)
+          [centerX + 1, centerY - 2], // Up-Right-Far (20)
+
+          // Far positions - significant distance (radius 3)
+          [centerX + 3, centerY], // Far Right (21)
+          [centerX, centerY + 3], // Far Down (22)
+          [centerX - 3, centerY], // Far Left (23)
+          [centerX, centerY - 3], // Far Up (24)
+
+          // Very far positions - maximum distance (radius 3.5)
+          [centerX + 3, centerY + 1], // Far Right-Down (25)
+          [centerX + 3, centerY - 1], // Far Right-Up (26)
+          [centerX + 2, centerY + 2], // Far Down-Right (27)
+          [centerX - 2, centerY + 2], // Far Down-Left (28)
+          [centerX - 3, centerY + 1], // Far Left-Down (29)
+          [centerX - 3, centerY - 1], // Far Left-Up (30)
+          [centerX - 2, centerY - 2], // Far Up-Left (31)
+          [centerX + 2, centerY - 2], // Far Up-Right (32)
+
+          // Extreme positions - edge of grid (radius 4)
+          [centerX + 4, centerY], // Very Far Right (33)
+          [centerX, centerY + 4], // Very Far Down (34)
+          [centerX - 4, centerY], // Very Far Left (35)
+          [centerX, centerY - 4], // Very Far Up (36)
+
+          // Corner positions - maximum spread
+          [centerX + 4, centerY + 1], // Very Far Right-Down (37)
+          [centerX + 4, centerY - 1], // Very Far Right-Up (38)
+          [centerX + 3, centerY + 2], // Very Far Down-Right (39)
+          [centerX - 3, centerY + 2], // Very Far Down-Left (40)
+          [centerX - 4, centerY + 1], // Very Far Left-Down (41)
+          [centerX - 4, centerY - 1], // Very Far Left-Up (42)
+          [centerX - 3, centerY - 2], // Very Far Up-Left (43)
+          [centerX + 3, centerY - 2], // Very Far Up-Right (44)
+
+          // Edge positions - grid boundaries
+          [centerX + 4, centerY + 2], // Extreme Right-Down (45)
+          [centerX - 4, centerY + 2], // Extreme Left-Down (46)
+          [centerX + 4, centerY - 2], // Extreme Right-Up (47)
+          [centerX - 4, centerY - 2], // Extreme Left-Up (48)
+          [centerX + 2, centerY + 3], // Extreme Down-Right (49)
+        ];
+
+        const pos = spiralPositions[index] || [centerX, centerY];
+        x = Math.max(0, Math.min(gridSize - 1, pos[0]));
+        y = Math.max(0, Math.min(gridSize - 1, pos[1]));
+      }
+
+      const cellKey = `${y}-${x}`;
+
+      // Determine emoji based on race only
+      let emoji = raceEmoji[member.race] || "👤"; // Default human emoji
+
+      // Try different name properties
+      const memberName =
+        member.firstName +
+          " " +
+          member.lastName +
+          " - " +
+          member.race +
+          " " +
+          member.class +
+          " lvl." +
+          member.level || `Member ${index + 1}`;
+
+      // Determine background color based on member type
+      let backgroundColor = "#ffffff"; // Default white
+
+      if (index === 0 && gameState.playerCharacter) {
+        // Player character gets special color
+        backgroundColor = "#e8f4fd"; // Light blue
+      } else {
+        // Group members get different colors based on their index
+        const colors = [
+          "red", // Alice blue
+          "#f5f5dc", // Beige
+          "#ffe4e1", // Misty rose
+          "#f0fff0", // Honeydew
+          "#fff8dc", // Cornsilk
+          "#fdf5e6", // Old lace
+          "#faf0e6", // Linen
+          "#f5fffa", // Mint cream
+          "#fffacd", // Lemon chiffon
+          "#e6e6fa", // Lavender
+          "#ffe4b5", // Moccasin
+          "#f0e68c", // Khaki
+          "#dda0dd", // Plum
+          "#98fb98", // Pale green
+          "#f0ffff", // Azure
+          "#ffefd5", // Papaya whip
+          "#ffdab9", // Peach puff
+          "#e0ffff", // Light cyan
+          "#f5deb3", // Wheat
+          "#d3d3d3", // Light gray
+          "#ffb6c1", // Light pink
+          "#ffa07a", // Light salmon
+          "#87ceeb", // Sky blue
+          "#dda0dd", // Plum
+          "#98fb98", // Pale green
+          "#f0e68c", // Khaki
+          "#ffb6c1", // Light pink
+          "#e6e6fa", // Lavender
+          "#f5deb3", // Wheat
+          "#d3d3d3", // Light gray
+          "#ffefd5", // Papaya whip
+          "#f0ffff", // Azure
+          "#ffe4b5", // Moccasin
+          "#ffdab9", // Peach puff
+          "#e0ffff", // Light cyan
+          "#f0f8ff", // Alice blue
+          "#f5f5dc", // Beige
+          "#ffe4e1", // Misty rose
+          "#f0fff0", // Honeydew
+          "#fff8dc", // Cornsilk
+          "#fdf5e6", // Old lace
+          "#faf0e6", // Linen
+          "#f5fffa", // Mint cream
+          "#fffacd", // Lemon chiffon
+          "#e6e6fa", // Lavender
+          "#ffe4b5", // Moccasin
+          "#f0e68c", // Khaki
+          "#dda0dd", // Plum
+          "#98fb98", // Pale green
+          "#f0ffff", // Azure
+        ];
+        backgroundColor = colors[index % colors.length];
+      }
+
+      tiles[cellKey] = {
+        emoji: emoji,
+        name: memberName,
+        backgroundColor: backgroundColor,
+      };
+    });
+
+    return tiles;
+  }
+
+  // Generate tiles for the grid using group members (including player character)
+  const allMembers = gameState.playerCharacter
+    ? [gameState.playerCharacter, ...gameState.group]
+    : gameState.group;
+  const groupTiles = populateGridWithGroupMembers(allMembers);
+
   const components = [
+    {
+      type: "squaregrid",
+      showCoordinates: false,
+      tiles: groupTiles,
+    },
     { type: "message", label: message, value: "" },
     {
       type: "button",
@@ -231,7 +460,7 @@ export async function showHealthGroupDialog() {
     { type: "button", label: "❌ Close", value: "close" },
   ];
 
-  const choice = await getShowChoiceDialog("Group Status", components);
+  const choice = await getShowChoiceDialog(title, components);
 
   if (choice === "char_mgmt") {
     await showCharacterManagementDialog();

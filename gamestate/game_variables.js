@@ -18,7 +18,7 @@ export const gameState = {
   viewDist: 3,
   cooldown: false,
   health: 100,
-  gold: 20 + Math.floor(Math.random() * 10),
+  gold: 2000 + Math.floor(Math.random() * 10),
   food: 10 + Math.floor(Math.random() * 5),
   water: 10 + Math.floor(Math.random() * 5),
   tents: 0,

@@ -212,6 +212,7 @@ body {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
     z-index: 20;
     text-align: left;
+    scrollbar-width: none;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     overflow-y: auto;
     /* Enable vertical scrolling */
