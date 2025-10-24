@@ -116,7 +116,11 @@ function initializeCombatPositions() {
   // Position allies using spiral pattern
   combatState.allies.forEach((ally, index) => {
     const pos = allyPositions[index] || [1, 4]; // Fallback position
-    combatState.positions.allies[ally.id || `ally_${index}`] = {
+    // Add unique ID to ally
+    ally.combatId = index;
+    // Use a consistent key format
+    const allyKey = `ally_${index}`;
+    combatState.positions.allies[allyKey] = {
       row: pos[0],
       col: pos[1],
     };
@@ -125,7 +129,11 @@ function initializeCombatPositions() {
   // Position monsters using spiral pattern
   combatState.monsters.forEach((monster, index) => {
     const pos = monsterPositions[index] || [8, 5]; // Fallback position
-    combatState.positions.monsters[monster.name || `monster_${index}`] = {
+    // Add unique ID to monster
+    monster.combatId = index;
+    // Use a consistent key format
+    const monsterKey = `monster_${index}`;
+    combatState.positions.monsters[monsterKey] = {
       row: pos[0],
       col: pos[1],
     };
@@ -140,14 +148,16 @@ function generateCombatGrid(phase, currentCombatant = null) {
   // Add allies to grid
   Object.keys(combatState.positions.allies).forEach((allyId) => {
     const position = combatState.positions.allies[allyId];
-    const ally = combatState.allies.find(
-      (a) => (a.id || `ally_${combatState.allies.indexOf(a)}`) === allyId
-    );
+    // Extract index from ally key (ally_0, ally_1, etc.)
+    const allyIndex = parseInt(allyId.split("_")[1]);
+    const ally = combatState.allies[allyIndex];
 
     if (ally && position) {
       const cellKey = `${position.row}-${position.col}`;
       const emoji = getRaceEmoji(ally.character?.race || ally.race);
-      const name = ally.name || `Ally ${combatState.allies.indexOf(ally) + 1}`;
+      const name = ally.name || `Ally ${allyIndex + 1}`;
+      // Add ID to name for better identification
+      const displayName = `${name} (#${ally.combatId + 1})`;
 
       // Determine background color
       let backgroundColor = "#4169E1"; // Royal Blue for allies
@@ -166,9 +176,9 @@ function generateCombatGrid(phase, currentCombatant = null) {
 
       tiles[cellKey] = {
         emoji: emoji,
-        name: name,
+        name: displayName,
         backgroundColor: backgroundColor,
-        characterIndex: combatState.allies.indexOf(ally),
+        characterIndex: allyIndex,
       };
     }
   });
@@ -176,10 +186,9 @@ function generateCombatGrid(phase, currentCombatant = null) {
   // Add monsters to grid
   Object.keys(combatState.positions.monsters).forEach((monsterId) => {
     const position = combatState.positions.monsters[monsterId];
-    const monster = combatState.monsters.find(
-      (m) =>
-        (m.name || `monster_${combatState.monsters.indexOf(m)}`) === monsterId
-    );
+    // Extract index from monster key (monster_0, monster_1, etc.)
+    const monsterIndex = parseInt(monsterId.split("_")[1]);
+    const monster = combatState.monsters[monsterIndex];
 
     if (monster && position) {
       const cellKey = `${position.row}-${position.col}`;
@@ -191,13 +200,13 @@ function generateCombatGrid(phase, currentCombatant = null) {
       if (isDetected) {
         emoji = getRaceEmoji(monster.race);
         backgroundColor = "#DC143C"; // Crimson Red for detected enemies
-        name =
-          monster.name ||
-          `Monster ${combatState.monsters.indexOf(monster) + 1}`;
+        name = monster.name || `Monster ${monsterIndex + 1}`;
+        // Add ID to name for better identification
+        name = `${name} (#${monster.combatId + 1})`;
       } else {
         emoji = "?";
         backgroundColor = "#808080"; // Gray for undetected enemies
-        name = "Unknown Enemy";
+        name = `Unknown Enemy (#${monster.combatId + 1})`;
       }
 
       // Change background color if this is the current combatant
@@ -209,7 +218,7 @@ function generateCombatGrid(phase, currentCombatant = null) {
         emoji: emoji,
         name: name,
         backgroundColor: backgroundColor,
-        characterIndex: combatState.monsters.indexOf(monster),
+        characterIndex: monsterIndex,
       };
     }
   });
@@ -716,9 +725,9 @@ async function handleEngagementPhase() {
     }:\n`;
     combatState.monsters.forEach((monster, index) => {
       const emoji = getRaceEmoji(monster.race);
-      engagementMessage += `${index + 1}. ${monster.name} (${
-        monster.race
-      } ${emoji} ${monster.class} Lv.${monster.level})\n`;
+      engagementMessage += `${index + 1}. ${monster.name} (#${
+        monster.combatId + 1
+      }) (${monster.race} ${emoji} ${monster.class} Lv.${monster.level})\n`;
     });
 
     // Check if enemies also detected the player group
@@ -1030,9 +1039,9 @@ async function handlePlayerTurn(player, combatGrid) {
 
   aliveMonsters.forEach((monster, index) => {
     const emoji = getRaceEmoji(monster.race);
-    combatMessage += `${index + 1}. ${monster.name} ${emoji} (${
-      monster.currentHealth
-    }/${monster.maxHealth} HP)\n`;
+    combatMessage += `${index + 1}. ${monster.name} (#${
+      monster.combatId + 1
+    }) ${emoji} (${monster.currentHealth}/${monster.maxHealth} HP)\n`;
   });
 
   const choices = [
@@ -1072,16 +1081,18 @@ async function handlePlayerAttack(player, targets) {
     let targetMessage = `🎯 CHOOSE TARGET\n\n`;
     targets.forEach((target, index) => {
       const emoji = getRaceEmoji(target.race);
-      targetMessage += `${index + 1}. ${target.name} ${emoji} (${
-        target.currentHealth
-      }/${target.maxHealth} HP)\n`;
+      targetMessage += `${index + 1}. ${target.name} (#${
+        target.combatId + 1
+      }) ${emoji} (${target.currentHealth}/${target.maxHealth} HP)\n`;
     });
 
     const targetChoices = targets.map((target, index) => {
       const emoji = getRaceEmoji(target.race);
       return {
         type: "button",
-        label: `${target.name} ${emoji} (${target.currentHealth}/${target.maxHealth} HP)`,
+        label: `${target.name} (#${target.combatId + 1}) ${emoji} (${
+          target.currentHealth
+        }/${target.maxHealth} HP)`,
         value: `target_${index}`,
       };
     });
