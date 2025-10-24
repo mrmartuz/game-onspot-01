@@ -98,9 +98,28 @@ export function updateStatus() {
   ).innerText = `👥: ${gameState.group.length}]`;
 
   // Update date and discoveries
+  const currentHour = getCurrentGameDate().getHours();
+  let timeEmoji;
+
+  if (currentHour >= 22 || currentHour < 6) {
+    timeEmoji = "🌙"; // Night (10 PM - 6 AM)
+  } else if (currentHour >= 6 && currentHour < 8) {
+    timeEmoji = "🌅"; // Sunrise (6 AM - 8 AM)
+  } else if (currentHour >= 8 && currentHour < 12) {
+    timeEmoji = "☀️"; // Morning sun (8 AM - 12 PM)
+  } else if (currentHour >= 12 && currentHour < 14) {
+    timeEmoji = "🌞"; // Midday sun (12 PM - 2 PM)
+  } else if (currentHour >= 14 && currentHour < 18) {
+    timeEmoji = "☀️"; // Afternoon sun (2 PM - 6 PM)
+  } else if (currentHour >= 18 && currentHour < 20) {
+    timeEmoji = "🌇"; // Sunset (6 PM - 8 PM)
+  } else {
+    timeEmoji = "🌙"; // Evening twilight (8 PM - 10 PM)
+  }
+
   document.getElementById(
     "date-button"
-  ).innerText = `📜[${getCurrentGameDate().toLocaleDateString()}]⌚[${getCurrentGameDate().getHours()}]`;
+  ).innerText = `📜[${getCurrentGameDate().toLocaleDateString()}]${timeEmoji}[${currentHour}]`;
   document.getElementById(
     "discoveries-button"
   ).innerText = `🌟[🔍: ${Math.floor(

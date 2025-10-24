@@ -65,6 +65,7 @@ export const gameState = {
   offsetX: 0,
   offsetY: 0,
   last_consume_time: Date.now(),
+  timeOffset: 0, // Manual time adjustments in milliseconds (for actions like rest)
 };
 
 // Character ID generation system - Phase 2.1 Migration

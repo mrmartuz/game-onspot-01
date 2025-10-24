@@ -9,11 +9,27 @@ import { getGroupBonus } from "./utils.js";
 export function getCurrentGameDate() {
   const elapsed_real_ms = Date.now() - game_start_real;
   const elapsed_game_ms = elapsed_real_ms * acceleration;
-  return new Date(game_start_date.getTime() + elapsed_game_ms);
+  const timeOffset = gameState.timeOffset || 0;
+  return new Date(game_start_date.getTime() + elapsed_game_ms + timeOffset);
 }
 
 export function logEvent(desc) {
   gameState.events.push({ date: getCurrentGameDate().toLocaleString(), desc });
+}
+
+export function advanceGameTime(hours) {
+  const beforeTime = getCurrentGameDate();
+  const hoursInMs = hours * 60 * 60 * 1000;
+
+  // Add to time offset
+  gameState.timeOffset = (gameState.timeOffset || 0) + hoursInMs;
+
+  const afterTime = getCurrentGameDate();
+
+  // Trigger consumption check to handle any crossed thresholds
+  timeConsumption();
+
+  return { beforeTime, afterTime };
 }
 
 export function timeConsumption() {

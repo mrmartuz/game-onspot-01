@@ -1548,8 +1548,8 @@ function handlePostCombatDeaths() {
 
 // Handle harvest dialog after combat victory
 async function handleHarvestDialog() {
-  const defeatedMonsters = combatState.monsters.filter((monster) =>
-    monster.isDead()
+  const defeatedMonsters = combatState.monsters.filter(
+    (monster) => monster.isDead() || monster.isUnconscious()
   );
 
   if (defeatedMonsters.length === 0) {

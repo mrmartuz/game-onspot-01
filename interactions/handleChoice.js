@@ -6,7 +6,7 @@ import {
 } from "../interactions.js";
 import { getGroupBonus } from "../utils.js";
 import { updateStatus } from "../rendering.js";
-import { logEvent } from "../time_system.js";
+import { logEvent, advanceGameTime } from "../time_system.js";
 import { getMaxStorage } from "../utils.js";
 import { updateGroupBonus } from "../utils.js";
 import { getSaveGameDialog } from "../interactions.js";
@@ -28,24 +28,51 @@ export async function handleChoice(choice, tile) {
   }
   if (choice === "2") {
     // Rest
+    const { beforeTime, afterTime } = advanceGameTime(2);
+
     // Apply health bonus for better healing
     let healthBonus = getGroupBonus("health");
     let baseHealing = 10;
     let bonusHealing = Math.floor(baseHealing * healthBonus * 0.5); // Health bonus adds up to 50% more healing
     let totalHealing = baseHealing + bonusHealing;
 
-    gameState.health = Math.min(100, gameState.health + totalHealing);
+    // Heal player character
+    if (gameState.playerCharacter) {
+      gameState.playerCharacter.health.current = Math.min(
+        gameState.playerCharacter.health.max,
+        gameState.playerCharacter.health.current + totalHealing
+      );
+      gameState.health = gameState.playerCharacter.health.current; // Update legacy health
+    } else {
+      // Fallback for legacy system
+      gameState.health = Math.min(100, gameState.health + totalHealing);
+    }
+
+    // Heal all group members
+    gameState.group.forEach((member) => {
+      if (member.health && member.health.current < member.health.max) {
+        member.health.current = Math.min(
+          member.health.max,
+          member.health.current + totalHealing
+        );
+      }
+    });
+
     gameState.food -= gameState.group.length * 0.5;
     gameState.water -= gameState.group.length * 0.5;
     gameState.gold -= 2;
     updateStatus();
 
+    const timePassedText = `Time passed: 2 hours (${beforeTime.getHours()}:00 -> ${afterTime.getHours()}:00)`;
     let bonusText = bonusHealing > 0 ? ` (+${bonusHealing} bonus)` : "";
+
     await getShowChoiceDialog(
-      `Rested. 😴 Healed ${totalHealing} health${bonusText}`,
+      `Rested. 😴 Healed ${totalHealing} health${bonusText}\n${timePassedText}`,
       [{ type: "button", label: "OK", value: "ok" }]
     );
-    logEvent(`😴 Rested and healed ${totalHealing} health${bonusText}`);
+    logEvent(
+      `😴 Rested and healed ${totalHealing} health${bonusText} (2 hours)`
+    );
   } else if (choice === "3") {
     // Trade
     // Apply interact bonus for better trade prices
