@@ -2,6 +2,7 @@ import {
   calculateCharacterDamage,
   calculateCharacterDefense,
   calculateCharacterAccuracy,
+  calculateCharacterHealth,
   progressSkill,
 } from "./character-calculations.js";
 import { gameState } from "../../gamestate/game_variables.js";
@@ -14,7 +15,14 @@ export async function generateAllies() {
 
   // Add player character as first ally
   if (gameState.playerCharacter) {
-    const playerAlly = new Ally(gameState.playerCharacter);
+    const playerCurrentHealth =
+      gameState.playerCharacter.health?.current ||
+      calculateCharacterHealth(gameState.playerCharacter);
+    const playerAlly = new Ally(
+      gameState.playerCharacter,
+      null,
+      playerCurrentHealth
+    );
 
     // Set player-specific properties
     playerAlly.id = gameState.playerCharacter.id;
@@ -27,7 +35,9 @@ export async function generateAllies() {
   // Add group members as allies
   if (gameState.group && gameState.group.length > 0) {
     for (const character of gameState.group) {
-      const ally = new Ally(character);
+      const memberCurrentHealth =
+        character.health?.current || calculateCharacterHealth(character);
+      const ally = new Ally(character, null, memberCurrentHealth);
 
       // Set character-specific properties
       ally.id = character.id;

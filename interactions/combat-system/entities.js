@@ -18,12 +18,12 @@ export class CombatEntity {
   }
 
   takeDamage(amount) {
-    const damageApplied = Math.min(amount, this.currentHealth);
-    this.currentHealth = Math.max(0, this.currentHealth - damageApplied);
-    this.damageTaken += damageApplied;
+    // Allow damage to go below 0 HP (negative health)
+    this.currentHealth = this.currentHealth - amount;
+    this.damageTaken += amount;
 
     // Progress defense skills when taking damage
-    if (this.character && damageApplied > 0) {
+    if (this.character && amount > 0) {
       const shieldSkill = this.character.skills.shieldwork || 0;
       const tacticsSkill = this.character.skills.tactics || 0;
 
@@ -42,12 +42,18 @@ export class CombatEntity {
       )} tactics experience from taking damage`;
     }
 
-    if (this.currentHealth <= 0) {
+    // Death mechanics: unconscious at 0 HP, dead at -maxHealth/2
+    if (this.currentHealth <= 0 && !this.unconscious) {
+      this.status = "unconscious";
+      this.unconscious = true;
+    }
+
+    if (this.currentHealth <= -Math.floor(this.maxHealth / 2)) {
       this.status = "dead";
       this.unconscious = true;
     }
 
-    return damageApplied;
+    return amount;
   }
 
   heal(amount) {
@@ -273,9 +279,11 @@ export class Monster extends CombatEntity {
 }
 
 export class Ally extends CombatEntity {
-  constructor(character, maxHealth = null) {
+  constructor(character, maxHealth = null, currentHealth = null) {
     const health = maxHealth || calculateCharacterHealth(character);
+    const startingHealth = currentHealth !== null ? currentHealth : health;
     super(character.firstName + " " + character.lastName, health, "ally");
+    this.currentHealth = startingHealth;
     this.character = character;
     this.unconscious = false;
     this.turnActions = [];

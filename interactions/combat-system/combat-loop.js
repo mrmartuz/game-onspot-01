@@ -41,12 +41,19 @@ export function getCombatStatus(allies, monsters, turnCount = 0) {
       detected: monster.detected,
     })),
     combatActive:
-      allies.some((ally) => !ally.isDead() && !ally.isFleeing()) &&
-      monsters.some((monster) => !monster.isDead() && !monster.isFleeing()),
+      allies.some(
+        (ally) => !ally.isDead() && !ally.isFleeing() && !ally.isUnconscious()
+      ) &&
+      monsters.some(
+        (monster) =>
+          !monster.isDead() && !monster.isFleeing() && !monster.isUnconscious()
+      ),
     victory: monsters.every(
       (monster) => monster.isDead() || monster.isFleeing()
     ),
-    defeat: allies.every((ally) => ally.isDead() || ally.isFleeing()),
+    defeat: allies.every(
+      (ally) => ally.isDead() || ally.isFleeing() || ally.isUnconscious()
+    ),
   };
 
   return status;
@@ -158,7 +165,9 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
 
     // Execute player action
     if (playerChoice === "attack") {
-      const target = monsters.find((m) => !m.isDead() && !m.isFleeing());
+      const target = monsters.find(
+        (m) => !m.isDead() && !m.isFleeing() && !m.isUnconscious()
+      );
       if (target && gameState.playerCharacter) {
         const damage = calculateCharacterDamage(gameState.playerCharacter);
         const actualDamage = target.takeDamage(damage);
@@ -265,6 +274,9 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
     ("Combat ended without clear victory or defeat");
   }
 
+  // Sync health back to gameState characters
+  syncHealthToGameStateLoop(allies);
+
   // Update game state (experience and skills already updated above)
   ("Combat completed - game state updated");
 
@@ -338,4 +350,80 @@ function getPrimaryWeaponSkill(character) {
     return "shields";
 
   return "unarmed";
+}
+
+// Sync health from combat entities back to gameState (for combat-loop.js)
+function syncHealthToGameStateLoop(allies) {
+  // Sync player character health
+  const playerAlly = allies.find((ally) => ally.isPlayer);
+  if (playerAlly && playerAlly.character && gameState.playerCharacter) {
+    gameState.playerCharacter.health.current = playerAlly.currentHealth;
+    gameState.playerCharacter.health.max = playerAlly.maxHealth;
+    gameState.health = playerAlly.currentHealth; // Backwards compatibility
+    "[HEALTH SYNC] Synced player health:",
+      playerAlly.currentHealth,
+      "/",
+      playerAlly.maxHealth;
+  }
+
+  // Sync group member health
+  allies.forEach((ally) => {
+    if (!ally.isPlayer && ally.character && ally.id) {
+      const groupMember = gameState.group.find((char) => char.id === ally.id);
+      if (groupMember) {
+        groupMember.health.current = ally.currentHealth;
+        groupMember.health.max = ally.maxHealth;
+        `[HEALTH SYNC] Synced ${ally.name} health:`,
+          ally.currentHealth,
+          "/",
+          ally.maxHealth;
+      }
+    }
+  });
+
+  // Apply post-combat auto-heal for survivors
+  applyPostCombatHealingLoop();
+}
+
+// Apply post-combat healing to surviving characters (for combat-loop.js)
+function applyPostCombatHealingLoop() {
+  // Heal player character if not dead
+  if (
+    gameState.playerCharacter &&
+    gameState.playerCharacter.health.current >
+      -Math.floor(gameState.playerCharacter.health.max / 2)
+  ) {
+    const healAmount = Math.floor(gameState.playerCharacter.health.max / 10);
+    const oldHealth = gameState.playerCharacter.health.current;
+    gameState.playerCharacter.health.current = Math.min(
+      gameState.playerCharacter.health.max,
+      gameState.playerCharacter.health.current + healAmount
+    );
+    gameState.health = gameState.playerCharacter.health.current; // Update legacy health
+    const actualHealing = gameState.playerCharacter.health.current - oldHealth;
+    if (actualHealing > 0) {
+      "[POST-COMBAT HEAL] Player healed for", actualHealing, "HP";
+    }
+  }
+
+  // Heal group members if not dead
+  gameState.group.forEach((member) => {
+    if (member.health.current > -Math.floor(member.health.max / 2)) {
+      const healAmount = Math.floor(member.health.max / 10);
+      const oldHealth = member.health.current;
+      member.health.current = Math.min(
+        member.health.max,
+        member.health.current + healAmount
+      );
+      const actualHealing = member.health.current - oldHealth;
+      if (actualHealing > 0) {
+        "[POST-COMBAT HEAL]",
+          member.firstName,
+          member.lastName,
+          "healed for",
+          actualHealing,
+          "HP";
+      }
+    }
+  });
 }

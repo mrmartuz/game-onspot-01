@@ -154,10 +154,15 @@ function generateCombatGrid(phase, currentCombatant = null) {
 
     if (ally && position) {
       const cellKey = `${position.row}-${position.col}`;
-      // Show skull emoji for dead allies, race emoji for living ones
-      const emoji = ally.isDead()
-        ? "💀"
-        : getRaceEmoji(ally.character?.race || ally.race);
+      // Show different emojis based on ally status
+      let emoji;
+      if (ally.isDead()) {
+        emoji = "💀"; // Dead
+      } else if (ally.isUnconscious()) {
+        emoji = "😵"; // Unconscious
+      } else {
+        emoji = getRaceEmoji(ally.character?.race || ally.race); // Conscious
+      }
       const name = ally.name || `Ally ${allyIndex + 1}`;
       // Add ID to name for better identification
       const displayName = `${name} (#${ally.combatId + 1})`;
@@ -201,8 +206,14 @@ function generateCombatGrid(phase, currentCombatant = null) {
       let emoji, backgroundColor, name;
 
       if (isDetected) {
-        // Show skull emoji for dead creatures, race emoji for living ones
-        emoji = monster.isDead() ? "💀" : getRaceEmoji(monster.race);
+        // Show different emojis based on monster status
+        if (monster.isDead()) {
+          emoji = "💀"; // Dead
+        } else if (monster.isUnconscious()) {
+          emoji = "😵"; // Unconscious
+        } else {
+          emoji = getRaceEmoji(monster.race); // Conscious
+        }
         backgroundColor = "#DC143C"; // Crimson Red for detected enemies
         name = monster.name || `Monster ${monsterIndex + 1}`;
         // Add ID to name for better identification
@@ -1021,7 +1032,7 @@ async function handlePlayerTurn(player, combatGrid) {
   console.log(`Player turn: ${player.name}`);
 
   const aliveMonsters = combatState.monsters.filter(
-    (m) => !m.isDead() && !m.isFleeing()
+    (m) => !m.isDead() && !m.isFleeing() && !m.isUnconscious()
   );
 
   if (aliveMonsters.length === 0) {
@@ -1304,7 +1315,7 @@ async function handleAllyTurn(ally, combatGrid) {
 
   // Simple AI for allies
   const aliveMonsters = combatState.monsters.filter(
-    (m) => !m.isDead() && !m.isFleeing()
+    (m) => !m.isDead() && !m.isFleeing() && !m.isUnconscious()
   );
 
   `[ALLY TARGETS] ${ally.name} can target ${
@@ -1336,7 +1347,7 @@ async function handleMonsterTurn(monster, combatGrid) {
 
   // Simple AI for monsters
   const aliveAllies = combatState.allies.filter(
-    (a) => !a.isDead() && !a.isFleeing()
+    (a) => !a.isDead() && !a.isFleeing() && !a.isUnconscious()
   );
 
   `[MONSTER TARGETS] ${monster.name} can target ${
@@ -1364,8 +1375,9 @@ async function handleResolutionPhase(status) {
     // Show harvest dialog after victory
     await handleHarvestDialog();
 
-    // Sync all skill changes back to gameState
+    // Sync all skill and health changes back to gameState
     syncSkillsToGameState();
+    syncHealthToGameState();
 
     // Update status display to reflect skill progression
     updateStatus();
@@ -1377,8 +1389,9 @@ async function handleResolutionPhase(status) {
       [{ type: "button", label: "Continue", value: "ok" }]
     );
 
-    // Sync skills even after defeat
+    // Sync skills and health even after defeat
     syncSkillsToGameState();
+    syncHealthToGameState();
 
     // Update status display even after defeat
     updateStatus();
@@ -1390,8 +1403,9 @@ async function handleResolutionPhase(status) {
       [{ type: "button", label: "Continue", value: "ok" }]
     );
 
-    // Sync skills even after retreat
+    // Sync skills and health even after retreat
     syncSkillsToGameState();
+    syncHealthToGameState();
 
     // Update status display even after retreat
     updateStatus();
@@ -1421,6 +1435,115 @@ function syncSkillsToGameState() {
       }
     }
   });
+}
+
+// Sync health from combat entities back to gameState
+function syncHealthToGameState() {
+  // Sync player character health
+  const playerAlly = combatState.allies.find((ally) => ally.isPlayer);
+  if (playerAlly && playerAlly.character && gameState.playerCharacter) {
+    gameState.playerCharacter.health.current = playerAlly.currentHealth;
+    gameState.playerCharacter.health.max = playerAlly.maxHealth;
+    gameState.health = playerAlly.currentHealth; // Backwards compatibility
+    "[HEALTH SYNC] Synced player health:",
+      playerAlly.currentHealth,
+      "/",
+      playerAlly.maxHealth;
+  }
+
+  // Sync group member health
+  combatState.allies.forEach((ally) => {
+    if (!ally.isPlayer && ally.character && ally.id) {
+      const groupMember = gameState.group.find((char) => char.id === ally.id);
+      if (groupMember) {
+        groupMember.health.current = ally.currentHealth;
+        groupMember.health.max = ally.maxHealth;
+        `[HEALTH SYNC] Synced ${ally.name} health:`,
+          ally.currentHealth,
+          "/",
+          ally.maxHealth;
+      }
+    }
+  });
+
+  // Apply post-combat auto-heal for survivors
+  applyPostCombatHealing();
+
+  // Handle death and remove dead group members
+  handlePostCombatDeaths();
+}
+
+// Apply post-combat healing to surviving characters
+function applyPostCombatHealing() {
+  // Heal player character if not dead
+  if (
+    gameState.playerCharacter &&
+    gameState.playerCharacter.health.current >
+      -Math.floor(gameState.playerCharacter.health.max / 2)
+  ) {
+    const healAmount = Math.floor(gameState.playerCharacter.health.max / 10);
+    const oldHealth = gameState.playerCharacter.health.current;
+    gameState.playerCharacter.health.current = Math.min(
+      gameState.playerCharacter.health.max,
+      gameState.playerCharacter.health.current + healAmount
+    );
+    gameState.health = gameState.playerCharacter.health.current; // Update legacy health
+    const actualHealing = gameState.playerCharacter.health.current - oldHealth;
+    if (actualHealing > 0) {
+      "[POST-COMBAT HEAL] Player healed for", actualHealing, "HP";
+    }
+  }
+
+  // Heal group members if not dead
+  gameState.group.forEach((member) => {
+    if (member.health.current > -Math.floor(member.health.max / 2)) {
+      const healAmount = Math.floor(member.health.max / 10);
+      const oldHealth = member.health.current;
+      member.health.current = Math.min(
+        member.health.max,
+        member.health.current + healAmount
+      );
+      const actualHealing = member.health.current - oldHealth;
+      if (actualHealing > 0) {
+        "[POST-COMBAT HEAL]",
+          member.firstName,
+          member.lastName,
+          "healed for",
+          actualHealing,
+          "HP";
+      }
+    }
+  });
+}
+
+// Handle post-combat deaths and remove dead group members
+function handlePostCombatDeaths() {
+  // Check if player character is dead
+  if (
+    gameState.playerCharacter &&
+    gameState.playerCharacter.health.current <=
+      -Math.floor(gameState.playerCharacter.health.max / 2)
+  ) {
+    ("[DEATH] Player character has died!");
+    // Player death will be handled by the game's death check system
+  }
+
+  // Remove dead group members
+  const aliveGroupMembers = gameState.group.filter((member) => {
+    const isDead = member.health.current <= -Math.floor(member.health.max / 2);
+    if (isDead) {
+      "[DEATH] Removing dead group member:", member.firstName, member.lastName;
+      logEvent(`💀 ${member.firstName} ${member.lastName} has died in combat`);
+    }
+    return !isDead;
+  });
+
+  // Update group with only living members
+  const removedCount = gameState.group.length - aliveGroupMembers.length;
+  if (removedCount > 0) {
+    gameState.group = aliveGroupMembers;
+    "[DEATH] Removed", removedCount, "dead group members";
+  }
 }
 
 // Handle harvest dialog after combat victory
@@ -1574,10 +1697,10 @@ async function calculateInitiativeOrder(
 
 function getCombatStatus() {
   const aliveAllies = combatState.allies.filter(
-    (a) => !a.isDead() && !a.isFleeing()
+    (a) => !a.isDead() && !a.isFleeing() && !a.isUnconscious()
   );
   const aliveMonsters = combatState.monsters.filter(
-    (m) => !m.isDead() && !m.isFleeing()
+    (m) => !m.isDead() && !m.isFleeing() && !m.isUnconscious()
   );
 
   return {

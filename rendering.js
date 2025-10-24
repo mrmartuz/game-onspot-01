@@ -91,8 +91,8 @@ export function updateStatus() {
 
   // Update group elements
   document.getElementById("status-bar-health").innerText = `[❤️‍🩹: ${Math.floor(
-    gameState.health
-  )}`;
+    gameState.playerCharacter?.health?.current || gameState.health
+  )}/${Math.floor(gameState.playerCharacter?.health?.max || gameState.health)}`;
   document.getElementById(
     "status-bar-group"
   ).innerText = `👥: ${gameState.group.length}]`;
