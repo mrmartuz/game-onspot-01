@@ -55,6 +55,209 @@ function getRaceEmoji(race) {
   return raceEmoji[race] || "👤";
 }
 
+// Initialize combat positions for all combatants
+function initializeCombatPositions() {
+  const gridSize = 10;
+
+  // Define spiral positions for allies (top area)
+  const allyPositions = [
+    // Core positions for allies (rows 0-2)
+    [0, 4],
+    [0, 5],
+    [0, 6], // Top row
+    [1, 3],
+    [1, 4],
+    [1, 5],
+    [1, 6],
+    [1, 7], // Middle row
+    [2, 2],
+    [2, 3],
+    [2, 4],
+    [2, 5],
+    [2, 6],
+    [2, 7],
+    [2, 8], // Bottom row
+    // Extended positions if needed
+    [0, 3],
+    [0, 7],
+    [1, 2],
+    [1, 8],
+    [2, 1],
+    [2, 9],
+  ];
+
+  // Define spiral positions for monsters (bottom area)
+  const monsterPositions = [
+    // Core positions for monsters (rows 7-9)
+    [7, 2],
+    [7, 3],
+    [7, 4],
+    [7, 5],
+    [7, 6],
+    [7, 7],
+    [7, 8], // Top row
+    [8, 3],
+    [8, 4],
+    [8, 5],
+    [8, 6],
+    [8, 7], // Middle row
+    [9, 4],
+    [9, 5],
+    [9, 6], // Bottom row
+    // Extended positions if needed
+    [7, 1],
+    [7, 9],
+    [8, 2],
+    [8, 8],
+    [9, 3],
+    [9, 7],
+  ];
+
+  // Position allies using spiral pattern
+  combatState.allies.forEach((ally, index) => {
+    const pos = allyPositions[index] || [1, 4]; // Fallback position
+    combatState.positions.allies[ally.id || `ally_${index}`] = {
+      row: pos[0],
+      col: pos[1],
+    };
+  });
+
+  // Position monsters using spiral pattern
+  combatState.monsters.forEach((monster, index) => {
+    const pos = monsterPositions[index] || [8, 5]; // Fallback position
+    combatState.positions.monsters[monster.name || `monster_${index}`] = {
+      row: pos[0],
+      col: pos[1],
+    };
+  });
+}
+
+// Generate combat grid for visualization
+function generateCombatGrid(phase, currentCombatant = null) {
+  const tiles = {};
+  const gridSize = 10;
+
+  // Add allies to grid
+  Object.keys(combatState.positions.allies).forEach((allyId) => {
+    const position = combatState.positions.allies[allyId];
+    const ally = combatState.allies.find(
+      (a) => (a.id || `ally_${combatState.allies.indexOf(a)}`) === allyId
+    );
+
+    if (ally && position) {
+      const cellKey = `${position.row}-${position.col}`;
+      const emoji = getRaceEmoji(ally.character?.race || ally.race);
+      const name = ally.name || `Ally ${combatState.allies.indexOf(ally) + 1}`;
+
+      // Determine background color
+      let backgroundColor = "#4169E1"; // Royal Blue for allies
+      if (ally.isPlayer) {
+        backgroundColor = "#FFD700"; // Gold for player
+      }
+
+      // Change background color if this is the current combatant
+      if (currentCombatant && currentCombatant === ally) {
+        if (ally.isPlayer) {
+          backgroundColor = "#FFA500"; // Orange for active player
+        } else {
+          backgroundColor = "#FF6B6B"; // Light red for active ally
+        }
+      }
+
+      tiles[cellKey] = {
+        emoji: emoji,
+        name: name,
+        backgroundColor: backgroundColor,
+        characterIndex: combatState.allies.indexOf(ally),
+      };
+    }
+  });
+
+  // Add monsters to grid
+  Object.keys(combatState.positions.monsters).forEach((monsterId) => {
+    const position = combatState.positions.monsters[monsterId];
+    const monster = combatState.monsters.find(
+      (m) =>
+        (m.name || `monster_${combatState.monsters.indexOf(m)}`) === monsterId
+    );
+
+    if (monster && position) {
+      const cellKey = `${position.row}-${position.col}`;
+      const isDetected =
+        phase === "detection" ? combatState.enemiesDetected : true;
+
+      let emoji, backgroundColor, name;
+
+      if (isDetected) {
+        emoji = getRaceEmoji(monster.race);
+        backgroundColor = "#DC143C"; // Crimson Red for detected enemies
+        name =
+          monster.name ||
+          `Monster ${combatState.monsters.indexOf(monster) + 1}`;
+      } else {
+        emoji = "?";
+        backgroundColor = "#808080"; // Gray for undetected enemies
+        name = "Unknown Enemy";
+      }
+
+      // Change background color if this is the current combatant
+      if (currentCombatant && currentCombatant === monster) {
+        backgroundColor = "#FF4500"; // Orange-red for active monster
+      }
+
+      tiles[cellKey] = {
+        emoji: emoji,
+        name: name,
+        backgroundColor: backgroundColor,
+        characterIndex: combatState.monsters.indexOf(monster),
+      };
+    }
+  });
+
+  return tiles;
+}
+
+// Update positions based on engagement choices
+function updatePositionsForEngagement(playerChoice, enemyChoice) {
+  const gridSize = 10;
+
+  // Calculate movement distances
+  const playerMovement = getMovementDistance(playerChoice);
+  const enemyMovement = getMovementDistance(enemyChoice);
+
+  // Update ally positions (move down)
+  Object.keys(combatState.positions.allies).forEach((allyId) => {
+    const position = combatState.positions.allies[allyId];
+    if (position) {
+      position.row = Math.min(gridSize - 1, position.row + playerMovement);
+    }
+  });
+
+  // Update monster positions (move up)
+  Object.keys(combatState.positions.monsters).forEach((monsterId) => {
+    const position = combatState.positions.monsters[monsterId];
+    if (position) {
+      position.row = Math.max(0, position.row - enemyMovement);
+    }
+  });
+}
+
+// Get movement distance based on action choice
+function getMovementDistance(choice) {
+  switch (choice) {
+    case "charge":
+      return 2; // Move 2 rows closer
+    case "attack":
+      return 1; // Move 1 row closer
+    case "stalk":
+      return 3; // Move 3 rows closer (stealth approach)
+    case "flee":
+      return 0; // Stay at same position
+    default:
+      return 0;
+  }
+}
+
 // Combat phases
 const COMBAT_PHASES = {
   DETECTION: "detection",
@@ -68,6 +271,7 @@ let combatState = {
   phase: COMBAT_PHASES.DETECTION,
   allies: [],
   monsters: [],
+  positions: { allies: {}, monsters: {} }, // Track grid positions
   turnCount: 0,
   playerDetected: false,
   enemiesDetected: false,
@@ -84,6 +288,7 @@ export async function handleEnhancedCombatDialog(ex, ey, isOnTile = false) {
     phase: COMBAT_PHASES.DETECTION,
     allies: [],
     monsters: [],
+    positions: { allies: {}, monsters: {} }, // Track grid positions
     turnCount: 0,
     playerDetected: false,
     enemiesDetected: false,
@@ -138,6 +343,9 @@ export async function handleEnhancedCombatDialog(ex, ey, isOnTile = false) {
 
   `Generated ${combatState.allies.length} allies and ${combatState.monsters.length} monsters`;
 
+  // Initialize positions for all combatants
+  initializeCombatPositions();
+
   // Start with detection phase
   return await handleDetectionPhase();
 }
@@ -183,7 +391,11 @@ async function handleDetectionPhase() {
     stealthModifier > 0 ? "+" : ""
   }${stealthModifier}`;
 
+  // Generate combat grid for detection phase
+  const combatGrid = generateCombatGrid("detection");
+
   await getShowChoiceDialog(detectionMessage, [
+    { type: "squaregrid", tiles: combatGrid },
     { type: "button", label: "Continue", value: "continue" },
   ]);
 
@@ -344,7 +556,14 @@ async function handleSimultaneousEngagement(playerChoice, enemyChoice) {
 
   message += "Combat begins!";
 
+  // Update positions based on engagement choices
+  updatePositionsForEngagement(playerChoice, enemyChoice);
+
+  // Generate updated combat grid
+  const updatedGrid = generateCombatGrid("engagement");
+
   await getShowChoiceDialog(message, [
+    { type: "squaregrid", tiles: updatedGrid },
     { type: "button", label: "Begin Combat", value: "begin" },
   ]);
 
@@ -518,7 +737,11 @@ async function handleEngagementPhase() {
 
     engagementMessage += `What do you want to do?`;
 
+    // Generate combat grid for engagement phase
+    const combatGrid = generateCombatGrid("engagement");
+
     const choices = [
+      { type: "squaregrid", tiles: combatGrid },
       { type: "button", label: "⚡ Charge Attack", value: "charge" },
       { type: "button", label: "🎯 Careful Attack", value: "attack" },
       { type: "button", label: "🥷 Stalk", value: "stalk" },
@@ -573,6 +796,12 @@ async function handleEngagementPhase() {
 async function handleChargeAttack() {
   ("Player chooses: Charge Attack");
 
+  // Update positions for charge attack
+  updatePositionsForEngagement("charge", "attack"); // Assume enemy does careful attack
+
+  // Generate updated combat grid
+  const updatedGrid = generateCombatGrid("engagement");
+
   // Charge gives initiative bonus but higher risk
   combatState.initiativeOrder = await calculateInitiativeOrder(
     true,
@@ -584,7 +813,10 @@ async function handleChargeAttack() {
 
   await getShowChoiceDialog(
     "⚡ CHARGE ATTACK!\n\nYour group charges forward with battle cries!\nYou gain initiative bonus but enemies are alerted.",
-    [{ type: "button", label: "Begin Combat", value: "begin" }]
+    [
+      { type: "squaregrid", tiles: updatedGrid },
+      { type: "button", label: "Begin Combat", value: "begin" },
+    ]
   );
 
   return await handleCombatPhase();
@@ -592,6 +824,12 @@ async function handleChargeAttack() {
 
 async function handleCarefulAttack() {
   ("Player chooses: Careful Attack");
+
+  // Update positions for careful attack
+  updatePositionsForEngagement("attack", "attack"); // Assume enemy does careful attack
+
+  // Generate updated combat grid
+  const updatedGrid = generateCombatGrid("engagement");
 
   // Careful attack - normal initiative
   combatState.initiativeOrder = await calculateInitiativeOrder(
@@ -604,7 +842,10 @@ async function handleCarefulAttack() {
 
   await getShowChoiceDialog(
     "🎯 CAREFUL ATTACK\n\nYour group approaches cautiously, weapons ready.\nNormal initiative rolls.",
-    [{ type: "button", label: "Begin Combat", value: "begin" }]
+    [
+      { type: "squaregrid", tiles: updatedGrid },
+      { type: "button", label: "Begin Combat", value: "begin" },
+    ]
   );
 
   return await handleCombatPhase();
@@ -612,6 +853,12 @@ async function handleCarefulAttack() {
 
 async function handleStalk() {
   ("Player chooses: Stalk");
+
+  // Update positions for stalk
+  updatePositionsForEngagement("stalk", "attack"); // Assume enemy does careful attack
+
+  // Generate updated combat grid
+  const updatedGrid = generateCombatGrid("engagement");
 
   // Stalk gives stealth bonus but might fail
   const stalkSuccess = Math.random() < 0.7; // 70% chance of success
@@ -627,12 +874,18 @@ async function handleStalk() {
 
     await getShowChoiceDialog(
       "🥷 STALKING SUCCESS\n\nYour group successfully stalks the enemies.\nYou gain stealth bonus to initiative.",
-      [{ type: "button", label: "Begin Combat", value: "begin" }]
+      [
+        { type: "squaregrid", tiles: updatedGrid },
+        { type: "button", label: "Begin Combat", value: "begin" },
+      ]
     );
   } else {
     await getShowChoiceDialog(
       "🥷 STALKING FAILED\n\nYour group is detected while stalking!\nEnemies gain initiative bonus.",
-      [{ type: "button", label: "Begin Combat", value: "begin" }]
+      [
+        { type: "squaregrid", tiles: updatedGrid },
+        { type: "button", label: "Begin Combat", value: "begin" },
+      ]
     );
 
     combatState.initiativeOrder = await calculateInitiativeOrder(
@@ -718,15 +971,18 @@ async function handleCombatPhase() {
     const currentCombatant =
       combatState.initiativeOrder[combatState.currentTurn];
 
+    // Generate combat grid with current combatant highlighted
+    const combatGrid = generateCombatGrid("combat", currentCombatant);
+
     if (currentCombatant.isPlayer) {
       // Player turn
-      await handlePlayerTurn(currentCombatant);
+      await handlePlayerTurn(currentCombatant, combatGrid);
     } else if (currentCombatant.character) {
       // Ally turn
-      await handleAllyTurn(currentCombatant);
+      await handleAllyTurn(currentCombatant, combatGrid);
     } else {
       // Monster turn
-      await handleMonsterTurn(currentCombatant);
+      await handleMonsterTurn(currentCombatant, combatGrid);
     }
 
     // Check combat end conditions
@@ -743,7 +999,7 @@ async function handleCombatPhase() {
 }
 
 // Player turn handler
-async function handlePlayerTurn(player) {
+async function handlePlayerTurn(player, combatGrid) {
   console.log(`Player turn: ${player.name}`);
 
   const aliveMonsters = combatState.monsters.filter(
@@ -780,6 +1036,7 @@ async function handlePlayerTurn(player) {
   });
 
   const choices = [
+    { type: "squaregrid", tiles: combatGrid },
     { type: "button", label: "⚔️ Attack", value: "attack" },
     { type: "button", label: "🛡️ Defend", value: "defend" },
     { type: "button", label: "🛡️ Protect Ally", value: "protect" },
@@ -884,6 +1141,9 @@ async function executeAttack(attacker, target) {
     1
   )}`;
 
+  // Generate combat grid with attacker highlighted
+  const combatGrid = generateCombatGrid("combat", attacker);
+
   if (hitRoll <= hitChance) {
     const actualDamage = target.takeDamage(damage);
     const attackerEmoji = getRaceEmoji(
@@ -905,7 +1165,10 @@ async function executeAttack(attacker, target) {
 
     await getShowChoiceDialog(
       `⚔️ ${attacker.name} ${attackerEmoji} attacks ${target.name} ${targetEmoji} for ${actualDamage} damage!`,
-      [{ type: "button", label: "Continue", value: "ok" }]
+      [
+        { type: "squaregrid", tiles: combatGrid },
+        { type: "button", label: "Continue", value: "ok" },
+      ]
     );
   } else {
     const attackerEmoji = getRaceEmoji(
@@ -915,7 +1178,10 @@ async function executeAttack(attacker, target) {
     `[ATTACK MISS] ${attacker.name} misses ${target.name}!`;
     await getShowChoiceDialog(
       `⚔️ ${attacker.name} ${attackerEmoji} attacks ${target.name} ${targetEmoji} but misses!`,
-      [{ type: "button", label: "Continue", value: "ok" }]
+      [
+        { type: "squaregrid", tiles: combatGrid },
+        { type: "button", label: "Continue", value: "ok" },
+      ]
     );
   }
 }
@@ -1003,7 +1269,7 @@ async function handlePlayerFlee() {
 }
 
 // Ally turn handler
-async function handleAllyTurn(ally) {
+async function handleAllyTurn(ally, combatGrid) {
   `[ALLY TURN] ${ally.name} (${ally.character?.race || "unknown"}) - Status: ${
     ally.status
   }, Health: ${ally.currentHealth}/${ally.maxHealth}, Unconscious: ${
@@ -1035,7 +1301,7 @@ async function handleAllyTurn(ally) {
 }
 
 // Monster turn handler
-async function handleMonsterTurn(monster) {
+async function handleMonsterTurn(monster, combatGrid) {
   `[MONSTER TURN] ${monster.name} (${monster.race || "unknown"}) - Status: ${
     monster.status
   }, Health: ${monster.currentHealth}/${monster.maxHealth}, Unconscious: ${
