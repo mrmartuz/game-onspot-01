@@ -154,7 +154,10 @@ function generateCombatGrid(phase, currentCombatant = null) {
 
     if (ally && position) {
       const cellKey = `${position.row}-${position.col}`;
-      const emoji = getRaceEmoji(ally.character?.race || ally.race);
+      // Show skull emoji for dead allies, race emoji for living ones
+      const emoji = ally.isDead()
+        ? "💀"
+        : getRaceEmoji(ally.character?.race || ally.race);
       const name = ally.name || `Ally ${allyIndex + 1}`;
       // Add ID to name for better identification
       const displayName = `${name} (#${ally.combatId + 1})`;
@@ -198,7 +201,8 @@ function generateCombatGrid(phase, currentCombatant = null) {
       let emoji, backgroundColor, name;
 
       if (isDetected) {
-        emoji = getRaceEmoji(monster.race);
+        // Show skull emoji for dead creatures, race emoji for living ones
+        emoji = monster.isDead() ? "💀" : getRaceEmoji(monster.race);
         backgroundColor = "#DC143C"; // Crimson Red for detected enemies
         name = monster.name || `Monster ${monsterIndex + 1}`;
         // Add ID to name for better identification
@@ -985,7 +989,12 @@ async function handleCombatPhase() {
 
     if (currentCombatant.isPlayer) {
       // Player turn
-      await handlePlayerTurn(currentCombatant, combatGrid);
+      const playerResult = await handlePlayerTurn(currentCombatant, combatGrid);
+      // Check if player retreated or fled successfully
+      if (playerResult === "retreated" || playerResult === "fled") {
+        combatState.combatActive = false;
+        return await handleResolutionPhase({ retreat: true });
+      }
     } else if (currentCombatant.character) {
       // Ally turn
       await handleAllyTurn(currentCombatant, combatGrid);
@@ -1375,6 +1384,19 @@ async function handleResolutionPhase(status) {
     updateStatus();
 
     return "defeat";
+  } else if (status.retreat) {
+    await getShowChoiceDialog(
+      "🏃 RETREAT SUCCESSFUL!\n\nYour group has successfully retreated from combat.\nSome members may be wounded but alive.",
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+
+    // Sync skills even after retreat
+    syncSkillsToGameState();
+
+    // Update status display even after retreat
+    updateStatus();
+
+    return "retreat";
   }
 
   return "unknown";
