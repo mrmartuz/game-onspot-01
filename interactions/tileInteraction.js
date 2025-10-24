@@ -1,6 +1,6 @@
 import { gameState } from "../gamestate/game_variables.js";
 import { getShowChoiceDialog } from "../interactions.js";
-import { getGroupBonus } from "../utils.js";
+import { getGroupBonus, getMaxStorage } from "../utils.js";
 import { updateStatus } from "../rendering.js";
 import { logEvent } from "../time_system.js";
 import {
@@ -12,9 +12,78 @@ import { recruitmentDialog } from "./recruitmentDialog.js";
 import { recruitmentSystem } from "./recruitmentSystem.js";
 import { handleChoice } from "./handleChoice.js";
 
+// Helper function to check if there's enough storage space for water
+function hasSpaceForWater(amount = 10) {
+  const maxStorage = getMaxStorage();
+
+  // Calculate current storage usage
+  const goldSpace = Math.ceil(gameState.gold / 25);
+  const foodSpace = gameState.food;
+  const waterSpace = gameState.water;
+  const woodSpace = gameState.wood;
+  const tentSpace = gameState.tents;
+  const buildingMatSpace = gameState.building_mats;
+
+  // Calculate monster head space
+  const headSpace = gameState.monsterHeads.reduce(
+    (total, head) => total + head.inventorySize,
+    0
+  );
+
+  const totalUsedSpace =
+    goldSpace +
+    foodSpace +
+    waterSpace +
+    headSpace +
+    woodSpace +
+    tentSpace +
+    buildingMatSpace;
+  const availableSpace = maxStorage - totalUsedSpace;
+
+  return availableSpace >= amount;
+}
+
+// Helper function to collect water from waterfall
+async function collectWaterFromWaterfall() {
+  const waterAmount = 10;
+
+  if (!hasSpaceForWater(waterAmount)) {
+    await getShowChoiceDialog(
+      `❌ Not enough storage space!\n\nYou need ${waterAmount} space to collect water from the waterfall.`,
+      [{ type: "button", label: "OK", value: "ok" }]
+    );
+    return false;
+  }
+
+  gameState.water += waterAmount;
+  updateStatus();
+  logEvent(`💧 Collected ${waterAmount} water from waterfall`);
+
+  await getShowChoiceDialog(
+    `💧 Collected ${waterAmount} water from the waterfall!\n\nYour party now has ${gameState.water.toFixed(
+      1
+    )} water.`,
+    [{ type: "button", label: "OK", value: "ok" }]
+  );
+
+  return true;
+}
+
 // Helper function to show minimal menu after recruitment
 async function showMinimalMenuAfterRecruitment(tile) {
   let options = [{ type: "button", label: "🚶 Leave", value: "1" }];
+
+  // Add water collection option for waterfalls
+  if (tile.location === "waterfalls") {
+    const waterButtonLabel = hasSpaceForWater(10)
+      ? "💧 Take water from the waterfall +10💧"
+      : "💧 Take water from the waterfall +10💧 (No space)";
+    options.unshift({
+      type: "button",
+      label: waterButtonLabel,
+      value: "water",
+    });
+  }
 
   // Add fight option for monster caves
   if (tile.location === "monster caves" || tile.entity === "monster") {
@@ -32,8 +101,10 @@ async function showMinimalMenuAfterRecruitment(tile) {
 
   const choice = await getShowChoiceDialog(finalMsg, options);
 
-  // Handle the choice if user wants to fight monsters
-  if (choice === "9") {
+  // Handle the choices
+  if (choice === "water") {
+    await collectWaterFromWaterfall();
+  } else if (choice === "9") {
     await getHandleEnhancedCombatDialog(gameState.px, gameState.py, true);
   }
 }
@@ -199,6 +270,19 @@ export async function checkTileInteraction(tile) {
 
         // If no character available, show regular discovery message
         let components = [];
+
+        // Add water collection option for waterfalls
+        if (tile.location === "waterfalls") {
+          const waterButtonLabel = hasSpaceForWater(10)
+            ? "💧 Take water from the waterfall +10💧"
+            : "💧 Take water from the waterfall +10💧 (No space)";
+          components.push({
+            type: "button",
+            label: waterButtonLabel,
+            value: "water",
+          });
+        }
+
         // Show combat option for locations with monsters
         if (tile.location === "monster caves" || tile.entity === "monster") {
           components.push({
@@ -215,8 +299,10 @@ export async function checkTileInteraction(tile) {
           components
         );
 
-        // Handle the choice if user wants to fight monsters
-        if (choice === "9") {
+        // Handle the choices
+        if (choice === "water") {
+          await collectWaterFromWaterfall();
+        } else if (choice === "9") {
           await getHandleEnhancedCombatDialog(gameState.px, gameState.py, true);
         }
         return;
@@ -302,12 +388,29 @@ export async function checkTileInteraction(tile) {
       // If no character available, show regular discovery message
       let components = [];
 
+      // Add water collection option for waterfalls
+      if (tile.location === "waterfalls") {
+        const waterButtonLabel = hasSpaceForWater(10)
+          ? "💧 Take water from the waterfall +10💧"
+          : "💧 Take water from the waterfall +10💧 (No space)";
+        components.push({
+          type: "button",
+          label: waterButtonLabel,
+          value: "water",
+        });
+      }
+
       components.push({ type: "button", label: "OK", value: "ok" });
 
-      await getShowChoiceDialog(
+      const choice = await getShowChoiceDialog(
         `Discovered ${tile.location}! 🌟${totalPoints}`,
         components
       );
+
+      // Handle water collection
+      if (choice === "water") {
+        await collectWaterFromWaterfall();
+      }
       logEvent(
         `🌟 Discovered ${tile.location} at ${positionKey} +${totalPoints} points`
       );
