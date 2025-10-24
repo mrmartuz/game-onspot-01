@@ -7,6 +7,98 @@ import { getGroupBonus } from "../utils.js";
 import { getShowChoiceDialog } from "../interactions.js";
 import { showCharacterManagementDialog } from "./characterManagementDialog.js";
 
+// Helper function to format character details for display
+function formatCharacterDetails(character) {
+  if (!character) {
+    return "Click on a creature in the grid above to see their details";
+  }
+
+  const classEmoji = {
+    fighter: "⚔️",
+    archer: "🏹",
+    brute: "💪",
+    monk: "🧘",
+    cleric: "⛪",
+    geomancer: "🌍",
+    pyromancer: "🔥",
+    necromancer: "💀",
+    articaster: "❄️",
+    martial_artist: "🥋",
+    ranger: "🌲",
+    explorer: "🔍",
+    paladin: "🛡️",
+    alchemist: "🧪",
+    herbalist: "🌿",
+    hunter: "🎯",
+    dungeondiver: "🗝️",
+    craftsman: "🔨",
+  };
+
+  const raceEmoji = {
+    Human: "👤",
+    Elf: "🧝",
+    Dwarf: "🧙",
+    Orc: "👹",
+    Goblin: "👺",
+    Demon: "👿",
+    Angel: "👼",
+    Undead: "💀",
+    Draconic: "🐉",
+    Fishman: "🐠",
+    Birdman: "🦅",
+  };
+
+  const classEmojiIcon = classEmoji[character.class] || "👤";
+  const raceEmojiIcon = raceEmoji[character.race] || "👤";
+
+  let details = `👤 Name: ${character.firstName} ${character.lastName}\n`;
+  details += `🧬 Race: ${character.race} ${raceEmojiIcon} | Class: ${character.class} ${classEmojiIcon}\n`;
+  details += `⚧ Gender: ${character.gender} | 📊 Level: ${
+    character.level || 1
+  } | ❤️‍🩹 Health: ${character.health?.current || 0}/${
+    character.health?.max || 0
+  }\n`;
+
+  // Display stats (excluding LUCK)
+  if (character.stats) {
+    details += `💪 Stats: STR:${character.stats.STR} DEX:${character.stats.DEX} CON:${character.stats.CON} INT:${character.stats.INT} WIS:${character.stats.WIS} CHA:${character.stats.CHA}\n`;
+  }
+
+  // Display top 5 skills
+  if (character.skills) {
+    const topSkills = Object.entries(character.skills)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([skill, level]) => `${skill}: ${level.toFixed(2)}`)
+      .join(", ");
+    if (topSkills) {
+      details += `🎯 Top 5 Skills: ${topSkills}\n`;
+    }
+  }
+
+  // Display equipment
+  if (character.equipment) {
+    details += `🛡️ Armor: ${character.equipment.armor || "(empty)"}\n`;
+    details += `⚔️ Weapon: ${character.equipment.weapon || "(empty)"}\n`;
+
+    // Check if weapon is two-handed to determine second hand display
+    const weapon = character.equipment.weapon || "";
+    const isTwoHanded =
+      weapon.includes("greataxe") ||
+      weapon.includes("greatsword") ||
+      weapon.includes("polearm") ||
+      weapon.includes("bow");
+    details += `🖐️ Second Hand: ${
+      character.equipment.secondHand || (isTwoHanded ? "(2h-grip)" : "(empty)")
+    }\n`;
+
+    details += `🎒 Back: ${character.equipment.back || "(empty)"}\n`;
+    details += `🔧 Tool: ${character.equipment.tool || "(empty)"}\n`;
+  }
+
+  return details;
+}
+
 export async function showHealthGroupDialog() {
   let message = "";
   let title = "";
@@ -71,76 +163,7 @@ export async function showHealthGroupDialog() {
   "Current gameState.group:", gameState.group;
   "Current gameState.groupBonus:", gameState.groupBonus;
 
-  // Player character details
-  if (gameState.playerCharacter) {
-    const player = gameState.playerCharacter;
-    const classEmojiIcon = classEmoji[player.class] || "👤";
-    const raceEmojiIcon = raceEmoji[player.race] || "👤";
-
-    let playerStats = `👤 **Player Character**\n`;
-    playerStats += `Name: ${player.firstName} ${player.lastName}\n`;
-    playerStats += `Race: ${player.race} ${raceEmojiIcon} | Class: ${player.class} ${classEmojiIcon}\n`;
-    playerStats += `Gender: ${player.gender} | Level: ${player.level || 1}\n`;
-    playerStats += `Health: ${player.health?.current || 0}/${
-      player.health?.max || 0
-    } ❤️‍🩹\n`;
-
-    // Display stats
-    if (player.stats) {
-      playerStats += `Stats: STR:${player.stats.STR} DEX:${player.stats.DEX} CON:${player.stats.CON} INT:${player.stats.INT} WIS:${player.stats.WIS} CHA:${player.stats.CHA} LUCK:${player.stats.LUCK}\n`;
-    }
-
-    // Display top skills
-    if (player.skills) {
-      const topSkills = Object.entries(player.skills)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 3)
-        .map(([skill, level]) => `${skill}:${level.toFixed(2)}`)
-        .join(", ");
-      if (topSkills) {
-        playerStats += `Top Skills: ${topSkills}\n`;
-      }
-    }
-
-    message += playerStats + "\n";
-  } else {
-    message += `👤 **Player Character**\n`;
-    message += `Name: ${gameState.name}\n`;
-    message += `Health: ${Math.floor(gameState.health)}/100 ❤️‍🩹\n\n`;
-  }
-
-  // Group members (NPCs) details
-  if (gameState.group.length > 0) {
-    message += `👥 **Group Members (${gameState.group.length}):**\n`;
-
-    gameState.group.forEach((member, index) => {
-      const classEmojiIcon = classEmoji[member.class] || "👤";
-      const raceEmojiIcon = raceEmoji[member.race] || "👤";
-
-      message += `${index + 1}. ${member.firstName} ${member.lastName}\n`;
-      message += `   ${member.race} ${raceEmojiIcon} ${
-        member.class
-      } ${classEmojiIcon} | Level ${member.level || 1}\n`;
-      message += `   Gender: ${member.gender} | Health: ${
-        member.health?.current || 0
-      }/${member.health?.max || 0}\n`;
-
-      // Display top skills
-      if (member.skills) {
-        const topSkills = Object.entries(member.skills)
-          .sort(([, a], [, b]) => b - a)
-          .slice(0, 2)
-          .map(([skill, level]) => `${skill}:${level.toFixed(2)}`)
-          .join(", ");
-        if (topSkills) {
-          message += `   Skills: ${topSkills}\n`;
-        }
-      }
-      message += "\n";
-    });
-  } else {
-    message += `👥 **Group Members:** None\n\n`;
-  }
+  // Character details will be displayed dynamically when grid items are clicked
 
   message += `📊 **Total Active Bonuses:**\n`;
 
@@ -212,11 +235,6 @@ export async function showHealthGroupDialog() {
       }**: +${totalBonus.toFixed(1)} - ${description}\n`;
     }
   });
-
-  message += `\n📦 **Storage:** ${getMaxStorage()} units\n`;
-  message += `💰 **Gold:** ${gameState.gold}\n`;
-  message += `🍞 **Food:** ${gameState.food}\n`;
-  message += `💧 **Water:** ${gameState.water}\n`;
 
   groupMembersPositions = {
     group: gameState.group.map((member) => ({
@@ -428,6 +446,7 @@ export async function showHealthGroupDialog() {
         emoji: emoji,
         name: memberName,
         backgroundColor: backgroundColor,
+        characterIndex: index,
       };
     });
 
@@ -440,11 +459,27 @@ export async function showHealthGroupDialog() {
     : gameState.group;
   const groupTiles = populateGridWithGroupMembers(allMembers);
 
+  // Function to handle character selection
+  function handleCharacterSelect(characterIndex) {
+    const character = allMembers[characterIndex];
+    const detailsDiv = document.getElementById("character-details");
+    if (detailsDiv && character) {
+      detailsDiv.textContent = formatCharacterDetails(character);
+    }
+  }
+
   const components = [
     {
       type: "squaregrid",
       showCoordinates: false,
       tiles: groupTiles,
+      onCharacterSelect: handleCharacterSelect,
+    },
+    {
+      type: "message",
+      label: formatCharacterDetails(null),
+      value: "",
+      id: "character-details",
     },
     { type: "message", label: message, value: "" },
     {

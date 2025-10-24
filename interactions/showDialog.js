@@ -72,6 +72,9 @@ export async function showChoiceDialog(message, components) {
             const msgDiv = document.createElement("div");
             const msg = document.createElement("p");
             msg.textContent = component.label || "Unnamed Message";
+            if (component.id) {
+              msg.id = component.id;
+            }
             msgDiv.appendChild(msg);
             gameDialog.appendChild(msgDiv);
             break;
@@ -195,6 +198,7 @@ export async function showChoiceDialog(message, components) {
             mobileGridContainer.style.height = `${mobileGridSize + 40}px`; // Add extra height for name row
             mobileGridContainer.style.maxWidth = "70vw";
             mobileGridContainer.style.maxHeight = "70vh";
+            mobileGridContainer.style.margin = "0 auto"; // Center the grid horizontally
 
             // Create 10x10 grid of divs
             for (let row = 0; row < 10; row++) {
@@ -259,15 +263,25 @@ export async function showChoiceDialog(message, components) {
                       selectedNameDiv.style.border = "2px solid #6a6a6a";
                     }
                   }
+
+                  // Update character details if characterIndex is available
+                  const characterIndex = gridDiv.dataset.characterIndex;
+                  if (
+                    characterIndex !== undefined &&
+                    component.onCharacterSelect
+                  ) {
+                    component.onCharacterSelect(parseInt(characterIndex));
+                  }
                 });
 
                 // Check if there's content for this cell position
                 const cellKey = `${row}-${col}`;
                 let cellContent = "";
                 let cellName = "";
+                let tileData = null;
 
                 if (component.tiles && component.tiles[cellKey]) {
-                  const tileData = component.tiles[cellKey];
+                  tileData = component.tiles[cellKey];
 
                   // Only support object format with emoji and name
                   if (typeof tileData === "object" && tileData.emoji) {
@@ -288,8 +302,11 @@ export async function showChoiceDialog(message, components) {
 
                 gridDiv.textContent = cellContent;
 
-                // Store the creature name for click events
+                // Store the creature name and character index for click events
                 gridDiv.dataset.creatureName = cellName;
+                if (tileData && tileData.characterIndex !== undefined) {
+                  gridDiv.dataset.characterIndex = tileData.characterIndex;
+                }
 
                 mobileGridContainer.appendChild(gridDiv);
               }
