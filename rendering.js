@@ -11,7 +11,7 @@ export const ctx = canvas.getContext("2d");
 export function resize() {
   // Get available space (viewport minus status bars)
   const availableWidth = window.innerWidth;
-  const availableHeight = window.innerHeight - 80; // 50px status bar + 30px bottom bar
+  const availableHeight = window.innerHeight - 98; // 49px status bar + 49px bottom bar
 
   // Calculate aspect ratio
   const aspectRatio = availableWidth / availableHeight;
@@ -72,6 +72,40 @@ export function draw(offsetDeltaX, offsetDeltaY) {
   drawPlayer(ctx);
 }
 
+function updateBarColors() {
+  const currentHour = getCurrentGameDate().getHours();
+  let backgroundColor;
+  let borderColor;
+  if (currentHour >= 22 || currentHour < 6) {
+    backgroundColor = "#050A0F"; // Night (10 PM - 6 AM)
+    borderColor = "#0F1B2B";
+  } else if (currentHour >= 6 && currentHour < 8) {
+    backgroundColor = "#3E2B14"; // Sunrise (6 AM - 8 AM)
+    borderColor = "#D8B080";
+  } else if (currentHour >= 8 && currentHour < 12) {
+    backgroundColor = "#193D4D"; // Morning sun (8 AM - 12 PM)
+    borderColor = "#8EC0D8";
+  } else if (currentHour >= 12 && currentHour < 14) {
+    backgroundColor = "#3885A8"; // Midday sun (12 PM - 2 PM)
+    borderColor = "#A5CEE1";
+  } else if (currentHour >= 14 && currentHour < 18) {
+    backgroundColor = "#193D4D"; // Afternoon sun (2 PM - 6 PM)
+    borderColor = "#8EC0D8";
+  } else if (currentHour >= 18 && currentHour < 20) {
+    backgroundColor = "#583622"; // Sunset (6 PM - 8 PM)
+    borderColor = "#C89070";
+  } else {
+    backgroundColor = "#23282F"; // Evening twilight (8 PM - 10 PM)
+    borderColor = "#6A798E";
+  }
+
+  // Apply colors to both bars
+  document.getElementById("status-bar").style.backgroundColor = backgroundColor;
+  document.getElementById("bottom-bar").style.backgroundColor = backgroundColor;
+  document.getElementById("status-bar").style.borderColor = borderColor;
+  document.getElementById("bottom-bar").style.borderColor = borderColor;
+}
+
 export function updateStatus() {
   // Update individual stat elements
   document.getElementById("gold-button").innerText = `[🪙: ${Math.floor(
@@ -125,4 +159,7 @@ export function updateStatus() {
   ).innerText = `🌟[🔍: ${Math.floor(
     gameState.discoverPoints
   )} ⚔️: ${Math.floor(gameState.killPoints)}]`;
+
+  // Update bar colors based on time of day
+  updateBarColors();
 }

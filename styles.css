@@ -83,11 +83,11 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 50px;
+    height: 49px;
     background-color: gray;
     color: white;
     text-align: center;
-    line-height: 50px;
+    line-height: 49px;
     z-index: 10;
     font-size: 16px;
     display: flex;
@@ -95,6 +95,8 @@ body {
     justify-content: center;
     align-items: center;
     gap: 30px;
+    transition: background-color 5s ease, border-color 5s ease;
+    border-bottom: 1px solid transparent;
 }
 
 #gold-button,
@@ -163,7 +165,7 @@ body {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 50px;
+    height: 49px;
     background-color: gray;
     color: white;
     z-index: 10;
@@ -171,6 +173,8 @@ body {
     display: flex;
     justify-content: space-around;
     align-items: center;
+    transition: background-color 5s ease, border-color 5s ease;
+    border-top: 1px solid transparent;
 }
 
 #group-bonus-button {
