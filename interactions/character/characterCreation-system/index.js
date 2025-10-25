@@ -10,6 +10,19 @@ import { handleClassSelection } from "./steps/class-selection.js";
 import { handleStatsAllocationWithState } from "./steps/stats-allocation.js";
 import { showCharacterPreview } from "./steps/character-preview.js";
 import { statGeneration } from "../stats.js";
+import {
+  CharacterCreationState,
+  NavigationResult,
+  createNavigationResult,
+} from "./state.js";
+import {
+  validateRaceSelection,
+  validateSexSelection,
+  validateNameResult,
+  validateClassSelection,
+  validateStatsResult,
+} from "./validation.js";
+import { classDatabase } from "../../../interactions/combat/classes.js";
 
 /**
  * Main character generation dialog entry point
@@ -59,44 +72,113 @@ export async function showCharacterGenerationDialog() {
 }
 
 /**
- * Handle custom character creation flow
+ * Handle custom character creation flow with state management
+ * @param {CharacterCreationState} state - Character creation state (optional)
  * @returns {Promise<Object|string>} Generated character or navigation result
  */
-async function handleCustomCreation() {
+async function handleCustomCreation(state = new CharacterCreationState()) {
+  // Set generation method if not already set
+  if (!state.getGenerationMethod()) {
+    state.setGenerationMethod("custom");
+  }
+
   // Step 1: Race Selection
-  const raceResult = await handleRaceSelection();
-  if (raceResult === "back") return "back";
+  let raceResult = state.getRace();
+  if (!raceResult) {
+    raceResult = await handleRaceSelection();
+    if (raceResult === "back") return "back";
+
+    // Validate race selection
+    if (!validateRaceSelection(raceResult)) {
+      console.error("Invalid race selection:", raceResult);
+      return "back";
+    }
+
+    state.setRace(raceResult);
+  }
 
   // Step 2: Sex Selection
-  const sexResult = await handleSexSelectionStep(raceResult);
-  if (sexResult === "back") return "back";
+  let sexResult = state.getSex();
+  if (!sexResult) {
+    sexResult = await handleSexSelectionStep(raceResult, state);
+    if (sexResult === "back") {
+      state.resetFromStep("race");
+      return await handleCustomCreation(state);
+    }
 
-  // Step 3: Name and Surname
-  const nameResult = await handleNameSelectionStep(raceResult, sexResult);
-  if (nameResult === "back") return "back";
+    // Validate sex selection
+    if (!validateSexSelection(sexResult)) {
+      console.error("Invalid sex selection:", sexResult);
+      return "back";
+    }
 
-  // Step 4: Class Selection (only common classes)
-  const classResult = await handleClassSelectionStep(
-    nameResult,
-    raceResult,
-    sexResult
-  );
-  if (classResult === "back") return "back";
+    state.setSex(sexResult);
+  }
 
-  // Ensure classResult is valid
-  if (!classResult || typeof classResult !== "string") {
-    console.error("Invalid class result:", classResult);
-    return "back";
+  // Step 3: Name Selection
+  let nameResult = state.getName();
+  if (!nameResult) {
+    nameResult = await handleNameSelectionStep(raceResult, sexResult, state);
+    if (nameResult === "back") {
+      state.resetFromStep("sex");
+      return await handleCustomCreation(state);
+    }
+
+    // Validate name result
+    if (!validateNameResult(nameResult)) {
+      console.error("Invalid name result:", nameResult);
+      return "back";
+    }
+
+    state.setName(nameResult);
+  }
+
+  // Step 4: Class Selection
+  let classResult = state.getClass();
+  if (!classResult) {
+    classResult = await handleClassSelectionStep(
+      nameResult,
+      raceResult,
+      sexResult,
+      state
+    );
+    if (classResult === "back") {
+      state.resetFromStep("name");
+      return await handleCustomCreation(state);
+    }
+
+    // Validate class selection
+    if (!validateClassSelection(classResult, classDatabase)) {
+      console.error("Invalid class selection:", classResult);
+      return "back";
+    }
+
+    state.setClass(classResult);
   }
 
   // Step 5: Stats Allocation
-  const statsResult = await handleStatsAllocationStep(
-    nameResult,
-    raceResult,
-    sexResult,
-    classResult
-  );
-  if (statsResult === "back") return "back";
+  let statsResult = state.getStats();
+  if (!statsResult) {
+    statsResult = await handleStatsAllocationStep(
+      nameResult,
+      raceResult,
+      sexResult,
+      classResult,
+      state
+    );
+    if (statsResult === "back") {
+      state.resetFromStep("class");
+      return await handleCustomCreation(state);
+    }
+
+    // Validate stats result
+    if (!validateStatsResult(statsResult)) {
+      console.error("Invalid stats result:", statsResult);
+      return "back";
+    }
+
+    state.setStats(statsResult);
+  }
 
   // Step 6: Create character and show preview
   const character = await characterGeneration.generateCharacter({
@@ -119,29 +201,44 @@ async function handleCustomCreation() {
     classResult
   );
 
-  // Check if character was accepted
+  // Handle navigation results from preview
   if (result && result.action === "accept") {
     return result; // Return the accepted character
   }
 
-  // Handle back from preview - restart the entire custom creation flow
-  if (result === "back") {
-    return await handleCustomCreation();
+  // Handle back navigation from preview
+  if (result && result.action === NavigationResult.BACK_TO_STATS) {
+    // Go back to stats allocation with preserved data
+    state.resetFromStep("stats");
+    return await handleCustomCreation(state);
   }
 
-  return result; // Return other results (regenerate, etc.)
+  // Handle regenerate from preview
+  if (result && result.action === NavigationResult.REGENERATE) {
+    // Regenerate character with same selections but new stats/equipment
+    state.resetFromStep("stats");
+    return await handleCustomCreation(state);
+  }
+
+  // Handle back to main menu
+  if (result && result.action === NavigationResult.BACK_TO_MAIN) {
+    return "back";
+  }
+
+  return result; // Return other results
 }
 
 /**
  * Handle sex selection step with proper back navigation
  * @param {string} raceResult - Selected race
+ * @param {CharacterCreationState} state - Character creation state
  * @returns {Promise<string>} Selected sex or navigation result
  */
-async function handleSexSelectionStep(raceResult) {
+async function handleSexSelectionStep(raceResult, state) {
   const sexResult = await handleSexSelection(raceResult);
   if (sexResult === "back") {
     // Go back to race selection
-    return await handleCustomCreation();
+    return "back";
   }
   return sexResult;
 }
@@ -150,13 +247,14 @@ async function handleSexSelectionStep(raceResult) {
  * Handle name selection step with proper back navigation
  * @param {string} raceResult - Selected race
  * @param {string} sexResult - Selected sex
+ * @param {CharacterCreationState} state - Character creation state
  * @returns {Promise<Object|string>} Name result or navigation result
  */
-async function handleNameSelectionStep(raceResult, sexResult) {
+async function handleNameSelectionStep(raceResult, sexResult, state) {
   const nameResult = await handleNameSelection(raceResult, sexResult);
   if (nameResult === "back") {
     // Go back to sex selection
-    return await handleSexSelectionStep(raceResult);
+    return "back";
   }
   return nameResult;
 }
@@ -166,9 +264,15 @@ async function handleNameSelectionStep(raceResult, sexResult) {
  * @param {Object} nameResult - Name selection result
  * @param {string} raceResult - Selected race
  * @param {string} sexResult - Selected sex
+ * @param {CharacterCreationState} state - Character creation state
  * @returns {Promise<string>} Selected class or navigation result
  */
-async function handleClassSelectionStep(nameResult, raceResult, sexResult) {
+async function handleClassSelectionStep(
+  nameResult,
+  raceResult,
+  sexResult,
+  state
+) {
   const classResult = await handleClassSelection(
     nameResult,
     raceResult,
@@ -176,7 +280,7 @@ async function handleClassSelectionStep(nameResult, raceResult, sexResult) {
   );
   if (classResult === "back") {
     // Go back to name selection
-    return await handleNameSelectionStep(raceResult, sexResult);
+    return "back";
   }
   return classResult;
 }
@@ -187,13 +291,15 @@ async function handleClassSelectionStep(nameResult, raceResult, sexResult) {
  * @param {string} raceResult - Selected race
  * @param {string} sexResult - Selected sex
  * @param {string} classResult - Selected class
+ * @param {CharacterCreationState} state - Character creation state
  * @returns {Promise<Object|string>} Stats result or navigation result
  */
 async function handleStatsAllocationStep(
   nameResult,
   raceResult,
   sexResult,
-  classResult
+  classResult,
+  state
 ) {
   const statsResult = await handleStatsAllocationWithState(
     { ...statGeneration.baseStats },
@@ -205,7 +311,7 @@ async function handleStatsAllocationStep(
   );
   if (statsResult === "back") {
     // Go back to class selection
-    return await handleClassSelectionStep(nameResult, raceResult, sexResult);
+    return "back";
   }
   return statsResult;
 }

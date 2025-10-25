@@ -18,6 +18,7 @@ import {
 import { STAT_CATEGORIES, DEFAULT_POINTS } from "../constants.js";
 import { handleRandomGeneration } from "./random-generation.js";
 import { handleStatsAllocationWithState } from "./stats-allocation.js";
+import { createNavigationResult, NavigationResult } from "../state.js";
 
 /**
  * Show character preview and handle final actions
@@ -117,22 +118,25 @@ export async function showCharacterPreview(
       case "random":
         return await handleRandomGeneration();
       case "custom":
-        return "back"; // Will restart custom creation flow
+        return createNavigationResult(NavigationResult.REGENERATE, {
+          nameResult,
+          raceResult,
+          sexResult,
+          classResult,
+        });
       default:
-        return "back";
+        return createNavigationResult(NavigationResult.BACK_TO_MAIN);
     }
   } else if (choiceValue === "back") {
     // Go back to stats allocation for custom characters
     if (generationMethod === "custom") {
-      // Reset stats to base stats when going back
-      return await handleStatsAllocationWithState(
-        { ...statGeneration.baseStats },
-        DEFAULT_POINTS,
+      return createNavigationResult(NavigationResult.BACK_TO_STATS, {
+        statsResult,
         nameResult,
         raceResult,
         sexResult,
-        classResult
-      );
+        classResult,
+      });
     }
     // For random characters, go back to random generation
     return await handleRandomGeneration();
@@ -140,14 +144,13 @@ export async function showCharacterPreview(
 
   // If no valid action was taken, go back to stats allocation for custom characters
   if (generationMethod === "custom") {
-    return await handleStatsAllocationWithState(
-      { ...statGeneration.baseStats },
-      DEFAULT_POINTS,
+    return createNavigationResult(NavigationResult.BACK_TO_STATS, {
+      statsResult,
       nameResult,
       raceResult,
       sexResult,
-      classResult
-    );
+      classResult,
+    });
   }
   // For random characters, go back to random generation
   return await handleRandomGeneration();

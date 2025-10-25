@@ -19,7 +19,6 @@ import {
   decreaseStat,
 } from "../utils/utils-validation.js";
 
-
 /**
  * Handle stats allocation for custom character creation
  * @param {Object} currentStats - Current stats
@@ -47,73 +46,64 @@ export async function handleStatsAllocationWithState(
     )
   );
 
-  // Show current stats using utility function
-  const statDisplayComponents = createStatDisplay(
-    currentStats,
-    STAT_CATEGORIES
-  );
-  components.push(...statDisplayComponents);
+  // Create compact 3-row stats allocation grid
+  const allStats = [...STAT_CATEGORIES.physical, ...STAT_CATEGORIES.mental];
 
-  // Physical stats buttons in grid
-  const physicalButtons = [];
-  STAT_CATEGORIES.physical.forEach((stat) => {
+  // Row 1: Increase buttons (arrow up symbols)
+  const increaseButtons = allStats.map((stat) => {
     const canIncrease = canIncreaseStat(currentStats, stat, remainingPoints);
-    const canDecrease = canDecreaseStat(currentStats, stat);
+    const cost = calculateStatCost(currentStats[stat], currentStats[stat] + 1);
 
-    physicalButtons.push({
-      label: `+ ${stat} (${calculateStatCost(
-        currentStats[stat],
-        currentStats[stat] + 1
-      )})`,
+    return {
+      label: `⬆️ ${cost}`,
       value: `increase_${stat}`,
       disabled: !canIncrease,
-      gridColumn: 1,
-    });
-
-    physicalButtons.push({
-      label: `- ${stat} (${Math.abs(
-        calculateStatCost(currentStats[stat], currentStats[stat] - 1)
-      )})`,
-      value: `decrease_${stat}`,
-      disabled: !canDecrease,
-      gridColumn: 1,
-    });
+    };
   });
 
   components.push({
     type: "button_grid",
-    buttons: physicalButtons,
+    columns: 6,
+    buttons: increaseButtons,
   });
 
-  // Mental stats buttons in grid
-  const mentalButtons = [];
-  STAT_CATEGORIES.mental.forEach((stat) => {
-    const canIncrease = canIncreaseStat(currentStats, stat, remainingPoints);
+  // Row 2: Stat names and current values (display only)
+  const statDisplayButtons = allStats.map((stat) => {
+    // Use abbreviated stat names to prevent truncation
+    const statAbbrev = stat.substring(0, 1) + ".";
+    return {
+      label: `${currentStats[stat] > 9 ? statAbbrev : stat} ${
+        currentStats[stat]
+      }`,
+      value: `display_${stat}`,
+      disabled: false, // Not disabled, but handled in choice logic
+    };
+  });
+  //label: `${currentStats[stat]>9?statAbbrev:stat} ${currentStats[stat]}`
+  components.push({
+    type: "button_grid",
+    columns: 6,
+    buttons: statDisplayButtons,
+  });
+
+  // Row 3: Decrease buttons (arrow down symbols)
+  const decreaseButtons = allStats.map((stat) => {
     const canDecrease = canDecreaseStat(currentStats, stat);
+    const cost = Math.abs(
+      calculateStatCost(currentStats[stat], currentStats[stat] - 1)
+    );
 
-    mentalButtons.push({
-      label: `+ ${stat} (${calculateStatCost(
-        currentStats[stat],
-        currentStats[stat] + 1
-      )})`,
-      value: `increase_${stat}`,
-      disabled: !canIncrease,
-      gridColumn: 1,
-    });
-
-    mentalButtons.push({
-      label: `- ${stat} (${Math.abs(
-        calculateStatCost(currentStats[stat], currentStats[stat] - 1)
-      )})`,
+    return {
+      label: `⬇️ ${cost}`,
       value: `decrease_${stat}`,
       disabled: !canDecrease,
-      gridColumn: 1,
-    });
+    };
   });
 
   components.push({
     type: "button_grid",
-    buttons: mentalButtons,
+    columns: 6,
+    buttons: decreaseButtons,
   });
 
   components.push(createMessage(`Remaining Points: ${remainingPoints}`));
@@ -162,6 +152,16 @@ export async function handleStatsAllocationWithState(
         classResult
       );
     }
+  } else if (choiceValue && choiceValue.startsWith("display_")) {
+    // Display buttons are not interactive, just refresh the dialog
+    return await handleStatsAllocationWithState(
+      currentStats,
+      remainingPoints,
+      nameResult,
+      raceResult,
+      sexResult,
+      classResult
+    );
   } else if (choiceValue === "back") {
     // Go back to class selection (reset class selection)
     return "back";
