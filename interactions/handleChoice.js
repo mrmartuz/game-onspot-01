@@ -15,8 +15,8 @@ import {
   calculateHeadValue,
   removeHeadFromInventory,
   getAllHeadsForDisplay,
-  getRaceEmoji,
 } from "./loot-system.js";
+import { getRaceEmoji } from "../gamestate/emoji-database.js";
 
 export async function handleChoice(choice, tile) {
   if (choice === "close") {

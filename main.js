@@ -64,7 +64,7 @@ if (startMenu !== "load") {
   let characterCreation;
   while (characterCreation !== "create") {
     characterCreation = await getCharacterCreationDialog();
-    if (characterCreation === "back") {
+    if (characterCreation === "reload") {
       location.reload();
     } else if (characterCreation === "create") {
       continue;

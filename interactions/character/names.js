@@ -1,4 +1,4 @@
-// Race-gender specific name databases
+// Race-sex specific name databases
 export const nameDatabase = {
   Human: {
     male: {

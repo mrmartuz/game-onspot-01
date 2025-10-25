@@ -143,10 +143,22 @@ export async function showChoiceDialog(message, components) {
           case "button_grid":
             const gridContainer = document.createElement("div");
             gridContainer.style.display = "grid";
-            gridContainer.style.gridTemplateColumns =
-              "repeat(auto-fit, minmax(100px, 1fr))";
-            gridContainer.style.gap = "8px";
+
+            // Default to 2 columns, allow override via component.columns
+            const columns = component.columns || 2;
+            gridContainer.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+
+            // Set gap and margins
+            const gap = component.gap || "6px"; // Default gap
+            gridContainer.style.gap = gap;
             gridContainer.style.marginBottom = "10px";
+
+            // Ensure grid doesn't exceed parent width
+            gridContainer.style.maxWidth = "100%";
+            gridContainer.style.boxSizing = "border-box";
+
+            // Set text size (default to smaller for better fit)
+            const textSize = component.textSize || "12px";
 
             if (component.buttons && Array.isArray(component.buttons)) {
               component.buttons.forEach((buttonConfig) => {
@@ -154,10 +166,24 @@ export async function showChoiceDialog(message, components) {
                 btn.textContent = buttonConfig.label || "Unnamed Button";
                 btn.disabled = buttonConfig.disabled || false;
 
+                // Apply text size
+                btn.style.fontSize = textSize;
+
                 // Apply grid column span if specified
                 if (buttonConfig.gridColumn) {
                   btn.style.gridColumn = `span ${buttonConfig.gridColumn}`;
                 }
+
+                // Ensure button uses maximum available width
+                btn.style.minWidth = "0";
+                btn.style.maxWidth = "100%";
+                btn.style.width = "100%";
+                btn.style.height = "auto";
+                btn.style.padding = "8px 4px";
+                btn.style.overflow = "hidden";
+                btn.style.textOverflow = "ellipsis";
+                btn.style.whiteSpace = "nowrap";
+                btn.style.boxSizing = "border-box";
 
                 // Add visual styling for disabled buttons
                 if (btn.disabled) {

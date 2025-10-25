@@ -6,6 +6,7 @@ import characterGeneration, { raceDatabase } from "./character/index.js";
 import { classDatabase } from "./combat/classes.js";
 import { gameState } from "../gamestate/game_variables.js";
 import { generateCharacterDescription } from "./recruitmentSystem.js";
+import { raceEmoji, classEmoji } from "../gamestate/emoji-database.js";
 
 export async function showCompanionChoiceDialog(playerCharacter) {
   const message = "👥 COMPANION CHOICE";
@@ -27,14 +28,14 @@ export async function showCompanionChoiceDialog(playerCharacter) {
 
   components.push({
     type: "button",
-    label: "💰 Start Alone (+50 Gold)",
-    value: "alone",
+    label: "👥 Choose Companion",
+    value: "companion",
   });
 
   components.push({
     type: "button",
-    label: "👥 Choose Companion",
-    value: "companion",
+    label: "💰 Start Alone (+50 Gold)",
+    value: "alone",
   });
 
   const choice = await getShowChoiceDialog(message, components);
@@ -72,7 +73,11 @@ async function showCompanionSelectionDialog(playerCharacter) {
 
     components.push({
       type: "message",
-      label: `${companion.firstName} ${companion.lastName} (${companion.gender} ${companion.race} ${classData.name} Lv.${companion.level})`,
+      label: `${companion.firstName} ${companion.lastName} (${companion.sex} ${
+        companion.race
+      } ${raceEmoji[companion.race]} ${classData.name} ${
+        classEmoji[companion.class]
+      } Lv.${companion.level})`,
       value: `char_${index}`,
     });
 
@@ -125,9 +130,9 @@ async function generateRandomCompanions(race, count) {
   const commonClasses = await characterGeneration.getClassesByRarity("common");
 
   for (let i = 0; i < count; i++) {
-    // Generate random gender
-    const genders = ["male", "female"];
-    const gender = genders[Math.floor(Math.random() * genders.length)];
+    // Generate random sex
+    const sexes = ["male", "female"];
+    const sex = sexes[Math.floor(Math.random() * sexes.length)];
 
     // Select random common class
     const className =
@@ -136,7 +141,7 @@ async function generateRandomCompanions(race, count) {
     // Generate character with specific race and class
     const companion = await characterGeneration.generateCharacter({
       raceName: race,
-      gender: gender,
+      sex: sex,
       className: className,
       isPlayer: false, // This is an NPC companion
     });

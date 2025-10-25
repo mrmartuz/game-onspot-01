@@ -232,12 +232,12 @@ export async function handleCombat(ex, ey, isOnTile = false) {
     const death = await checkDeath();
     if (death === "health") {
       await showChoiceDialog("You died fighting! ☠️", [
-        { type: "button", label: "🔄 Restart Game", value: "restart" },
+        { type: "button", label: "🔄 Restart Game", value: "reloadGame" },
       ]);
       location.reload();
     } else if (death === "gold") {
       await showChoiceDialog("You paid your debt with your life! ☠️", [
-        { type: "button", label: "🔄 Restart Game", value: "restart" },
+        { type: "button", label: "🔄 Restart Game", value: "reloadGame" },
       ]);
       location.reload();
     }

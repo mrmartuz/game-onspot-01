@@ -6,6 +6,7 @@ import { gameState } from "../gamestate/game_variables.js";
 import { getGroupBonus } from "../utils.js";
 import { getShowChoiceDialog } from "../interactions.js";
 import { showCharacterManagementDialog } from "./characterManagementDialog.js";
+import { classEmoji, raceEmoji, sexEmoji } from "../gamestate/emoji-database.js";
 
 // Helper function to format character details for display
 function formatCharacterDetails(character) {
@@ -13,47 +14,12 @@ function formatCharacterDetails(character) {
     return "Click on a creature in the grid above to see their details";
   }
 
-  const classEmoji = {
-    fighter: "⚔️",
-    archer: "🏹",
-    brute: "💪",
-    monk: "🧘",
-    cleric: "⛪",
-    geomancer: "🌍",
-    pyromancer: "🔥",
-    necromancer: "💀",
-    articaster: "❄️",
-    martial_artist: "🥋",
-    ranger: "🌲",
-    explorer: "🔍",
-    paladin: "🛡️",
-    alchemist: "🧪",
-    herbalist: "🌿",
-    hunter: "🎯",
-    dungeondiver: "🗝️",
-    craftsman: "🔨",
-  };
-
-  const raceEmoji = {
-    Human: "👤",
-    Elf: "🧝",
-    Dwarf: "🧙",
-    Orc: "👹",
-    Goblin: "👺",
-    Demon: "👿",
-    Angel: "👼",
-    Undead: "💀",
-    Draconic: "🐉",
-    Fishman: "🐠",
-    Birdman: "🦅",
-  };
-
   const classEmojiIcon = classEmoji[character.class] || "👤";
   const raceEmojiIcon = raceEmoji[character.race] || "👤";
 
   let details = `👤 Name: ${character.firstName} ${character.lastName}\n`;
   details += `🧬 Race: ${character.race} ${raceEmojiIcon} | Class: ${character.class} ${classEmojiIcon}\n`;
-  details += `⚧ Gender: ${character.gender} | 📊 Level: ${
+  details += `${sexEmoji[character.sex]} Sex: ${character.sex}  | 📊 Level: ${
     character.level || 1
   } | ❤️‍🩹 Health: ${character.health?.current || 0}/${
     character.health?.max || 0
@@ -120,43 +86,6 @@ export async function showHealthGroupDialog() {
       ? "clan"
       : "tribe"
   }\n`;
-
-  // Class emoji mapping for display (consistent with character management)
-  const classEmoji = {
-    fighter: "⚔️",
-    archer: "🏹",
-    brute: "💪",
-    monk: "🧘",
-    cleric: "⛪",
-    geomancer: "🌍",
-    pyromancer: "🔥",
-    necromancer: "💀",
-    articaster: "❄️",
-    martial_artist: "🥋",
-    ranger: "🌲",
-    explorer: "🔍",
-    paladin: "🛡️",
-    alchemist: "🧪",
-    herbalist: "🌿",
-    hunter: "🎯",
-    dungeondiver: "🗝️",
-    craftsman: "🔨",
-  };
-
-  // Race emoji mapping for display (consistent with character management)
-  const raceEmoji = {
-    Human: "👤",
-    Elf: "🧝",
-    Dwarf: "🧙",
-    Orc: "👹",
-    Goblin: "👺",
-    Demon: "👿",
-    Angel: "👼",
-    Undead: "💀",
-    Draconic: "🐉",
-    Fishman: "🐠",
-    Birdman: "🦅",
-  };
 
   // Debug: Log the current state
   "Current gameState.playerCharacter:", gameState.playerCharacter;
@@ -254,21 +183,6 @@ export async function showHealthGroupDialog() {
   // Function to populate grid with group members
   function populateGridWithGroupMembers(groupMembers, gridSize = 10) {
     const tiles = {};
-
-    // Define emoji mapping for races only
-    const raceEmoji = {
-      Human: "👤",
-      Elf: "🧝",
-      Dwarf: "🧙",
-      Orc: "👹",
-      Goblin: "👺",
-      Demon: "👿",
-      Angel: "👼",
-      Undead: "💀",
-      Draconic: "🐉",
-      Fishman: "🐠",
-      Birdman: "🦅",
-    };
 
     groupMembers.forEach((member, index) => {
       // Calculate position starting from center

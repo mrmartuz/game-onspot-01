@@ -4,6 +4,13 @@
 import { getShowChoiceDialog } from "../interactions.js";
 import { recruitmentSystem } from "./recruitmentSystem.js";
 import { gameState } from "../gamestate/game_variables.js";
+import {
+  locationEmoji,
+  sexEmoji,
+  raceEmoji,
+  classEmoji,
+  goldEmoji,
+} from "../gamestate/emoji-database.js";
 
 // Show recruitment board dialog
 export async function showRecruitmentDialog(
@@ -12,7 +19,9 @@ export async function showRecruitmentDialog(
   y,
   characters = null
 ) {
-  const message = `RECRUITMENT BOARD - ${locationType.toUpperCase()}`;
+  const message = `RECRUITMENT BOARD - ${locationType.toUpperCase()} ${
+    locationEmoji[locationType]
+  }`;
   const components = [];
 
   // Get characters using persistent storage system
@@ -40,7 +49,13 @@ export async function showRecruitmentDialog(
 
       components.push({
         type: "message",
-        label: `${character.firstName} ${character.lastName} (${character.gender} ${character.race} ${character.class} Lv.${character.level})`,
+        label: `${character.firstName} ${character.lastName}\n(${
+          character.sex
+        } ${sexEmoji[character.sex]} ${character.race} ${
+          raceEmoji[character.race]
+        } ${character.class} ${classEmoji[character.class]} Lv.${
+          character.level
+        })`,
         value: `char_${index}`,
       });
 
@@ -52,7 +67,7 @@ export async function showRecruitmentDialog(
 
       components.push({
         type: "message",
-        label: `Cost: ${costText}`,
+        label: `Cost: ${costText} ${goldEmoji}`,
         value: `cost_${index}`,
       });
 

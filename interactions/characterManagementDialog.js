@@ -4,43 +4,7 @@
 import { gameState } from "../gamestate/game_variables.js";
 import { showChoiceDialog } from "./showDialog.js";
 import { getGroupBonus } from "../utils.js";
-
-// Class emoji mapping for display
-const classEmoji = {
-  fighter: "⚔️",
-  archer: "🏹",
-  brute: "💪",
-  monk: "🧘",
-  cleric: "⛪",
-  geomancer: "🌍",
-  pyromancer: "🔥",
-  necromancer: "💀",
-  articaster: "❄️",
-  martial_artist: "🥋",
-  ranger: "🌲",
-  explorer: "🔍",
-  paladin: "🛡️",
-  alchemist: "🧪",
-  herbalist: "🌿",
-  hunter: "🎯",
-  dungeondiver: "🗝️",
-  craftsman: "🔨",
-};
-
-// Race emoji mapping for display
-const raceEmoji = {
-  Human: "👤",
-  Elf: "🧝",
-  Dwarf: "🧙",
-  Orc: "👹",
-  Goblin: "👺",
-  Demon: "👿",
-  Angel: "👼",
-  Undead: "💀",
-  Draconic: "🐉",
-  Fishman: "🐠",
-  Birdman: "🦅",
-};
+import { classEmoji, raceEmoji } from "../gamestate/emoji-database.js";
 
 export async function showCharacterManagementDialog() {
   const message = "👥 CHARACTER MANAGEMENT";
@@ -105,7 +69,7 @@ async function showPlayerCharacterDialog() {
   let message = `👤 **PLAYER CHARACTER**\n\n`;
   message += `Name: ${player.firstName} ${player.lastName}\n`;
   message += `Race: ${player.race} ${raceEmojiIcon} | Class: ${player.class} ${emoji}\n`;
-  message += `Gender: ${player.gender} | Level: ${player.level || 1}\n`;
+  message += `Sex: ${player.sex} | Level: ${player.level || 1}\n`;
   message += `Health: ${player.health?.current || 0}/${
     player.health?.max || 0
   } ❤️‍🩹\n\n`;
@@ -300,7 +264,7 @@ async function showMemberDetailsDialog(member, memberIndex) {
   let message = `👤 **GROUP MEMBER DETAILS**\n\n`;
   message += `Name: ${member.firstName} ${member.lastName}\n`;
   message += `Race: ${member.race} ${raceEmojiIcon} | Class: ${member.class} ${emoji}\n`;
-  message += `Gender: ${member.gender} | Level: ${member.level || 1}\n`;
+  message += `Sex: ${member.sex} | Level: ${member.level || 1}\n`;
   message += `Health: ${member.health?.current || 0}/${
     member.health?.max || 0
   } ❤️‍🩹\n\n`;

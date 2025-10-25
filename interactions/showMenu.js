@@ -8,32 +8,7 @@ import { getShowChoiceDialog } from "../interactions.js";
 import { logEvent } from "../time_system.js";
 import { updateStatus } from "../rendering.js";
 import { showCharacterManagementDialog } from "./characterManagementDialog.js";
-
-// Race emoji mapping for display
-const raceEmoji = {
-  Human: "👤",
-  Elf: "🧝",
-  Dwarf: "🧙",
-  Orc: "👹",
-  Goblin: "👺",
-  Demon: "👿",
-  Angel: "👼",
-  Undead: "💀",
-  Draconic: "🐉",
-  Fishman: "🐠",
-  Birdman: "🦅",
-  // Beast races
-  Wolf: "🐺",
-  Bear: "🐻",
-  MountainLion: "🦁",
-  // Monster races
-  Troll: "👹",
-  Dragon: "🐉",
-};
-
-function getRaceEmoji(race) {
-  return raceEmoji[race] || "👤";
-}
+import { getRaceEmoji } from "../gamestate/emoji-database.js";
 
 export async function showMenu() {
   // Check if player is on a tile with location or entity

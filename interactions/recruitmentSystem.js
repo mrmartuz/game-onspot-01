@@ -345,14 +345,7 @@ export const recruitmentCosts = {
 
 // Character description generation
 export function generateCharacterDescription(character) {
-  const {
-    stats,
-    skills,
-    race,
-    gender,
-    class: className,
-    equipment,
-  } = character;
+  const { stats, skills, race, sex, class: className, equipment } = character;
 
   // Find highest and second highest stats
   const statEntries = Object.entries(stats).filter(([stat]) => stat !== "LUCK");
@@ -382,13 +375,13 @@ export function generateCharacterDescription(character) {
   const equipmentDesc = getEquipmentDescription(equipment);
 
   // Generate description
-  const genderPronoun = gender === "male" ? "he" : "she";
-  const genderPossessive = gender === "male" ? "his" : "her";
+  const sexPronoun = sex === "male" ? "he" : "she";
+  const sexPossessive = sex === "male" ? "his" : "her";
 
-  return `You find yourself in front of a ${highestDesc} ${race} ${gender}, ${genderPronoun} is a ${secondHighestDesc} ${className}. ${
-    genderPossessive.charAt(0).toUpperCase() + genderPossessive.slice(1)
+  return `You find yourself in front of a ${highestDesc} ${race} ${sex}, ${sexPronoun} is a ${secondHighestDesc} ${className}. ${
+    sexPossessive.charAt(0).toUpperCase() + sexPossessive.slice(1)
   } expertise lies in ${skill1Desc} and ${skill2Desc}. ${
-    genderPronoun.charAt(0).toUpperCase() + genderPronoun.slice(1)
+    sexPronoun.charAt(0).toUpperCase() + sexPronoun.slice(1)
   } wears ${equipmentDesc.clothing} and brandishes ${equipmentDesc.weapon}.`;
 }
 

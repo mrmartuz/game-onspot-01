@@ -863,7 +863,7 @@
 //     usePointAllocation: false, // Use procedural generation for creatures
 //     className: selectedClass,
 //     raceName: creatureTemplate.race,
-//     gender: Math.random() < 0.7 ? "male" : "female", // 70/30 male/female
+//     sex: Math.random() < 0.7 ? "male" : "female", // 70/30 male/female
 //     isPlayer: false,
 //   });
 

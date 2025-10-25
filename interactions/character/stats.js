@@ -70,8 +70,8 @@ export const statGeneration = {
 
 // Procedural character generation
 export const proceduralGeneration = {
-  // Generate random gender with 70/30 male/female distribution
-  generateRandomGender: function () {
+  // Generate random sex with 70/30 male/female distribution
+  generateRandomSex: function () {
     const random = Math.random();
     return random < 0.7 ? "male" : "female";
   },

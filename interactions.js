@@ -17,7 +17,7 @@ import { showDiscoveriesDialog } from "./interactions/discoveriesDialog.js";
 import { showEventsDialog } from "./interactions/eventDialog.js";
 import { startMenu } from "./interactions/startMenu.js";
 import { titleDialog } from "./interactions/titleDialog.js";
-import { showCharacterGenerationDialog } from "./interactions/charCreationDialog.js";
+import { showCharacterGenerationDialog } from "./interactions/character/characterCreation-system/index.js";
 import { showGroupCreationDialog } from "./interactions/groupCreationDialog.js";
 import { worldGenerationDialog } from "./interactions/worldGenerationDialog.js";
 import { saveGameDialog } from "./interactions/saveGameDialog.js";

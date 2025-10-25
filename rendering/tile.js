@@ -6,6 +6,11 @@ import {
   getKilledTile,
   addCachedTile,
 } from "../gamestate/gameStateSetGet.js";
+import {
+  getLocationEmoji,
+  getFloraEmoji,
+  getEntityEmoji,
+} from "../gamestate/emoji-database.js";
 
 export function getBiome(x, y) {
   let dist = Math.sqrt(x * x + y * y);
@@ -311,54 +316,10 @@ export function updateTile(x, y) {
   addVisitedTile(key);
 }
 
-export function getEmojiForLocation(type) {
-  const map = {
-    waterfalls: "🏞️",
-    volcano: "🌋",
-    canyon: "⛰️",
-    geyser: "🗻",
-    peaks: "🏔️",
-    "monster caves": "🕷️",
-    cave: "🦇",
-    ruin: "🏚️",
-    camp: "⛺",
-    farm: "🏡",
-    outpost: "🏕️",
-    hamlet: "🏠",
-    village: "🏘️",
-    city: "🏰",
-  };
-  return map[type] || "🪨";
-}
-
-export function getEmojiForFlora(type) {
-  const map = {
-    oak: "🌳",
-    pine: "🌲",
-    palm: "🌴",
-    cactus: "🌵",
-    "sun-flower": "🌻",
-    iris: "🪻",
-    tulip: "🌷",
-    mushroom: "🍄",
-    "dead-tree": "🌵",
-  };
-  return map[type] || "🍀";
-}
-
-export function getEmojiForEntity(type) {
-  const map = {
-    monster: "🧌",
-    beast: "🦏",
-    animal: "🐎",
-    npc: "🧍🏻",
-    group: "👫",
-    army: "💂",
-    trader: "🧑‍🎓",
-    caravan: "🧑‍✈️",
-  };
-  return map[type] || "🥷🏻";
-}
+// Re-export the centralized emoji functions for backward compatibility
+export { getLocationEmoji as getEmojiForLocation };
+export { getFloraEmoji as getEmojiForFlora };
+export { getEntityEmoji as getEmojiForEntity };
 
 export function colorToRGB(color) {
   const ctx = document.createElement("canvas").getContext("2d");

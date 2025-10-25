@@ -11,14 +11,14 @@ export async function loadGameDialog() {
       value: "",
     },
     { type: "button", label: "⏬ Load", value: "load" },
-    { type: "button", label: "❌ Back", value: "back" },
+    { type: "button", label: "❌ Back", value: "reload" },
   ];
   const choice = await getShowChoiceDialog(message, components);
   if (choice === "load") {
     await importSaveGame();
     return choice;
-  } else if (choice === "back") {
-    return choice;
+  } else if (choice === "reload") {
+    location.reload();
   }
 }
 

@@ -53,7 +53,7 @@ export const characterGeneration = {
       usePointAllocation = false,
       className = null,
       raceName = null,
-      gender = null,
+      sex = null,
       firstName = null,
       lastName = null,
       customStats = null,
@@ -75,9 +75,8 @@ export const characterGeneration = {
       return this.generateCharacter({ ...options, raceName: fallbackRace });
     }
 
-    // Generate gender
-    const selectedGender =
-      gender || proceduralGeneration.generateRandomGender();
+    // Generate sex
+    const selectedSex = sex || proceduralGeneration.generateRandomSex();
 
     // Generate stats
     let baseStats;
@@ -95,11 +94,11 @@ export const characterGeneration = {
       raceAdjustedStats[stat] += raceData.statBonuses[stat];
     });
 
-    // Apply gender stat bonuses
-    const genderBonuses = raceData.genderBonuses[selectedGender];
-    if (genderBonuses) {
-      Object.keys(genderBonuses).forEach((stat) => {
-        raceAdjustedStats[stat] += genderBonuses[stat];
+    // Apply sex stat bonuses
+    const sexBonuses = raceData.sexBonuses[selectedSex];
+    if (sexBonuses) {
+      Object.keys(sexBonuses).forEach((stat) => {
+        raceAdjustedStats[stat] += sexBonuses[stat];
       });
     }
 
@@ -124,8 +123,7 @@ export const characterGeneration = {
 
     // Generate names if not provided (race and gender specific)
     const generatedFirstName =
-      firstName ||
-      this.generateRandomName("first", selectedRace, selectedGender);
+      firstName || this.generateRandomName("first", selectedRace, selectedSex);
     const generatedLastName =
       lastName || this.generateRandomName("last", selectedRace);
 
@@ -134,7 +132,7 @@ export const characterGeneration = {
       id: `char_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
       firstName: generatedFirstName,
       lastName: generatedLastName,
-      gender: selectedGender,
+      sex: selectedSex,
       race: selectedRace,
       class: selectedClass,
       classLevel: 1,
@@ -145,7 +143,7 @@ export const characterGeneration = {
         max: Math.floor(finalStats.CON * 2 + 10),
       },
       equipment: equipment,
-      history: `${generatedFirstName} ${generatedLastName} is a ${selectedGender} ${raceData.name} ${selectedClass} who has joined your group.`,
+      history: `${generatedFirstName} ${generatedLastName} is a ${selectedSex} ${raceData.name} ${selectedClass} who has joined your group.`,
       experience: 0,
       level: 1,
     };
@@ -412,25 +410,25 @@ export const characterGeneration = {
     return racesOfRarity[Math.floor(Math.random() * racesOfRarity.length)];
   },
 
-  // Generate random names (race and gender specific)
-  generateRandomName: function (type, race = "Human", gender = "male") {
+  // Generate random names (race and sex specific)
+  generateRandomName: function (type, race = "Human", sex = "male") {
     const raceData = nameDatabase[race];
     if (!raceData) {
       console.error(`Name data not found for race: ${race}`);
       return "Unknown";
     }
 
-    const genderData = raceData[gender];
-    if (!genderData) {
-      console.error(`Name data not found for race: ${race}, gender: ${gender}`);
+    const sexData = raceData[sex];
+    if (!sexData) {
+      console.error(`Name data not found for race: ${race}, sex: ${sex}`);
       return "Unknown";
     }
 
     if (type === "first") {
-      const firstNames = genderData.firstNames;
+      const firstNames = sexData.firstNames;
       return firstNames[Math.floor(Math.random() * firstNames.length)];
     } else if (type === "last") {
-      const lastNames = genderData.lastNames;
+      const lastNames = sexData.lastNames;
       return lastNames[Math.floor(Math.random() * lastNames.length)];
     }
 

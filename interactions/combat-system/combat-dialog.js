@@ -23,37 +23,10 @@ import {
   addHeadToInventory,
   getAvailableHeadSpace,
   formatHeadForDisplay,
-  getRaceEmoji as getLootRaceEmoji,
 } from "../loot-system.js";
 import { logEvent } from "../../time_system.js";
 import { updateStatus } from "../../rendering.js";
-
-// Race emoji mapping for display
-const raceEmoji = {
-  Human: "👤",
-  Elf: "🧝",
-  Dwarf: "🧙",
-  Orc: "👹",
-  Goblin: "👺",
-  Demon: "👿",
-  Angel: "👼",
-  Undead: "💀",
-  Draconic: "🐉",
-  Fishman: "🐠",
-  Birdman: "🦅",
-  // Beast races
-  Wolf: "🐺",
-  Bear: "🐻",
-  MountainLion: "🦁",
-  // Monster races
-  Troll: "👹",
-  Dragon: "🐉",
-};
-
-// Helper function to get race emoji
-function getRaceEmoji(race) {
-  return raceEmoji[race] || "👤";
-}
+import { getRaceEmoji } from "../../gamestate/emoji-database.js";
 
 // Initialize combat positions for all combatants
 function initializeCombatPositions() {

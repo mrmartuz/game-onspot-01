@@ -1,6 +1,7 @@
 // Monster Head Loot System
 import { gameState } from "../gamestate/game_variables.js";
 import { getMaxStorage } from "../utils.js";
+import { getRaceEmoji } from "../gamestate/emoji-database.js";
 
 // Inventory size mapping for monster heads
 const headSizes = {
@@ -133,25 +134,6 @@ export function getAvailableHeadSpace() {
   const maxStorage = getMaxStorage();
   const usedSpace = getTotalHeadSpace();
   return Math.max(0, maxStorage - usedSpace);
-}
-
-/**
- * Get race emoji for display
- * @param {string} race - Monster race
- * @returns {string} Emoji for the race
- */
-export function getRaceEmoji(race) {
-  const raceEmojis = {
-    Goblin: "👺",
-    Wolf: "🐺",
-    Orc: "👹",
-    Bear: "🐻",
-    MountainLion: "🦁",
-    Troll: "🧌",
-    Demon: "👿",
-    Dragon: "🐉",
-  };
-  return raceEmojis[race] || "💀";
 }
 
 /**
