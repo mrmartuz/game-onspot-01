@@ -9,7 +9,7 @@ import { createMessage, createBackButton } from "../utils/utils-navigation.js";
 import { raceEmoji } from "../../../../gamestate/emoji-database.js";
 import { sexEmoji } from "../../../../gamestate/emoji-database.js";
 import { classEmoji } from "../../../../gamestate/emoji-database.js";
-
+import { raceDatabase } from "../../../../interactions/character/races.js";
 /**
  * Handle class selection for custom character creation
  * @param {Object} nameResult - Name selection result
@@ -23,7 +23,7 @@ export async function handleClassSelection(nameResult, race, sex) {
 
   components.push(
     createMessage(
-      `${raceEmoji[race]} ${nameResult.firstName} ${nameResult.lastName} is a ${sex} ${sexEmoji[sex]} ${race} ${raceEmoji[race]} character, choose their class:`
+      `You are  ${nameResult.firstName} ${nameResult.lastName} a ${sex} ${sexEmoji[sex]} ${raceDatabase[race].region} ${raceEmoji[race]}. \n Choose your class:`
     )
   );
 

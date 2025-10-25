@@ -10,12 +10,12 @@ import { createMessage, createBackButton } from "../../../../interactions/charac
  * @returns {Promise<string>} Selected race or navigation result
  */
 export async function handleRaceSelection() {
-  const message = "🧬 RACE SELECTION";
+  const message = `🧬 RACE SELECTION ${raceEmoji.Human}${raceEmoji.Elf}${raceEmoji.Dwarf}${raceEmoji.Orc}`;
   let components = [];
 
   components.push(
     createMessage(
-      "In this game there are lots of races, but you will be able to choose only the main ones. If you want one the other races, you will have to test your luck in the random generation. Choose your character's race:"
+      "In this game there are lots of races, but you will be able to choose only the main ones. If you want one the other races, you will have to test your luck in the random generation. \nChoose your character's race:"
     )
   );
 

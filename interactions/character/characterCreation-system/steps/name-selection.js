@@ -15,6 +15,7 @@ import {
 } from "../utils/utils-navigation.js";
 import { createNameGrid } from "../utils/utils-ui.js";
 import { MAX_NAMES_DISPLAYED } from "../constants.js";
+import { raceDatabase } from "../../../../interactions/character/races.js";
 
 /**
  * Handle name selection for custom character creation
@@ -32,7 +33,8 @@ export async function handleNameSelection(race = "Human", sex = "male") {
 
   components.push(
     createMessage(
-      `Choose names for your ${sex} ${sexEmoji[sex]} ${race} ${raceEmoji[race]} character:`
+      `You are a ${sex} ${sexEmoji[sex]} ${raceDatabase[race].region} ${raceEmoji[race]}\n
+      Choose names for your  character:`
     )
   );
 
@@ -143,7 +145,10 @@ export async function handleMoreFirstNames(race, sex) {
   const message = "📝 FIRST NAME SELECTION";
   let components = [];
 
-  components.push(createMessage(`All first names for ${sex} ${race}:`));
+  components.push(
+    createMessage(`You are a ${lastName} a ${sex} ${sexEmoji[sex]} ${raceDatabase[race].region} ${raceEmoji[race]}\n
+      Choose between the complete list of first names for ${race}:`)
+  );
 
   const raceData = nameDatabase[race];
   if (raceData && raceData[sex] && raceData[sex].firstNames) {
@@ -181,7 +186,10 @@ export async function handleMoreLastNames(race, sex) {
   const message = "📝 LAST NAME SELECTION";
   let components = [];
 
-  components.push(createMessage(`All last names for ${race}:`));
+  components.push(
+    createMessage(`You are a ${firstName} a ${sex} ${sexEmoji[sex]} ${raceDatabase[race].region} ${raceEmoji[race]}\n
+      Choose between the complete list of last names for ${race}:`)
+  );
 
   const raceData = nameDatabase[race];
   if (raceData && raceData[sex] && raceData[sex].lastNames) {
@@ -228,19 +236,11 @@ export async function handleNameSelectionContinuation(
 
   components.push(
     createMessage(
-      `Complete your ${sex} ${sexEmoji[sex]} ${race} ${raceEmoji[race]} character's name:`
+      `You are ${firstName?firstName:""} ${lastName?lastName:""} a ${sex} ${sexEmoji[sex]} ${raceDatabase[race].region} ${raceEmoji[race]}\n
+    ${firstName&&lastName?"\n":"Complete your character's name:"}`
     )
   );
-
-  // Show current selection
-  if (firstName) {
-    components.push(createMessage(`First Name: ${firstName}`));
-  }
-
-  if (lastName) {
-    components.push(createMessage(`Last Name: ${lastName}`));
-  }
-
+  
   // If we don't have both names, show selection options
   if (!firstName) {
     components.push(createMessage("Choose First Name:"));

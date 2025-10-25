@@ -5,6 +5,7 @@ import {
 } from "../../../../interactions.js";
 import { sexEmoji } from "../../../../gamestate/emoji-database.js";
 import { raceEmoji } from "../../../../gamestate/emoji-database.js";
+import { raceDatabase } from "../../../../interactions/character/races.js";
 import { createMessage, createBackButton } from "../utils/utils-navigation.js";
 
 /**
@@ -16,7 +17,12 @@ export async function handleSexSelection(race) {
   const message = `${sexEmoji.female} SEX SELECTION ${sexEmoji.male}`;
   let components = [];
 
-  components.push(createMessage(`Choose your ${race} ${raceEmoji[race]} character's sex:`))
+  components.push(
+    createMessage(
+      `You are a ${raceDatabase[race].region} ${raceEmoji[race]}\n
+      Choose your character's sex:`
+    )
+  );
 
   components.push({
     type: "button",

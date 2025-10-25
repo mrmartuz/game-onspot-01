@@ -22,6 +22,7 @@ import { raceEmoji } from "../../../../gamestate/emoji-database.js";
 import { sexEmoji } from "../../../../gamestate/emoji-database.js";
 import { classEmoji } from "../../../../gamestate/emoji-database.js";
 import { classDatabase } from "../../../../interactions/combat/classes.js";
+import { raceDatabase } from "../../../../interactions/character/races.js";
 /**
  * Handle stats allocation for custom character creation
  * @param {Object} currentStats - Current stats
@@ -45,11 +46,7 @@ export async function handleStatsAllocationWithState(
 
   components.push(
     createMessage(
-      `${raceEmoji[raceResult]} ${nameResult.firstName} ${
-        nameResult.lastName
-      } is a ${sexResult} ${sexEmoji[sexResult]} ${raceResult} ${
-        raceEmoji[raceResult]
-      } is a ${classEmoji[classResult]} ${classResult}, allocate is stats:
+      `You are ${nameResult.firstName} ${nameResult.lastName} a ${sexResult} ${sexEmoji[sexResult]} ${raceDatabase[raceResult].region} ${raceEmoji[raceResult]}, you are a ${classEmoji[classResult]} ${classResult}:
       \n
       ${classDatabase[classResult].description}
       \n

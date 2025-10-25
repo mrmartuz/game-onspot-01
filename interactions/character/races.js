@@ -1,6 +1,8 @@
 // Race system for character generation with gender bonuses
 export const raceDatabase = {
   // PLAYER/NPC AVAILABLE RACES
+
+  //TODO WILL NEED TO CHANGE THE NAME TO THE REGION NAME (INGAME NAME LIKE Aurenith, Lyssarion, etc.), CREATE A VAR WITH TEH IRL NAME (AURETHIN ARE HUMANS, LYSARION ARE ELVES, ETC.)
   Dwarf: {
     name: "Dwarf",
     region: "Gromthar",

@@ -196,12 +196,12 @@ body {
 
 /* New styles for dialog */
 #game-dialog {
-    position: fixed;
+    position: fixed !important;
     width: 50%;
-    max-height: calc(100vh - 100px);
-    /* Account for status bar (50px) and some padding */
-    top: 60px;
-    /* Start below the status bar */
+    max-height: calc(100vh - 60px);
+    /* Account for 30px top margin and some padding */
+    top: 30px !important;
+    /* Start 30px from the top - override browser default */
     left: 50%;
     transform: translateX(-50%);
     /* Center horizontally only */
@@ -219,6 +219,19 @@ body {
     padding: 20px;
     box-sizing: border-box;
     /* Ensure padding doesn't increase size */
+}
+
+/* Override browser's internal dialog positioning */
+#game-dialog:-internal-dialog-in-top-layer {
+    position: fixed !important;
+    top: 30px !important;
+    inset-block-start: 8% !important;
+    inset-block-end: auto !important;
+    inset-inline-start: 50% !important;
+    inset-inline-end: auto !important;
+    transform: translateX(-50%) !important;
+    margin: 0 !important;
+    max-height: calc(100vh - 60px) !important;
 }
 
 #game-dialog .dialog-content {
@@ -318,7 +331,7 @@ body {
 
     #game-dialog {
         width: 90%;
-        max-height: calc(100vh - 120px);
+        max-height: calc(100vh - 60px);
         padding: 15px;
     }
 
