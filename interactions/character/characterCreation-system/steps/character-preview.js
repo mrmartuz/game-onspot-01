@@ -6,12 +6,17 @@ import {
 
 import { raceDatabase } from "../../races.js";
 import { classDatabase } from "../../../../interactions/combat/classes.js";
-import { raceEmoji, classEmoji } from "../../../../gamestate/emoji-database.js";
+import {
+  raceEmoji,
+  classEmoji,
+  skillEmoji,
+} from "../../../../gamestate/emoji-database.js";
+import { skillDatabase } from "../../../../interactions/skills.js";
 
 import { createMessage, createBackButton } from "../utils/utils-navigation.js";
 import {
   createEquipmentDisplay,
-  createSkillsDisplay,
+  createSkillsButtonGrid,
   createStatDisplayGrid,
 } from "../utils/utils-ui.js";
 import { STAT_CATEGORIES } from "../constants.js";
@@ -40,9 +45,7 @@ export async function showCharacterPreview(
   sexResult = null,
   classResult = null
 ) {
-  const message = `${
-    raceEmoji[character.race]
-  } ${character.firstName.toUpperCase()} ${character.lastName.toUpperCase()}`;
+  const message = ``;
   let components = [];
 
   // Character basic info - First line: sex, race name (explanation race)
@@ -54,11 +57,19 @@ export async function showCharacterPreview(
   const className = classData ? classData.name : "Unknown Class";
   const classEmojiIcon = classEmoji[character.class] || "❓";
 
+  components.push({
+    type: "button",
+    label: `${
+      raceEmoji[character.race]
+    } ${character.firstName.toUpperCase()} ${character.lastName.toUpperCase()}`,
+    value: "display_character_name",
+  });
+
   components.push(
     createMessage(
       `${character.sex} ${
         sexEmoji[character.sex]
-      } ${raceRegion} ${raceEmojiIcon} (${raceName}) ${className} ${classEmojiIcon} lvl.${
+      } ${raceRegion} ${raceEmojiIcon} ${className} ${classEmojiIcon} lvl.${
         character.level
       }`
     )
@@ -67,8 +78,13 @@ export async function showCharacterPreview(
   // Stats display using utility function
   const statComponents = createStatDisplayGrid(character.stats, statEmoji);
   components.push(...statComponents);
-  // Skills display using utility function
-  const skillsComponents = createSkillsDisplay(character.skills);
+  // Skills display using button grid
+  const skillsComponents = createSkillsButtonGrid(
+    character.skills,
+    skillEmoji,
+    skillDatabase,
+    3
+  );
   components.push(...skillsComponents);
 
   // Equipment display using utility function

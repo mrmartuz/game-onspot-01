@@ -110,7 +110,7 @@ export function createEquipmentDisplay(equipment, slots = EQUIPMENT_SLOTS) {
 
   components.push({
     type: "message",
-    label: "STARTING EQUIPMENT",
+    label: "\nSTARTING EQUIPMENT",
     value: "",
   });
 
@@ -171,6 +171,63 @@ export function createSkillsDisplay(skills) {
         value: "",
       });
     }
+  }
+
+  return components;
+}
+
+/**
+ * Create dynamic skills button grid display
+ * @param {Object} skills - Character skills object
+ * @param {Object} skillEmoji - Object containing emoji mappings for skills
+ * @param {Object} skillDatabase - Skills database for skill names
+ * @param {number} columns - Number of columns in the grid (default: 3)
+ * @returns {Array} Array of components including button grid
+ */
+export function createSkillsButtonGrid(
+  skills,
+  skillEmoji,
+  skillDatabase,
+  columns = 3
+) {
+  const components = [];
+
+  if (Object.keys(skills).length > 0) {
+    components.push({
+      type: "message",
+      label: "\nSTARTING SKILLS",
+      value: "",
+    });
+
+    // Sort skills alphabetically by skill name
+    const sortedSkills = Object.entries(skills).sort(([a], [b]) => {
+      const skillA = skillDatabase[a];
+      const skillB = skillDatabase[b];
+      const nameA = skillA ? skillA.name : a;
+      const nameB = skillB ? skillB.name : b;
+      return nameA.localeCompare(nameB);
+    });
+
+    // Create button grid for skills
+    const skillButtons = sortedSkills.map(([skillKey, level]) => {
+      const skillData = skillDatabase[skillKey];
+      const skillName = skillData ? skillData.name : skillKey;
+      const emoji = skillEmoji[skillKey] || "📊";
+
+      return {
+        label: `${emoji} ${level} ${skillName}`,
+        value: `display_skill_${skillKey}`,
+        disabled: false, // Display only, not interactive
+      };
+    });
+
+    components.push({
+      type: "button_grid",
+      columns: columns,
+      textSize: "11px",
+      gap: "2px",
+      buttons: skillButtons,
+    });
   }
 
   return components;

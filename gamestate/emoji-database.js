@@ -134,6 +134,104 @@ export function getEntityEmoji(entity) {
   return entityEmoji[entity] || "🥷🏻";
 }
 
+// Skill emoji mapping for display
+export const skillEmoji = {
+  // WEAPON SKILLS
+  swords: "⚔️",
+  axes: "🪓",
+  hammers: "🔨",
+  throwing: "🎯",
+  shields: "🛡️",
+  great_swords: "🗡️",
+  great_axes: "🪓",
+  great_hammers: "🔨",
+  polearms: "🔱",
+  great_shields: "🛡️",
+  bows: "🏹",
+  crossbows: "🏹",
+  unarmed: "👊",
+
+  // COMBAT SUPPORT SKILLS
+  tactics: "📋",
+  intimidation: "😠",
+  shieldwork: "🛡️",
+
+  // MAGIC SKILLS
+  divine_magic: "✨",
+  fire_magic: "🔥",
+  ice_magic: "❄️",
+  earth_magic: "🌍",
+  death_magic: "💀",
+
+  // EXPLORATION SKILLS
+  navigation: "🧭",
+  tracking: "👣",
+  cartography: "🗺️",
+  survival: "🏕️",
+  climbing: "🧗",
+  swimming: "🏊",
+  scouting: "👁️",
+  stealth: "🥷",
+
+  // CRAFTING SKILLS
+  blacksmithing: "⚒️",
+  alchemy: "🧪",
+  leatherworking: "🦺",
+  tailoring: "✂️",
+  cooking: "🍳",
+  jewelcrafting: "💎",
+  enchanting: "✨",
+  herbalism: "🌿",
+  carpentry: "🪚",
+  scribing: "📝",
+
+  // SOCIAL SKILLS
+  diplomacy: "🤝",
+  bartering: "💰",
+  persuasion: "💬",
+  animal_handling: "🐕",
+  lockpicking: "🔓",
+  trap_disarming: "🪤",
+  lore_knowledge: "📚",
+  investigation: "🔍",
+  insight: "👁️",
+  performance: "🎭",
+  deception: "🎭",
+  sleight_of_hand: "🎪",
+
+  // SPECIALIZED SKILLS
+  meditation: "🧘",
+  healing: "💚",
+  acrobatics: "🤸",
+  nature_magic: "🌱",
+
+  // PROFESSIONAL SKILLS
+  mining: "⛏️",
+  stonework: "🗿",
+};
+
+// Skill category emoji mapping for display
+export const skillCategoryEmoji = {
+  weapons: "⚔️",
+  combat: "⚔️",
+  exploration: "🗺️",
+  crafting: "🔨",
+  social: "💬",
+  magic: "✨",
+  specialized: "⭐",
+  professional: "💼",
+};
+
+// Helper function to get skill emoji
+export function getSkillEmoji(skillName) {
+  return skillEmoji[skillName] || "📊";
+}
+
+// Helper function to get skill category emoji
+export function getSkillCategoryEmoji(categoryName) {
+  return skillCategoryEmoji[categoryName] || "📊";
+}
+
 // Default export containing all mappings
 export default {
   classEmoji,
@@ -141,9 +239,13 @@ export default {
   locationEmoji,
   floraEmoji,
   entityEmoji,
+  skillEmoji,
+  skillCategoryEmoji,
   getClassEmoji,
   getRaceEmoji,
   getLocationEmoji,
   getFloraEmoji,
   getEntityEmoji,
+  getSkillEmoji,
+  getSkillCategoryEmoji,
 };

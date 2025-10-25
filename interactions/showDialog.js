@@ -7,7 +7,7 @@ export async function showChoiceDialog(message, components) {
     // Wrap the message in a div
     const pDiv = document.createElement("div");
     const p = document.createElement("p");
-    p.textContent = message || "No message provided"; // Fallback for empty message
+    p.textContent = message || ""; // Fallback for empty message
     pDiv.appendChild(p);
     gameDialog.appendChild(pDiv);
     // Wrap each button in its own div
