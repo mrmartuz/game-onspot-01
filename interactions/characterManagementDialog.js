@@ -4,7 +4,18 @@
 import { gameState } from "../gamestate/game_variables.js";
 import { showChoiceDialog } from "./showDialog.js";
 import { getGroupBonus } from "../utils.js";
-import { classEmoji, raceEmoji } from "../gamestate/emoji-database.js";
+import {
+  classEmoji,
+  raceEmoji,
+  skillEmoji,
+  statEmoji,
+  sexEmoji,
+} from "../gamestate/emoji-database.js";
+import { skillDatabase } from "./skills.js";
+import { raceDatabase } from "./characterGeneration.js";
+import { classDatabase } from "./combat/classes.js";
+import { createCharacterOverview } from "./character/characterCreation-system/utils/utils-ui.js";
+import { STAT_CATEGORIES } from "./character/characterCreation-system/constants.js";
 
 export async function showCharacterManagementDialog() {
   const message = "👥 CHARACTER MANAGEMENT";
@@ -63,62 +74,27 @@ export async function showCharacterManagementDialog() {
 
 async function showPlayerCharacterDialog() {
   const player = gameState.playerCharacter;
-  const emoji = classEmoji[player.class] || "👤";
-  const raceEmojiIcon = raceEmoji[player.race] || "👤";
 
-  let message = `👤 **PLAYER CHARACTER**\n\n`;
-  message += `Name: ${player.firstName} ${player.lastName}\n`;
-  message += `Race: ${player.race} ${raceEmojiIcon} | Class: ${player.class} ${emoji}\n`;
-  message += `Sex: ${player.sex} | Level: ${player.level || 1}\n`;
-  message += `Health: ${player.health?.current || 0}/${
-    player.health?.max || 0
-  } ❤️‍🩹\n\n`;
+  let message = ``;
 
-  // Display stats
-  if (player.stats) {
-    message += `📊 **STATS:**\n`;
-    message += `STR: ${player.stats.STR} | DEX: ${player.stats.DEX} | CON: ${player.stats.CON}\n`;
-    message += `INT: ${player.stats.INT} | WIS: ${player.stats.WIS} | CHA: ${player.stats.CHA} | LUCK: ${player.stats.LUCK}\n\n`;
-  }
+  const components = [];
 
-  // Display top skills
-  if (player.skills) {
-    message += `🎯 **TOP SKILLS:**\n`;
-    const topSkills = Object.entries(player.skills)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([skill, level]) => `${skill}: ${level.toFixed(2)}`)
-      .join("\n");
-    message += `${topSkills}\n\n`;
-  }
+  // Complete character overview using single comprehensive component
+  const overviewComponents = createCharacterOverview(
+    player,
+    raceDatabase,
+    classDatabase,
+    skillDatabase,
+    raceEmoji,
+    classEmoji,
+    sexEmoji,
+    skillEmoji,
+    statEmoji,
+    STAT_CATEGORIES
+  );
+  components.push(...overviewComponents);
 
-  // Display equipment
-  if (player.equipment) {
-    message += `⚔️ **EQUIPMENT:**\n`;
-    if (player.equipment.armor) {
-      message += `Armor: ${player.equipment.armor}\n`;
-    }
-    if (player.equipment.weapon) {
-      message += `Weapon: ${player.equipment.weapon}\n`;
-    }
-    if (player.equipment.secondHand) {
-      message += `Second Hand: ${player.equipment.secondHand}\n`;
-    }
-    if (player.equipment.back) {
-      message += `Back: ${player.equipment.back}\n`;
-    }
-    if (player.equipment.tool) {
-      message += `Tool: ${player.equipment.tool}\n`;
-    }
-    message += "\n";
-  }
-
-  const components = [
-    {
-      type: "message",
-      label: message,
-      value: "",
-    },
+  components.push(
     {
       type: "button",
       label: "📈 Skill Details",
@@ -138,10 +114,10 @@ async function showPlayerCharacterDialog() {
       type: "button",
       label: "❌ Back",
       value: "back",
-    },
-  ];
+    }
+  );
 
-  const choice = await showChoiceDialog("Player Character Details", components);
+  const choice = await showChoiceDialog(message, components);
 
   switch (choice) {
     case "skills":
@@ -206,12 +182,12 @@ async function showGroupMembersDialog() {
   ];
 
   const choice = await showChoiceDialog("Group Members", components);
-
   switch (choice) {
     case "details":
       return await showMemberSelectionDialog();
     case "back":
       return await showCharacterManagementDialog();
+
     default:
       return await showCharacterManagementDialog();
   }
@@ -261,59 +237,25 @@ async function showMemberDetailsDialog(member, memberIndex) {
   const emoji = classEmoji[member.class] || "👤";
   const raceEmojiIcon = raceEmoji[member.race] || "👤";
 
-  let message = `👤 **GROUP MEMBER DETAILS**\n\n`;
-  message += `Name: ${member.firstName} ${member.lastName}\n`;
-  message += `Race: ${member.race} ${raceEmojiIcon} | Class: ${member.class} ${emoji}\n`;
-  message += `Sex: ${member.sex} | Level: ${member.level || 1}\n`;
-  message += `Health: ${member.health?.current || 0}/${
-    member.health?.max || 0
-  } ❤️‍🩹\n\n`;
+  let message = ``;
+  const components = [];
 
-  // Display stats
-  if (member.stats) {
-    message += `📊 **STATS:**\n`;
-    message += `STR: ${member.stats.STR} | DEX: ${member.stats.DEX} | CON: ${member.stats.CON}\n`;
-    message += `INT: ${member.stats.INT} | WIS: ${member.stats.WIS} | CHA: ${member.stats.CHA} | LUCK: ${member.stats.LUCK}\n\n`;
-  }
+  // Complete character overview using single comprehensive component
+  const overviewComponents = createCharacterOverview(
+    member,
+    raceDatabase,
+    classDatabase,
+    skillDatabase,
+    raceEmoji,
+    classEmoji,
+    sexEmoji,
+    skillEmoji,
+    statEmoji,
+    STAT_CATEGORIES
+  );
+  components.push(...overviewComponents);
 
-  // Display top skills
-  if (member.skills) {
-    message += `🎯 **TOP SKILLS:**\n`;
-    const topSkills = Object.entries(member.skills)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([skill, level]) => `${skill}: ${level.toFixed(2)}`)
-      .join("\n");
-    message += `${topSkills}\n\n`;
-  }
-
-  // Display equipment
-  if (member.equipment) {
-    message += `⚔️ **EQUIPMENT:**\n`;
-    if (member.equipment.armor) {
-      message += `Armor: ${member.equipment.armor}\n`;
-    }
-    if (member.equipment.weapon) {
-      message += `Weapon: ${member.equipment.weapon}\n`;
-    }
-    if (member.equipment.secondHand) {
-      message += `Second Hand: ${member.equipment.secondHand}\n`;
-    }
-    if (member.equipment.back) {
-      message += `Back: ${member.equipment.back}\n`;
-    }
-    if (member.equipment.tool) {
-      message += `Tool: ${member.equipment.tool}\n`;
-    }
-    message += "\n";
-  }
-
-  const components = [
-    {
-      type: "message",
-      label: message,
-      value: "",
-    },
+  components.push(
     {
       type: "button",
       label: "📈 Skill Details",
@@ -333,13 +275,10 @@ async function showMemberDetailsDialog(member, memberIndex) {
       type: "button",
       label: "❌ Back",
       value: "back",
-    },
-  ];
-
-  const choice = await showChoiceDialog(
-    `${member.firstName} ${member.lastName} Details`,
-    components
+    }
   );
+
+  const choice = await showChoiceDialog(message, components);
 
   switch (choice) {
     case "skills":
@@ -507,24 +446,7 @@ async function showSkillsDialog(character, title, returnContext) {
   if (allSkills.length === 0) {
     message += "No skills available for this character.\n\n";
   } else {
-    // Sort skills by level (highest first)
-    const sortedSkills = allSkills.sort(([, a], [, b]) => b - a);
-
-    message += `**All Skills:**\n`;
-    sortedSkills.forEach(([skill, level]) => {
-      const levelText =
-        level >= 10
-          ? "Master"
-          : level >= 7
-          ? "Expert"
-          : level >= 4
-          ? "Good"
-          : level > 0
-          ? "Novice"
-          : "Untrained";
-      message += `  ${skill}: ${level.toFixed(2)} (${levelText})\n`;
-    });
-    message += "\n";
+    message += `**All Skills:**\n\n`;
   }
 
   const components = [
@@ -533,12 +455,24 @@ async function showSkillsDialog(character, title, returnContext) {
       label: message,
       value: "",
     },
-    {
-      type: "button",
-      label: "❌ Back",
-      value: "back",
-    },
   ];
+
+  // Add skills display using button grid
+  if (allSkills.length > 0) {
+    const skillsComponents = createSkillsButtonGrid(
+      character.skills,
+      skillEmoji,
+      skillDatabase,
+      3
+    );
+    components.push(...skillsComponents);
+  }
+
+  components.push({
+    type: "button",
+    label: "❌ Back",
+    value: "back",
+  });
 
   const choice = await showChoiceDialog(title, components);
 

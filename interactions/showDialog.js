@@ -8,8 +8,10 @@ export async function showChoiceDialog(message, components) {
     const pDiv = document.createElement("div");
     const p = document.createElement("p");
     p.textContent = message || ""; // Fallback for empty message
-    pDiv.appendChild(p);
-    gameDialog.appendChild(pDiv);
+    if(message!== "") {
+      pDiv.appendChild(p);
+      gameDialog.appendChild(pDiv);
+    }
     // Wrap each button in its own div
     if (components && components.length > 0) {
       components.forEach((componentData) => {
@@ -143,6 +145,7 @@ export async function showChoiceDialog(message, components) {
           case "button_grid":
             const gridContainer = document.createElement("div");
             gridContainer.style.display = "grid";
+            gridContainer.style.marginBottom = "10px";
 
             // Default to 2 columns, allow override via component.columns
             const columns = component.columns || 2;

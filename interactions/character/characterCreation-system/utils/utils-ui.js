@@ -56,122 +56,50 @@ export function createNameGrid(names, type) {
 }
 
 /**
- * Create stat display messages for physical and mental stats
- * @param {Object} stats - Character stats object
- * @param {Object} categories - Stat categories (physical/mental)
- * @returns {Array} Array of message components
- */
-export function createStatDisplay(stats, categories = STAT_CATEGORIES) {
-  const components = [];
-
-  // Physical stats
-  components.push({
-    type: "message",
-    label: "Physical Stats:",
-    value: "",
-  });
-
-  const physicalStats = categories.physical
-    .map((stat) => `${stat}: ${stats[stat]}`)
-    .join(" | ");
-  components.push({
-    type: "message",
-    label: `  ${physicalStats}`,
-    value: "",
-  });
-
-  // Mental stats
-  components.push({
-    type: "message",
-    label: "Mental Stats:",
-    value: "",
-  });
-
-  const mentalStats = categories.mental
-    .map((stat) => `${stat}: ${stats[stat]}`)
-    .join(" | ");
-  components.push({
-    type: "message",
-    label: `  ${mentalStats}`,
-    value: "",
-  });
-
-  return components;
-}
-
-/**
- * Create equipment display messages
+ * Create equipment display button grid
  * @param {Object} equipment - Character equipment object
  * @param {Array} slots - Equipment slot configuration
- * @returns {Array} Array of message components
+ * @returns {Array} Array of components including button grid
  */
 export function createEquipmentDisplay(equipment, slots = EQUIPMENT_SLOTS) {
   const components = [];
 
   components.push({
     type: "message",
-    label: "\nSTARTING EQUIPMENT",
+    label: "\nCHARACTER'S EQUIPMENT ⚔️🛡️",
     value: "",
   });
 
-  slots.forEach(({ key, label }) => {
+  // Create button grid for equipment slots
+  const equipmentButtons = slots.map(({ key, label }) => {
     const item = equipment[key];
+    let displayText;
+
     if (item) {
       // Special handling for secondHand to show "(2h-grip)" properly
       if (key === "secondHand" && item === "(2h-grip)") {
-        components.push({
-          type: "message",
-          label: `${label}: ${item}`,
-          value: "",
-        });
+        displayText = `${label}: ${item}`;
       } else {
-        components.push({
-          type: "message",
-          label: `${label}: ${item}`,
-          value: "",
-        });
+        displayText = `${label}: ${item}`;
       }
     } else {
-      components.push({
-        type: "message",
-        label: `${label}: (empty)`,
-        value: "",
-      });
+      displayText = `${label}: (empty)`;
     }
+
+    return {
+      label: displayText,
+      value: `display_equipment_${key}`,
+      disabled: false, // Display only, not interactive
+    };
   });
 
-  return components;
-}
-
-/**
- * Create skills display messages
- * @param {Object} skills - Character skills object
- * @returns {Array} Array of message components
- */
-export function createSkillsDisplay(skills) {
-  const components = [];
-
-  if (Object.keys(skills).length > 0) {
-    components.push({
-      type: "message",
-      label: "\nSTARTING SKILLS",
-      value: "",
-    });
-
-    // Group skills into lines of 2 skills each
-    const skillEntries = Object.entries(skills);
-    for (let i = 0; i < skillEntries.length; i += 2) {
-      const skillLine = skillEntries
-        .slice(i, i + 2)
-        .map(([skill, level]) => `${skill}: ${level}`)
-        .join(" | ");
-      components.push({
-        type: "message",
-        label: skillLine,
-        value: "",
-      });
-    }
-  }
+  components.push({
+    type: "button_grid",
+    columns: 1,
+    textSize: "11px",
+    gap: "2px",
+    buttons: equipmentButtons,
+  });
 
   return components;
 }
@@ -195,7 +123,7 @@ export function createSkillsButtonGrid(
   if (Object.keys(skills).length > 0) {
     components.push({
       type: "message",
-      label: "\nSTARTING SKILLS",
+      label: "\nCHARACTER'S SKILLS ⚒️🪚",
       value: "",
     });
 
@@ -244,6 +172,66 @@ export function createCompactStatLine(stats, statList) {
 }
 
 /**
+ * Create character identity display component
+ * @param {Object} character - Character object with name, race, class, sex
+ * @param {Object} raceDatabase - Race database for race information
+ * @param {Object} classDatabase - Class database for class information
+ * @param {Object} raceEmoji - Object containing emoji mappings for races
+ * @param {Object} classEmoji - Object containing emoji mappings for classes
+ * @param {Object} sexEmoji - Object containing emoji mappings for sex
+ * @returns {Array} Array of components for character identity display
+ */
+export function createCharacterIdentityDisplay(
+  character,
+  raceDatabase,
+  classDatabase,
+  raceEmoji,
+  classEmoji,
+  sexEmoji
+) {
+  const components = [];
+
+  // Get race and class data
+  const raceData = raceDatabase && raceDatabase[character.race];
+  const raceRegion = raceData ? raceData.region : "Unknown Region";
+  const raceName = raceData ? raceData.name.toLowerCase() : "unknown";
+  const raceEmojiIcon = raceEmoji[character.race];
+
+  const classData = classDatabase[character.class];
+  const className = classData ? classData.name : "Unknown Class";
+  const classEmojiIcon = classEmoji[character.class] || "❓";
+
+  // Character name display
+  components.push({
+    type: "button",
+    label: `${raceEmojiIcon} ${character.firstName.toUpperCase()} ${character.lastName.toUpperCase()}`,
+    value: "display_character_name",
+    disabled: false, // Display only, not interactive
+  });
+
+  // Character details display
+  components.push({
+    type: "message",
+    label: `${character.sex} ${
+      sexEmoji[character.sex]
+    } ${raceRegion} ${raceEmojiIcon} ${className} ${classEmojiIcon} lvl.${
+      character.level
+    }`,
+    value: "",
+  });
+
+  components.push({
+    type: "message",
+    label: `Health: ${character.health?.current || 0}/${
+      character.health?.max || 0
+    } ❤️‍🩹`,
+    value: "",
+  });
+
+  return components;
+}
+
+/**
  * Create a visual stat display grid with names, values, and emojis
  * @param {Object} stats - Character stats object
  * @param {Object} statEmoji - Object containing emoji mappings for stats
@@ -256,6 +244,13 @@ export function createStatDisplayGrid(
   categories = STAT_CATEGORIES
 ) {
   const components = [];
+
+  components.push({
+    type: "message",
+    label: "CHARACTER'S STATS 📊🍀",
+    value: "",
+  });
+
   const allStats = [...categories.physical, ...categories.mental];
 
   // Stat names row (STR, DEX, CON, INT, WIS, CHA)
@@ -295,6 +290,75 @@ export function createStatDisplayGrid(
     type: "button_grid",
     columns: 6,
     buttons: statEmojiButtons,
+  });
+
+  return components;
+}
+
+/**
+ * Create a comprehensive character overview component that displays all character information
+ * @param {Object} character - Complete character object
+ * @param {Object} raceDatabase - Race database for race information
+ * @param {Object} classDatabase - Class database for class information
+ * @param {Object} skillDatabase - Skills database for skill names
+ * @param {Object} raceEmoji - Object containing emoji mappings for races
+ * @param {Object} classEmoji - Object containing emoji mappings for classes
+ * @param {Object} sexEmoji - Object containing emoji mappings for sex
+ * @param {Object} skillEmoji - Object containing emoji mappings for skills
+ * @param {Object} statEmoji - Object containing emoji mappings for stats
+ * @param {Object} categories - Stat categories (physical/mental)
+ * @returns {Array} Array of components for complete character overview
+ */
+export function createCharacterOverview(
+  character,
+  raceDatabase,
+  classDatabase,
+  skillDatabase,
+  raceEmoji,
+  classEmoji,
+  sexEmoji,
+  skillEmoji,
+  statEmoji,
+  categories = STAT_CATEGORIES
+) {
+  const components = [];
+
+  // Character Identity Section
+  const identityComponents = createCharacterIdentityDisplay(
+    character,
+    raceDatabase,
+    classDatabase,
+    raceEmoji,
+    classEmoji,
+    sexEmoji
+  );
+  components.push(...identityComponents);
+
+  // Stats Section
+  const statComponents = createStatDisplayGrid(
+    character.stats,
+    statEmoji,
+    categories
+  );
+  components.push(...statComponents);
+
+  // Skills Section
+  const skillsComponents = createSkillsButtonGrid(
+    character.skills,
+    skillEmoji,
+    skillDatabase,
+    3
+  );
+  components.push(...skillsComponents);
+
+  // Equipment Section
+  const equipmentComponents = createEquipmentDisplay(character.equipment);
+  components.push(...equipmentComponents);
+
+  components.push({
+    type: "message",
+    label: "\n",
+    value: "",
   });
 
   return components;

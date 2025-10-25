@@ -14,11 +14,7 @@ import {
 import { skillDatabase } from "../../../../interactions/skills.js";
 
 import { createMessage, createBackButton } from "../utils/utils-navigation.js";
-import {
-  createEquipmentDisplay,
-  createSkillsButtonGrid,
-  createStatDisplayGrid,
-} from "../utils/utils-ui.js";
+import { createCharacterOverview } from "../utils/utils-ui.js";
 import { STAT_CATEGORIES } from "../constants.js";
 import { handleRandomGeneration } from "./random-generation.js";
 
@@ -48,55 +44,20 @@ export async function showCharacterPreview(
   const message = ``;
   let components = [];
 
-  // Character basic info - First line: sex, race name (explanation race)
-  const raceData = raceDatabase && raceDatabase[character.race];
-  const raceRegion = raceData ? raceData.region : "Unknown Region";
-  const raceName = raceData ? raceData.name.toLowerCase() : "unknown";
-  const raceEmojiIcon = raceEmoji[character.race];
-  const classData = classDatabase[character.class];
-  const className = classData ? classData.name : "Unknown Class";
-  const classEmojiIcon = classEmoji[character.class] || "❓";
-
-  components.push({
-    type: "button",
-    label: `${
-      raceEmoji[character.race]
-    } ${character.firstName.toUpperCase()} ${character.lastName.toUpperCase()}`,
-    value: "display_character_name",
-  });
-
-  components.push(
-    createMessage(
-      `${character.sex} ${
-        sexEmoji[character.sex]
-      } ${raceRegion} ${raceEmojiIcon} ${className} ${classEmojiIcon} lvl.${
-        character.level
-      }`
-    )
-  );
-
-  // Stats display using utility function
-  const statComponents = createStatDisplayGrid(character.stats, statEmoji);
-  components.push(...statComponents);
-  // Skills display using button grid
-  const skillsComponents = createSkillsButtonGrid(
-    character.skills,
-    skillEmoji,
+  // Complete character overview using single comprehensive component
+  const overviewComponents = createCharacterOverview(
+    character,
+    raceDatabase,
+    classDatabase,
     skillDatabase,
-    3
+    raceEmoji,
+    classEmoji,
+    sexEmoji,
+    skillEmoji,
+    statEmoji,
+    STAT_CATEGORIES
   );
-  components.push(...skillsComponents);
-
-  // Equipment display using utility function
-  const equipmentComponents = createEquipmentDisplay(character.equipment);
-  components.push(...equipmentComponents);
-
-  // Health display
-  components.push(
-    createMessage(
-      `❤️ Health: ${character.health.current}/${character.health.max}`
-    )
-  );
+  components.push(...overviewComponents);
 
   // Action buttons
   components.push({

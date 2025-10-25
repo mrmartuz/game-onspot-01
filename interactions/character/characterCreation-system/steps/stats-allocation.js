@@ -9,7 +9,6 @@ import {
   createBackButton,
   createRandomButton,
 } from "../utils/utils-navigation.js";
-import { createStatDisplay } from "../utils/utils-ui.js";
 import { STAT_CATEGORIES, DEFAULT_POINTS } from "../constants.js";
 import {
   calculateStatCost,
