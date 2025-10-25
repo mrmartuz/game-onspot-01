@@ -10,9 +10,9 @@ import { raceEmoji, classEmoji } from "../../../../gamestate/emoji-database.js";
 
 import { createMessage, createBackButton } from "../utils/utils-navigation.js";
 import {
-  createStatDisplay,
   createEquipmentDisplay,
   createSkillsDisplay,
+  createStatDisplayGrid,
 } from "../utils/utils-ui.js";
 import { STAT_CATEGORIES } from "../constants.js";
 import { handleRandomGeneration } from "./random-generation.js";
@@ -64,49 +64,9 @@ export async function showCharacterPreview(
     )
   );
 
-  // Stat names row (STR, DEX, CON, INT, WIS, CHA)
-  const allStats = [...STAT_CATEGORIES.physical, ...STAT_CATEGORIES.mental];
-  const statNameButtons = allStats.map((stat) => ({
-    label: stat,
-    value: `display_stat_name_${stat}`,
-    disabled: false, // Display only, not interactive
-  }));
-
-  components.push({
-    type: "button_grid",
-    columns: 6,
-    buttons: statNameButtons,
-  });
-
-  // All the 6 stats on the same row
-  const stats = allStats.map((stat) => {
-    // Use abbreviated stat names to prevent truncation (same as stats-allocation.js)
-    return {
-      label: `${character.stats[stat]}`,
-      value: `display_${stat}`,
-      disabled: false, // Display only, not interactive
-    };
-  });
-
-  components.push({
-    type: "button_grid",
-    columns: 6,
-    buttons: stats,
-  });
-
-  const statEmojiButtons = allStats.map((stat) => {
-    return {
-      label: `${statEmoji[stat]}`,
-      value: `display_${stat}`,
-      disabled: false, // Not disabled, but handled in choice logic
-    };
-  });
-
-  components.push({
-    type: "button_grid",
-    columns: 6,
-    buttons: statEmojiButtons,
-  });
+  // Stats display using utility function
+  const statComponents = createStatDisplayGrid(character.stats, statEmoji);
+  components.push(...statComponents);
   // Skills display using utility function
   const skillsComponents = createSkillsDisplay(character.skills);
   components.push(...skillsComponents);

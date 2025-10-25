@@ -110,7 +110,7 @@ export function createEquipmentDisplay(equipment, slots = EQUIPMENT_SLOTS) {
 
   components.push({
     type: "message",
-    label: ":::::STARTING EQUIPMENT:::::",
+    label: "STARTING EQUIPMENT",
     value: "",
   });
 
@@ -184,4 +184,61 @@ export function createSkillsDisplay(skills) {
  */
 export function createCompactStatLine(stats, statList) {
   return statList.map((stat) => `${stat}:${stats[stat]}`).join(" | ");
+}
+
+/**
+ * Create a visual stat display grid with names, values, and emojis
+ * @param {Object} stats - Character stats object
+ * @param {Object} statEmoji - Object containing emoji mappings for stats
+ * @param {Object} categories - Stat categories (physical/mental)
+ * @returns {Array} Array of button grid components for stat display
+ */
+export function createStatDisplayGrid(
+  stats,
+  statEmoji,
+  categories = STAT_CATEGORIES
+) {
+  const components = [];
+  const allStats = [...categories.physical, ...categories.mental];
+
+  // Stat names row (STR, DEX, CON, INT, WIS, CHA)
+  const statNameButtons = allStats.map((stat) => ({
+    label: stat,
+    value: `display_stat_name_${stat}`,
+    disabled: false, // Display only, not interactive
+  }));
+
+  components.push({
+    type: "button_grid",
+    columns: 6,
+    buttons: statNameButtons,
+  });
+
+  // Stat values row
+  const statValueButtons = allStats.map((stat) => ({
+    label: `${stats[stat]}`,
+    value: `display_${stat}`,
+    disabled: false, // Display only, not interactive
+  }));
+
+  components.push({
+    type: "button_grid",
+    columns: 6,
+    buttons: statValueButtons,
+  });
+
+  // Stat emoji row
+  const statEmojiButtons = allStats.map((stat) => ({
+    label: `${statEmoji[stat]}`,
+    value: `display_${stat}`,
+    disabled: false, // Display only, not interactive
+  }));
+
+  components.push({
+    type: "button_grid",
+    columns: 6,
+    buttons: statEmojiButtons,
+  });
+
+  return components;
 }
