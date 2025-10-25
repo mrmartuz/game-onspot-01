@@ -1,11 +1,10 @@
-import { gameState } from "../gamestate/game_variables.js";
 import { getShowChoiceDialog } from "../interactions.js";
 
 export async function startMenu() {
   const message = " ";
 
   const choice = await getShowChoiceDialog(message, [
-    { type: "button", label: "Welcome to ExpoGa! ", value: "title" },
+    { type: "button", label: "ExpoGa🧭 v0.1.0 🔍", value: "title" },
     {
       type: "message",
       label: `This game offers you to explore the world, hire new members, gain renown, become the greatest explorer of all`,

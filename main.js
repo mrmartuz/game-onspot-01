@@ -14,7 +14,7 @@ import { setupInputs } from "./input_handlers.js";
 import {
   getStartMenuDialog,
   getCharacterCreationDialog,
-  getTitleDialog,
+  showTitleDialog,
   getGroupCreationDialog,
   getWorldGenerationDialog,
 } from "./interactions.js";
@@ -35,9 +35,11 @@ while (startMenu !== "explore" && startMenu !== "exit") {
   startMenu = await getStartMenuDialog();
   "Selected option:", startMenu;
   if (startMenu === "title") {
-    //TODO: show to player title and close it after pressing
-    //TODO: insert info about the game and mechanics
-    // await getTitleDialog();
+    const titleResult = await showTitleDialog();
+    if (titleResult === "back") {
+      // Continue the loop to show start menu again
+      continue;
+    }
   } else if (startMenu === "load") {
     startMenu;
     await getLoadGameDialog();

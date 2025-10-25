@@ -29,7 +29,7 @@ const GLOBAL_MAP_CONSTANTS = {
     "monster caves": "#808080", // Gray for monster caves
     peaks: "#161a1d", // DarkGray for peaks
     volcano: "#e6c229", // Yellow for volcanoes
-    waterfall: "#4682b4", // Blue for waterfalls
+    waterfalls: "#4682b4", // Blue for waterfalls
     canyon: "#4682b4", // Blue for canyons
     geyser: "#4682b4", // Blue for geysers
   },
@@ -45,7 +45,7 @@ const GLOBAL_MAP_CONSTANTS = {
     "monster caves": getEmojiForLocation("monster caves"), // Monster cave emoji
     peaks: getEmojiForLocation("peaks"), // Mountain peaks emoji
     volcano: getEmojiForLocation("volcano"), // Volcano emoji
-    waterfall: getEmojiForLocation("waterfall"), // Waterfall emoji
+    waterfalls: getEmojiForLocation("waterfalls"), // Waterfall emoji
     canyon: getEmojiForLocation("canyon"), // Canyon emoji
     geyser: getEmojiForLocation("geyser"), // Geyser emoji
   },
@@ -145,7 +145,7 @@ function getTileColor(tile) {
     if (["peaks", "volcano"].includes(location)) {
       return BIOME_COLORS[biome].peaks;
     }
-    if (["waterfall", "canyon", "geyser"].includes(location)) {
+    if (["waterfalls", "canyon", "geyser"].includes(location)) {
       return LOCATION_COLOR[location];
     }
     if (

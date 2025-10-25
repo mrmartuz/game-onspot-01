@@ -16,7 +16,7 @@ import { showHealthGroupDialog } from "./interactions/healthGroupDialog.js";
 import { showDiscoveriesDialog } from "./interactions/discoveriesDialog.js";
 import { showEventsDialog } from "./interactions/eventDialog.js";
 import { startMenu } from "./interactions/startMenu.js";
-import { titleDialog } from "./interactions/titleDialog.js";
+import { titleDialog } from "./interactions/showTitleDialog.js";
 import { showCharacterGenerationDialog } from "./interactions/character/characterCreation-system/index.js";
 import { showGroupCreationDialog } from "./interactions/groupCreationDialog.js";
 import { worldGenerationDialog } from "./interactions/worldGenerationDialog.js";
@@ -87,7 +87,7 @@ export async function getStartMenuDialog() {
   return startMenu();
 }
 
-export async function getTitleDialog() {
+export async function showTitleDialog() {
   return titleDialog();
 }
 
