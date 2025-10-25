@@ -8,7 +8,7 @@ export async function showChoiceDialog(message, components) {
     const pDiv = document.createElement("div");
     const p = document.createElement("p");
     p.textContent = message || ""; // Fallback for empty message
-    if(message!== "") {
+    if (message !== "") {
       pDiv.appendChild(p);
       gameDialog.appendChild(pDiv);
     }
@@ -34,6 +34,12 @@ export async function showChoiceDialog(message, components) {
                 gameDialog.close(component.value);
               }
             });
+
+            // Set focus if this button should be focused
+            if (component.focused) {
+              btn.setAttribute("data-focus", "true");
+            }
+
             btnDiv.appendChild(btn);
             gameDialog.appendChild(btnDiv);
             break;
@@ -393,6 +399,17 @@ export async function showChoiceDialog(message, components) {
       gameDialog.close();
     }
     gameDialog.showModal();
+
+    // Set focus on the button marked for focus
+    setTimeout(() => {
+      const focusedButton = gameDialog.querySelector(
+        'button[data-focus="true"]'
+      );
+      if (focusedButton) {
+        focusedButton.focus();
+      }
+    }, 0);
+
     gameDialog.addEventListener(
       "close",
       () => {

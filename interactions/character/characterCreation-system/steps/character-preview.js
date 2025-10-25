@@ -64,6 +64,7 @@ export async function showCharacterPreview(
     type: "button",
     label: "✅ Accept Character",
     value: "accept",
+    focused: true, // This will be used to set focus
   });
 
   components.push({
