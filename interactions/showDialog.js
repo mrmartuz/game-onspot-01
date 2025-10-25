@@ -151,7 +151,7 @@ export async function showChoiceDialog(message, components) {
             // Set gap and margins
             const gap = component.gap || "6px"; // Default gap
             gridContainer.style.gap = gap;
-            gridContainer.style.marginBottom = "10px";
+            gridContainer.style.marginBottom = "0px"; // Use same gap for margin
 
             // Ensure grid doesn't exceed parent width
             gridContainer.style.maxWidth = "100%";
@@ -184,6 +184,8 @@ export async function showChoiceDialog(message, components) {
                 btn.style.textOverflow = "ellipsis";
                 btn.style.whiteSpace = "nowrap";
                 btn.style.boxSizing = "border-box";
+                btn.style.marginBottom = "0px";
+                btn.style.marginTop = gap;
 
                 // Add visual styling for disabled buttons
                 if (btn.disabled) {

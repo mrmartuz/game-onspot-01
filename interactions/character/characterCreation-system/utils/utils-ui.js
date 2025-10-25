@@ -154,7 +154,7 @@ export function createSkillsDisplay(skills) {
   if (Object.keys(skills).length > 0) {
     components.push({
       type: "message",
-      label: ":::::STARTING SKILLS:::::",
+      label: "\nSTARTING SKILLS",
       value: "",
     });
 

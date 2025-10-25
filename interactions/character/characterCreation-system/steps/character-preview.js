@@ -3,23 +3,23 @@ import {
   getShowChoiceDialog,
   getDialogValue,
 } from "../../../../interactions.js";
-import characterGeneration from "../../generation.js";
+
 import { raceDatabase } from "../../races.js";
 import { classDatabase } from "../../../../interactions/combat/classes.js";
 import { raceEmoji, classEmoji } from "../../../../gamestate/emoji-database.js";
-import { statGeneration } from "../../stats.js";
+
 import { createMessage, createBackButton } from "../utils/utils-navigation.js";
 import {
   createStatDisplay,
   createEquipmentDisplay,
   createSkillsDisplay,
-  createCompactStatLine,
 } from "../utils/utils-ui.js";
-import { STAT_CATEGORIES, DEFAULT_POINTS } from "../constants.js";
+import { STAT_CATEGORIES } from "../constants.js";
 import { handleRandomGeneration } from "./random-generation.js";
-import { handleStatsAllocationWithState } from "./stats-allocation.js";
-import { createNavigationResult, NavigationResult } from "../state.js";
 
+import { createNavigationResult, NavigationResult } from "../state.js";
+import { statEmoji } from "../../../../gamestate/emoji-database.js";
+import { sexEmoji } from "../../../../gamestate/emoji-database.js";
 /**
  * Show character preview and handle final actions
  * @param {Object} character - Generated character
@@ -56,27 +56,57 @@ export async function showCharacterPreview(
 
   components.push(
     createMessage(
-      `${character.sex} ${raceRegion} ${raceEmojiIcon} (${raceName}) ${className} ${classEmojiIcon} lvl.${character.level}`
+      `${character.sex} ${
+        sexEmoji[character.sex]
+      } ${raceRegion} ${raceEmojiIcon} (${raceName}) ${className} ${classEmojiIcon} lvl.${
+        character.level
+      }`
     )
   );
 
-  // Stats header
-  components.push(createMessage("::::::STATS::::::"));
+  // Stat names row (STR, DEX, CON, INT, WIS, CHA)
+  const allStats = [...STAT_CATEGORIES.physical, ...STAT_CATEGORIES.mental];
+  const statNameButtons = allStats.map((stat) => ({
+    label: stat,
+    value: `display_stat_name_${stat}`,
+    disabled: false, // Display only, not interactive
+  }));
 
-  // Physical stats (STR, DEX, CON)
-  const physicalLine = createCompactStatLine(
-    character.stats,
-    STAT_CATEGORIES.physical
-  );
-  components.push(createMessage(physicalLine));
+  components.push({
+    type: "button_grid",
+    columns: 6,
+    buttons: statNameButtons,
+  });
 
-  // Mental stats (INT, WIS, CHA, do not show LUCK to the player)
-  const mentalLine = createCompactStatLine(
-    character.stats,
-    STAT_CATEGORIES.mental
-  );
-  components.push(createMessage(mentalLine));
+  // All the 6 stats on the same row
+  const stats = allStats.map((stat) => {
+    // Use abbreviated stat names to prevent truncation (same as stats-allocation.js)
+    return {
+      label: `${character.stats[stat]}`,
+      value: `display_${stat}`,
+      disabled: false, // Display only, not interactive
+    };
+  });
 
+  components.push({
+    type: "button_grid",
+    columns: 6,
+    buttons: stats,
+  });
+
+  const statEmojiButtons = allStats.map((stat) => {
+    return {
+      label: `${statEmoji[stat]}`,
+      value: `display_${stat}`,
+      disabled: false, // Not disabled, but handled in choice logic
+    };
+  });
+
+  components.push({
+    type: "button_grid",
+    columns: 6,
+    buttons: statEmojiButtons,
+  });
   // Skills display using utility function
   const skillsComponents = createSkillsDisplay(character.skills);
   components.push(...skillsComponents);
@@ -127,6 +157,17 @@ export async function showCharacterPreview(
       default:
         return createNavigationResult(NavigationResult.BACK_TO_MAIN);
     }
+  } else if (choiceValue && choiceValue.startsWith("display_")) {
+    // Display buttons are not interactive, just refresh the dialog
+    return await showCharacterPreview(
+      character,
+      generationMethod,
+      statsResult,
+      nameResult,
+      raceResult,
+      sexResult,
+      classResult
+    );
   } else if (choiceValue === "back") {
     // Go back to stats allocation for custom characters
     if (generationMethod === "custom") {

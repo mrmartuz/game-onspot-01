@@ -23,6 +23,7 @@ import { sexEmoji } from "../../../../gamestate/emoji-database.js";
 import { classEmoji } from "../../../../gamestate/emoji-database.js";
 import { classDatabase } from "../../../../interactions/combat/classes.js";
 import { raceDatabase } from "../../../../interactions/character/races.js";
+import { statEmoji } from "../../../../gamestate/emoji-database.js";
 /**
  * Handle stats allocation for custom character creation
  * @param {Object} currentStats - Current stats
@@ -112,6 +113,20 @@ export async function handleStatsAllocationWithState(
     type: "button_grid",
     columns: 6,
     buttons: decreaseButtons,
+  });
+
+  const statEmojiButtons = allStats.map((stat) => {
+    return {
+      label: `${statEmoji[stat]}`,
+      value: `display_${stat}`,
+      disabled: false, // Not disabled, but handled in choice logic
+    };
+  });
+
+  components.push({
+    type: "button_grid",
+    columns: 6,
+    buttons: statEmojiButtons,
   });
 
   components.push(createMessage(`Remaining Points: ${remainingPoints}`));

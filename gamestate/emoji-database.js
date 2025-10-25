@@ -5,7 +5,7 @@
 export const statEmoji = {
   STR: "💪",
   DEX: "🏹",
-  CON: "💪",
+  CON: "❤️",
   INT: "🧠",
   WIS: "💡",
   CHA: "💬",
