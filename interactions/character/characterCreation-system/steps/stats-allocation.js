@@ -18,7 +18,10 @@ import {
   increaseStat,
   decreaseStat,
 } from "../utils/utils-validation.js";
-
+import { raceEmoji } from "../../../../gamestate/emoji-database.js";
+import { sexEmoji } from "../../../../gamestate/emoji-database.js";
+import { classEmoji } from "../../../../gamestate/emoji-database.js";
+import { classDatabase } from "../../../../interactions/combat/classes.js";
 /**
  * Handle stats allocation for custom character creation
  * @param {Object} currentStats - Current stats
@@ -42,7 +45,15 @@ export async function handleStatsAllocationWithState(
 
   components.push(
     createMessage(
-      `You have ${remainingPoints} points to allocate. Each point over 10 costs 2 points. Minimum stat value is 8.`
+      `${raceEmoji[raceResult]} ${nameResult.firstName} ${
+        nameResult.lastName
+      } is a ${sexResult} ${sexEmoji[sexResult]} ${raceResult} ${
+        raceEmoji[raceResult]
+      } is a ${classEmoji[classResult]} ${classResult}, allocate is stats:
+      \n
+      ${classDatabase[classResult].description}
+      \n
+      You have ${remainingPoints} points to allocate. Each point over 10 costs 2 points. Minimum stat value is 8.`
     )
   );
 
@@ -122,8 +133,19 @@ export async function handleStatsAllocationWithState(
   const choiceValue = getDialogValue(choice, "value");
 
   if (choiceValue === "random") {
-    // Generate random stats using the point allocation system
-    return proceduralGeneration.generateRandomStats();
+    // Generate new random stats and stay in the allocation dialog
+    const newRandomStats = proceduralGeneration.generateRandomStats();
+    const newRemainingPoints =
+      statGeneration.calculateRemainingPoints(newRandomStats);
+
+    return await handleStatsAllocationWithState(
+      newRandomStats,
+      newRemainingPoints,
+      nameResult,
+      raceResult,
+      sexResult,
+      classResult
+    );
   } else if (choiceValue === "continue") {
     return currentStats;
   } else if (choiceValue && choiceValue.startsWith("increase_")) {

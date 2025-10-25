@@ -6,6 +6,9 @@ import {
 import characterGeneration from "../../generation.js";
 import { classDatabase } from "../../../../interactions/combat/classes.js";
 import { createMessage, createBackButton } from "../utils/utils-navigation.js";
+import { raceEmoji } from "../../../../gamestate/emoji-database.js";
+import { sexEmoji } from "../../../../gamestate/emoji-database.js";
+import { classEmoji } from "../../../../gamestate/emoji-database.js";
 
 /**
  * Handle class selection for custom character creation
@@ -19,7 +22,9 @@ export async function handleClassSelection(nameResult, race, sex) {
   let components = [];
 
   components.push(
-    createMessage("Choose a character class (Common classes only):")
+    createMessage(
+      `${raceEmoji[race]} ${nameResult.firstName} ${nameResult.lastName} is a ${sex} ${sexEmoji[sex]} ${race} ${raceEmoji[race]} character, choose their class:`
+    )
   );
 
   // Only show common classes
@@ -30,10 +35,9 @@ export async function handleClassSelection(nameResult, race, sex) {
       const classData = classDatabase[className];
       components.push({
         type: "button",
-        label: `${classData.name} - ${classData.description.substring(
-          0,
-          50
-        )}...`,
+        label: `${classEmoji[className]} ${
+          classData.name
+        } - ${classData.description.substring(0, 50)}...`,
         value: className,
       });
     });

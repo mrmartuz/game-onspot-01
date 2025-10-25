@@ -5,6 +5,7 @@ import {
 } from "../../../../interactions.js";
 import characterGeneration from "../../generation.js";
 import { nameDatabase } from "../../names.js";
+import { raceEmoji, sexEmoji } from "../../../../gamestate/emoji-database.js";
 import {
   createMessage,
   createBackButton,
@@ -30,7 +31,9 @@ export async function handleNameSelection(race = "Human", sex = "male") {
   let lastName = "";
 
   components.push(
-    createMessage(`Choose names for your ${sex} ${race} character:`)
+    createMessage(
+      `Choose names for your ${sex} ${sexEmoji[sex]} ${race} ${raceEmoji[race]} character:`
+    )
   );
 
   // First Name Selection
@@ -55,7 +58,6 @@ export async function handleNameSelection(race = "Human", sex = "male") {
     }
   }
 
-  components.push(createRandomButton("🎲 Random First Name"));
   components.push(createCustomInput("Custom First Name", "custom_first"));
 
   // Last Name Selection
@@ -96,9 +98,7 @@ export async function handleNameSelection(race = "Human", sex = "male") {
   const choiceValue = getDialogValue(choice, "value");
   const customFirst = getDialogValue(choice, "custom_first");
 
-  if (choiceValue === "random_first") {
-    firstName = characterGeneration.generateRandomName("first", race, sex);
-  } else if (choiceValue === "random_last") {
+  if (choiceValue === "random_last") {
     lastName = characterGeneration.generateRandomName("last", race);
   } else if (choiceValue && choiceValue.startsWith("first_")) {
     firstName = choiceValue.replace("first_", "");
@@ -227,7 +227,9 @@ export async function handleNameSelectionContinuation(
   let components = [];
 
   components.push(
-    createMessage(`Complete your ${sex} ${race} character's name:`)
+    createMessage(
+      `Complete your ${sex} ${sexEmoji[sex]} ${race} ${raceEmoji[race]} character's name:`
+    )
   );
 
   // Show current selection
@@ -250,7 +252,6 @@ export async function handleNameSelectionContinuation(
       components.push(nameGrid);
     }
 
-    components.push(createRandomButton("🎲 Random First Name"));
     components.push(createCustomInput("Custom First Name", "custom_first"));
   }
 
@@ -290,13 +291,6 @@ export async function handleNameSelectionContinuation(
   } else if (choiceValue === "back") {
     // Go back to sex selection (reset sex selection)
     return "back";
-  } else if (choiceValue === "random_first") {
-    return await handleNameSelectionContinuation(
-      race,
-      sex,
-      characterGeneration.generateRandomName("first", race, sex),
-      lastName
-    );
   } else if (choiceValue === "random_last") {
     return await handleNameSelectionContinuation(
       race,
