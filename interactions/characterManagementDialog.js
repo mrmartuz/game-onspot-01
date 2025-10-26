@@ -12,7 +12,7 @@ import {
   sexEmoji,
 } from "../gamestate/emoji-database.js";
 import { skillDatabase } from "./skills.js";
-import { raceDatabase } from "./characterGeneration.js";
+import { raceDatabase } from "./character/races.js";
 import { classDatabase } from "./combat/classes.js";
 import { createCharacterOverview } from "./character/characterCreation-system/utils/utils-ui.js";
 import { STAT_CATEGORIES } from "./character/characterCreation-system/constants.js";

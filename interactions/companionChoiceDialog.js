@@ -2,7 +2,7 @@
 // Provides choice between starting alone (+50 gold) or selecting from 4 random companions
 
 import { getShowChoiceDialog, getDialogValue } from "../interactions.js";
-import characterGeneration, { raceDatabase } from "./character/index.js";
+import characterGeneration from "./character/index.js";
 import { classDatabase } from "./combat/classes.js";
 import { gameState } from "../gamestate/game_variables.js";
 import { generateCharacterDescription } from "./recruitmentSystem.js";

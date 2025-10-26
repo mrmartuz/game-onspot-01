@@ -6,63 +6,52 @@ import { gameState } from "../gamestate/game_variables.js";
 import { getGroupBonus } from "../utils.js";
 import { getShowChoiceDialog } from "../interactions.js";
 import { showCharacterManagementDialog } from "./characterManagementDialog.js";
-import { classEmoji, raceEmoji, sexEmoji } from "../gamestate/emoji-database.js";
+import {
+  classEmoji,
+  raceEmoji,
+  sexEmoji,
+  statEmoji,
+} from "../gamestate/emoji-database.js";
+import { raceDatabase } from "./character/races.js";
+import { classDatabase } from "./combat/classes.js";
+import { STAT_CATEGORIES } from "./character/characterCreation-system/constants.js";
+import {
+  createCharacterIdentityDisplay,
+  createStatDisplayGrid,
+} from "./character/characterCreation-system/utils/utils-ui.js";
 
 // Helper function to format character details for display
 function formatCharacterDetails(character) {
   if (!character) {
-    return "Click on a creature in the grid above to see their details";
+    return [
+      {
+        type: "message",
+        label: "Click on a creature in the grid above to see their details",
+        value: "",
+      },
+    ];
   }
+  let components = [];
+  // Character Identity Section
+  const identityComponents = createCharacterIdentityDisplay(
+    character,
+    raceDatabase,
+    classDatabase,
+    raceEmoji,
+    classEmoji,
+    sexEmoji
+  );
+  components.push(...identityComponents);
 
-  const classEmojiIcon = classEmoji[character.class] || "👤";
-  const raceEmojiIcon = raceEmoji[character.race] || "👤";
+  // Stats Section
+  const statComponents = createStatDisplayGrid(
+    character.stats,
+    statEmoji,
+    STAT_CATEGORIES
+  );
+  components.push(...statComponents);
 
-  let details = `👤 Name: ${character.firstName} ${character.lastName}\n`;
-  details += `🧬 Race: ${character.race} ${raceEmojiIcon} | Class: ${character.class} ${classEmojiIcon}\n`;
-  details += `${sexEmoji[character.sex]} Sex: ${character.sex}  | 📊 Level: ${
-    character.level || 1
-  } | ❤️‍🩹 Health: ${character.health?.current || 0}/${
-    character.health?.max || 0
-  }\n`;
-
-  // Display stats (excluding LUCK)
-  if (character.stats) {
-    details += `💪 Stats: STR:${character.stats.STR} DEX:${character.stats.DEX} CON:${character.stats.CON} INT:${character.stats.INT} WIS:${character.stats.WIS} CHA:${character.stats.CHA}\n`;
-  }
-
-  // Display top 5 skills
-  if (character.skills) {
-    const topSkills = Object.entries(character.skills)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([skill, level]) => `${skill}: ${level.toFixed(2)}`)
-      .join(", ");
-    if (topSkills) {
-      details += `🎯 Top 5 Skills: ${topSkills}\n`;
-    }
-  }
-
-  // Display equipment
-  if (character.equipment) {
-    details += `🛡️ Armor: ${character.equipment.armor || "(empty)"}\n`;
-    details += `⚔️ Weapon: ${character.equipment.weapon || "(empty)"}\n`;
-
-    // Check if weapon is two-handed to determine second hand display
-    const weapon = character.equipment.weapon || "";
-    const isTwoHanded =
-      weapon.includes("greataxe") ||
-      weapon.includes("greatsword") ||
-      weapon.includes("polearm") ||
-      weapon.includes("bow");
-    details += `🖐️ Second Hand: ${
-      character.equipment.secondHand || (isTwoHanded ? "(2h-grip)" : "(empty)")
-    }\n`;
-
-    details += `🎒 Back: ${character.equipment.back || "(empty)"}\n`;
-    details += `🔧 Tool: ${character.equipment.tool || "(empty)"}\n`;
-  }
-
-  return details;
+  return components;
 }
 
 export async function showHealthGroupDialog() {
@@ -373,12 +362,91 @@ export async function showHealthGroupDialog() {
     : gameState.group;
   const groupTiles = populateGridWithGroupMembers(allMembers);
 
-  // Function to handle character selection
+  // Function to handle character selection and update display
   function handleCharacterSelect(characterIndex) {
     const character = allMembers[characterIndex];
-    const detailsDiv = document.getElementById("character-details");
-    if (detailsDiv && character) {
-      detailsDiv.textContent = formatCharacterDetails(character);
+    const detailsContainer = document.getElementById(
+      "character-details-container"
+    );
+
+    if (detailsContainer && character) {
+      const characterComponents = formatCharacterDetails(character);
+
+      // Clear existing content
+      detailsContainer.innerHTML = "";
+
+      // Render each component matching showDialog.js styling
+      characterComponents.forEach((component) => {
+        switch (component.type) {
+          case "button":
+            const btnDiv = document.createElement("div");
+            const btn = document.createElement("button");
+            btn.textContent = component.label || "";
+            btn.disabled = component.disabled || false;
+
+            if (btn.disabled) {
+              btn.style.opacity = "0.5";
+              btn.style.cursor = "not-allowed";
+            }
+
+            btnDiv.appendChild(btn);
+            detailsContainer.appendChild(btnDiv);
+            break;
+          case "message":
+            const msgDiv = document.createElement("div");
+            const msg = document.createElement("p");
+            msg.textContent = component.label || "";
+            msgDiv.appendChild(msg);
+            detailsContainer.appendChild(msgDiv);
+            break;
+          case "button_grid":
+            const gridContainer = document.createElement("div");
+            gridContainer.style.display = "grid";
+            gridContainer.style.marginBottom = "10px";
+
+            const columns = component.columns || 2;
+            gridContainer.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+
+            const gap = component.gap || "6px";
+            gridContainer.style.gap = gap;
+            gridContainer.style.marginBottom = "0px";
+            gridContainer.style.maxWidth = "100%";
+            gridContainer.style.boxSizing = "border-box";
+
+            const textSize = component.textSize || "12px";
+
+            if (component.buttons && Array.isArray(component.buttons)) {
+              component.buttons.forEach((buttonConfig) => {
+                const btn = document.createElement("button");
+                btn.textContent = buttonConfig.label || "";
+                btn.disabled = buttonConfig.disabled || false;
+
+                btn.style.fontSize = textSize;
+                btn.style.minWidth = "0";
+                btn.style.maxWidth = "100%";
+                btn.style.width = "100%";
+                btn.style.height = "auto";
+                btn.style.padding = "8px 4px";
+                btn.style.overflow = "hidden";
+                btn.style.textOverflow = "ellipsis";
+                btn.style.whiteSpace = "nowrap";
+                btn.style.boxSizing = "border-box";
+                btn.style.marginBottom = "0px";
+                btn.style.marginTop = gap;
+
+                if (btn.disabled) {
+                  btn.style.opacity = "0.5";
+                  btn.style.cursor = "not-allowed";
+                }
+
+                gridContainer.appendChild(btn);
+              });
+            }
+
+            detailsContainer.appendChild(gridContainer);
+            break;
+        }
+      });
     }
   }
 
@@ -391,10 +459,11 @@ export async function showHealthGroupDialog() {
     },
     {
       type: "message",
-      label: formatCharacterDetails(null),
+      label: "",
       value: "",
-      id: "character-details",
+      id: "character-details-container",
     },
+    ...formatCharacterDetails(null),
     { type: "message", label: message, value: "" },
     {
       type: "button",
