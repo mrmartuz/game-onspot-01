@@ -222,6 +222,33 @@ export const skillCategoryEmoji = {
   professional: "💼",
 };
 
+export const equipmentEmoji = {
+  clothes: "👕",
+  armor: "🛡️",
+  weapon: "⚔️",
+  second_hand: "👊",
+  back: "🎒",
+  tool: "🔨",
+  accessory: "💍",
+};
+
+export const weaponEmoji = {
+  swords: "⚔️",
+  axes: "🪓",
+  hammers: "🔨",
+  throwing: "🎯",
+  shields: "🛡️",
+  great_swords: "🗡️",
+  great_axes: "🪓",
+  second_hand: "👊",
+  great_hammers: "🔨",
+  polearms: "🔱",
+  great_shields: "🛡️",
+  bows: "🏹",
+  crossbows: "🏹",
+  unarmed: "👊",
+};
+
 // Helper function to get skill emoji
 export function getSkillEmoji(skillName) {
   return skillEmoji[skillName] || "📊";

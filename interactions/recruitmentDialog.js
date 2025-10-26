@@ -345,7 +345,7 @@ export async function showEntityRecruitmentDialog(entityType, x, y) {
 
       components.push({
         type: "message",
-        label: `${character.firstName} ${character.lastName} (${character.gender} ${character.race} ${character.class} Lv.${character.level})`,
+        label: `${character.firstName} ${character.lastName} (${character.sex} ${character.race} ${character.class} Lv.${character.level})`,
         value: `char_${index}`,
       });
 

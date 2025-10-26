@@ -70,32 +70,42 @@ export function createEquipmentDisplay(equipment, slots = EQUIPMENT_SLOTS) {
     value: "",
   });
 
-  // Create button grid for equipment slots
-  const equipmentButtons = slots.map(({ key, label }) => {
+  // Create button grid with slot names and items side by side
+  const equipmentButtons = [];
+
+  slots.forEach(({ key, label }) => {
     const item = equipment[key];
     let displayText;
 
     if (item) {
       // Special handling for secondHand to show "(2h-grip)" properly
       if (key === "secondHand" && item === "(2h-grip)") {
-        displayText = `${label}: ${item}`;
+        displayText = item;
       } else {
-        displayText = `${label}: ${item}`;
+        displayText = item;
       }
     } else {
-      displayText = `${label}: (empty)`;
+      displayText = "(empty)";
     }
 
-    return {
-      label: displayText,
-      value: `display_equipment_${key}`,
+    // Push slot name button (left column)
+    equipmentButtons.push({
+      label: label,
+      value: `display_equipment_slot_${key}`,
       disabled: false, // Display only, not interactive
-    };
+    });
+
+    // Push item button (right column)
+    equipmentButtons.push({
+      label: displayText,
+      value: `display_equipment_item_${key}`,
+      disabled: false, // Display only, not interactive
+    });
   });
 
   components.push({
     type: "button_grid",
-    columns: 1,
+    columns: 2,
     textSize: "11px",
     gap: "2px",
     buttons: equipmentButtons,
@@ -224,7 +234,7 @@ export function createCharacterIdentityDisplay(
     type: "message",
     label: `Health: ${character.health?.current || 0}/${
       character.health?.max || 0
-    } ❤️‍🩹`,
+    } ${character.health?.current === character.health?.max ? "❤️" : "❤️‍🩹"}`,
     value: "",
   });
 

@@ -234,9 +234,6 @@ async function showMemberSelectionDialog() {
 }
 
 async function showMemberDetailsDialog(member, memberIndex) {
-  const emoji = classEmoji[member.class] || "👤";
-  const raceEmojiIcon = raceEmoji[member.race] || "👤";
-
   let message = ``;
   const components = [];
 

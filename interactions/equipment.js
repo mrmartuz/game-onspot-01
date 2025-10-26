@@ -1,6 +1,8 @@
 // Equipment system for enhanced character progression
 // Equipment has status/material/rarity/type structure with durability and skill bonuses
-// Format: "status material rarity [type]"
+// Format: "emoji [item type] material rarity status"
+
+import { weaponEmoji, equipmentEmoji } from "../../gamestate/emoji-database.js";
 
 // Equipment status levels by item type
 export const equipmentStatus = {
@@ -2002,15 +2004,16 @@ export function getEquipmentType(typeName) {
 
 // Equipment parsing and creation functions
 export function parseEquipmentString(equipmentString) {
-  // Format: "status material rarity [type]"
+  // Format: "emoji [item type] material rarity status"
   const bracketMatch = equipmentString.match(
-    /^(.+?)\s+(.+?)\s+(.+?)\s+\[(.+?)\]$/
+    /^(.+?)\s+\[(.+?)\]\s+(.+?)\s+(.+?)\s+(.+?)$/
   );
   if (!bracketMatch) return null;
 
-  const [, status, material, rarity, type] = bracketMatch;
+  const [, emoji, type, material, rarity, status] = bracketMatch;
 
   return {
+    emoji: emoji.trim(),
     status: status.trim(),
     material: material.trim(),
     rarity: rarity.trim(),
@@ -2019,8 +2022,24 @@ export function parseEquipmentString(equipmentString) {
   };
 }
 
-export function createEquipmentString(status, material, rarity, type) {
-  return `${status} ${material} ${rarity} [${type}]`;
+export function createEquipmentString(
+  equipmentType,
+  itemType,
+  material,
+  rarity,
+  status
+) {
+  // Determine emoji based on equipment type
+  let emoji;
+  if (weaponEmoji[equipmentType]) {
+    emoji = weaponEmoji[equipmentType];
+  } else if (equipmentType === "container") {
+    emoji = equipmentEmoji.back;
+  } else {
+    emoji = equipmentEmoji[equipmentType] || "⚙️";
+  }
+
+  return `${emoji} [${itemType}] ${material} ${rarity} ${status}`;
 }
 
 export function generateRandomEquipment(equipmentType, rarity = "common") {
@@ -2056,10 +2075,11 @@ export function generateRandomEquipment(equipmentType, rarity = "common") {
     "common";
 
   return createEquipmentString(
-    randomStatus.name,
+    equipmentType,
+    randomItem,
     randomMaterial,
     randomRarity,
-    randomItem
+    randomStatus.name.toLowerCase()
   );
 }
 
@@ -2089,12 +2109,23 @@ export function degradeEquipment(equipmentString, amount = 1) {
   const parsed = parseEquipmentString(equipmentString);
   if (!parsed) return equipmentString;
 
-  const typeData = equipmentTypes[parsed.type];
+  // Find the equipment type by searching through equipmentTypes
+  let equipmentType = null;
+  for (const [typeName, typeData] of Object.entries(equipmentTypes)) {
+    if (typeData.items && typeData.items.includes(parsed.type)) {
+      equipmentType = typeName;
+      break;
+    }
+  }
+
+  if (!equipmentType) return equipmentString;
+
+  const typeData = equipmentTypes[equipmentType];
   if (!typeData) return equipmentString;
 
   const statusData = equipmentStatus[typeData.statusType];
   const currentStatus = statusData.statuses.find(
-    (s) => s.name === parsed.status
+    (s) => s.name.toLowerCase() === parsed.status.toLowerCase()
   );
 
   if (!currentStatus || currentStatus.level <= 0) return equipmentString;
@@ -2105,10 +2136,11 @@ export function degradeEquipment(equipmentString, amount = 1) {
     statusData.statuses[0];
 
   return createEquipmentString(
-    newStatus.name,
+    equipmentType,
+    parsed.type,
     parsed.material,
     parsed.rarity,
-    parsed.type
+    newStatus.name.toLowerCase()
   );
 }
 
@@ -2116,12 +2148,23 @@ export function repairEquipment(equipmentString, repairLevel = 1) {
   const parsed = parseEquipmentString(equipmentString);
   if (!parsed) return equipmentString;
 
-  const typeData = equipmentTypes[parsed.type];
+  // Find the equipment type by searching through equipmentTypes
+  let equipmentType = null;
+  for (const [typeName, typeData] of Object.entries(equipmentTypes)) {
+    if (typeData.items && typeData.items.includes(parsed.type)) {
+      equipmentType = typeName;
+      break;
+    }
+  }
+
+  if (!equipmentType) return equipmentString;
+
+  const typeData = equipmentTypes[equipmentType];
   if (!typeData) return equipmentString;
 
   const statusData = equipmentStatus[typeData.statusType];
   const currentStatus = statusData.statuses.find(
-    (s) => s.name === parsed.status
+    (s) => s.name.toLowerCase() === parsed.status.toLowerCase()
   );
 
   if (!currentStatus || !currentStatus.repairable) return equipmentString;
@@ -2132,10 +2175,11 @@ export function repairEquipment(equipmentString, repairLevel = 1) {
     statusData.statuses[6];
 
   return createEquipmentString(
-    newStatus.name,
+    equipmentType,
+    parsed.type,
     parsed.material,
     parsed.rarity,
-    parsed.type
+    newStatus.name.toLowerCase()
   );
 }
 

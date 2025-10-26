@@ -11,6 +11,7 @@ import {
   equipmentStatus,
 } from "../equipment.js";
 import { Monster } from "./entities.js";
+import { weaponEmoji, equipmentEmoji } from "../../gamestate/emoji-database.js";
 
 // Determine AI behavior based on creature template and characteristics
 function determineAIBehavior(template, monster) {
@@ -272,8 +273,18 @@ export function generateEquipmentItem(equipmentType, itemType) {
   const rarityWeights = [0.15, 0.25, 0.35, 0.25]; // Weighted toward poor/common
   const randomRarity = weightedRandom(allowedRarities, rarityWeights);
 
-  // Format: "status material rarity [itemType]"
-  return `${randomStatus.name.toLowerCase()} ${randomMaterial} ${randomRarity} [${itemType}]`;
+  // Format: "emoji [item type] material rarity status"
+  // Determine emoji based on equipment type
+  let emoji;
+  if (weaponEmoji[equipmentType]) {
+    emoji = weaponEmoji[equipmentType];
+  } else if (equipmentType === "container") {
+    emoji = equipmentEmoji.back;
+  } else {
+    emoji = equipmentEmoji[equipmentType] || "⚙️";
+  }
+
+  return `${emoji} [${itemType}] ${randomMaterial} ${randomRarity} ${randomStatus.name.toLowerCase()}`;
 }
 
 export async function generateTeamComposition(

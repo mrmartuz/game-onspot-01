@@ -4,6 +4,7 @@ import {
   equipmentRarity,
   equipmentStatus,
 } from "../equipment.js";
+import { weaponEmoji, equipmentEmoji } from "../../gamestate/emoji-database.js";
 
 // Equipment assignment system
 export const equipmentAssignment = {
@@ -458,8 +459,18 @@ export const equipmentAssignment = {
     const rarityWeights = [0.1, 0.2, 0.3, 0.4]; // Weighted toward common
     const randomRarity = this.weightedRandom(allowedRarities, rarityWeights);
 
-    // Format: "status material rarity [itemType]"
-    return `${randomStatus.name.toLowerCase()} ${randomMaterial} ${randomRarity} [${itemType}]`;
+    // Format: "emoji [item type] material rarity status"
+    // Determine emoji based on equipment type
+    let emoji;
+    if (weaponEmoji[equipmentType]) {
+      emoji = weaponEmoji[equipmentType];
+    } else if (equipmentType === "container") {
+      emoji = equipmentEmoji.back;
+    } else {
+      emoji = equipmentEmoji[equipmentType] || "⚙️";
+    }
+
+    return `${emoji} [${itemType}] ${randomMaterial} ${randomRarity} ${randomStatus.name.toLowerCase()}`;
   },
 
   // Weighted random selection
