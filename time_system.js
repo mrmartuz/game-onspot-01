@@ -51,6 +51,10 @@ export function timeConsumption() {
   const lastHour = lastGameDate.getHours();
   const lastMinute = lastGameDate.getMinutes();
 
+  // Count total characters (player + group members)
+  const totalCharacters =
+    (gameState.playerCharacter ? 1 : 0) + gameState.group.length;
+
   // 🍞 FOOD: Consume 3 times per day (breakfast, lunch, dinner)
   // Breakfast: 6:00-7:00, Lunch: 12:00-13:00, Dinner: 18:00-19:00
   const foodTimes = [6, 12, 18];
@@ -60,7 +64,7 @@ export function timeConsumption() {
       (lastHour === foodHour && lastMinute < 0 && currentMinute >= 0)
     ) {
       // Each character consumes 1 unit per meal
-      const foodPerMeal = gameState.group.length;
+      const foodPerMeal = totalCharacters;
       gameState.food = Math.max(0, gameState.food - foodPerMeal);
       if (gameState.food < 0) {
         logEvent(`🍞 You are starving! Consumed ${foodPerMeal} food for meal`);
@@ -77,7 +81,7 @@ export function timeConsumption() {
       (lastHour === waterHour && lastMinute < 0 && currentMinute >= 0)
     ) {
       // Each character consumes 1 unit per drink
-      const waterPerDrink = gameState.group.length;
+      const waterPerDrink = totalCharacters;
       gameState.water = Math.max(0, gameState.water - waterPerDrink);
       if (gameState.water < 0) {
         logEvent(`💧 You are dying of thirst! Consumed ${waterPerDrink} water`);
@@ -90,7 +94,7 @@ export function timeConsumption() {
     (lastHour < 12 && currentHour >= 12) ||
     (lastHour === 12 && lastMinute < 0 && currentMinute >= 0)
   ) {
-    const dailyGoldExpense = gameState.group.length * 0.5;
+    const dailyGoldExpense = totalCharacters * 0.5;
     gameState.gold = Math.max(-100, gameState.gold - dailyGoldExpense); // Allow going negative but not too much
     logEvent(`💰 Daily expenses: -${dailyGoldExpense.toFixed(1)} gold`);
   }

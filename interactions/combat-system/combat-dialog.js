@@ -1541,7 +1541,7 @@ async function handleHarvestDialog() {
   for (let i = 0; i < defeatedMonsters.length; i++) {
     const monster = defeatedMonsters[i];
     const head = generateMonsterHead(monster);
-    const emoji = getLootRaceEmoji(monster.race);
+    const emoji = getRaceEmoji(monster.race);
 
     harvestMessage += `${emoji} ${monster.race} (Level ${monster.level}, ${monster.rarity}) - ${head.inventorySize} space\n`;
 
@@ -1594,7 +1594,7 @@ async function handleHarvestDialog() {
         if (addHeadToInventory(head)) {
           harvestedCount++;
           harvestedItems.push(
-            `${getLootRaceEmoji(monster.race)} ${monster.race} Head`
+            `${getRaceEmoji(monster.race)} ${monster.race} Head`
           );
           ("Successfully added head to inventory");
 
