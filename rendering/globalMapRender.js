@@ -120,6 +120,22 @@ export function drawGlobalMap(ctx) {
   const playerDrawY = (gameState.py - startY) * tileSize;
   ctx.fillStyle = "white";
   ctx.fillRect(playerDrawX, playerDrawY, tileSize, tileSize);
+
+  // Draw blue circle inside the square
+  ctx.fillStyle = "blue";
+  ctx.beginPath();
+  ctx.arc(
+    playerDrawX + tileSize / 2,
+    playerDrawY + tileSize / 2,
+    tileSize * 0.45,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  // Draw shield emoji for the player
+  const playerEmoji = "🛡️";
+  drawEmoji(ctx, playerEmoji, playerDrawX, playerDrawY, tileSize);
 }
 
 function getTileColor(tile) {
