@@ -11,10 +11,17 @@ import {
   getCachedTile,
   hasCachedTile,
 } from "../gamestate/gameStateSetGet.js";
+import { updateTimeColorCache } from "../time_system.js";
+import { canvas } from "../rendering.js";
 
 export function drawRegionalMap(ctx, offsetDeltaX, offsetDeltaY) {
-  for (let vx = 0; vx < gameState.viewWidth; vx++) {
-    for (let vy = 0; vy < gameState.viewHeight; vy++) {
+  updateTimeColorCache();
+
+  // Render 2 extra tiles on each side for border coverage + movement buffer
+  const extraTiles = 2;
+
+  for (let vx = -extraTiles; vx < gameState.viewWidth + extraTiles; vx++) {
+    for (let vy = -extraTiles; vy < gameState.viewHeight + extraTiles; vy++) {
       let tx = gameState.px - Math.floor(gameState.viewWidth / 2) + vx;
       let ty = gameState.py - Math.floor(gameState.viewHeight / 2) + vy;
       let key = `${tx},${ty}`;
@@ -87,4 +94,79 @@ export function drawRegionalMap(ctx, offsetDeltaX, offsetDeltaY) {
       }
     }
   }
+
+  applyTimeOfDayOverlay(ctx);
+}
+
+function applyTimeOfDayOverlay(ctx) {
+  const currentTimeOfDay = gameState.currentTimeOfDay;
+  const nextTimeOfDay = gameState.nextTimeOfDay;
+  const transitionFactor = gameState.transitionFactor;
+
+  // Skip overlay during pure day for best performance
+  if (currentTimeOfDay === "day" && transitionFactor === 0) return;
+
+  // Get colors for current and next period
+  const currentColor = getTimeOfDayColor(currentTimeOfDay);
+  const nextColor = getTimeOfDayColor(nextTimeOfDay);
+
+  // Blend between two overlays during transitions
+  if (transitionFactor > 0 && transitionFactor < 1) {
+    // During transition: apply both overlays with varying opacity
+    // Draw first overlay with reduced opacity
+    if (currentColor.color) {
+      ctx.globalCompositeOperation = currentColor.blendMode;
+      ctx.fillStyle = currentColor.color.replace(
+        /[\d.]+\)$/,
+        `${currentColor.alpha * (1 - transitionFactor)})`
+      );
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Draw second overlay
+    if (nextColor.color) {
+      ctx.globalCompositeOperation = nextColor.blendMode;
+      ctx.fillStyle = nextColor.color.replace(
+        /[\d.]+\)$/,
+        `${nextColor.alpha * transitionFactor})`
+      );
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  } else {
+    // Pure period (no transition)
+    if (currentColor.color) {
+      ctx.globalCompositeOperation = currentColor.blendMode;
+      ctx.fillStyle = currentColor.color;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  // Reset blend mode and alpha for next frame
+  ctx.globalCompositeOperation = "source-over";
+  ctx.globalAlpha = 1.0;
+}
+
+function getTimeOfDayColor(timeOfDay) {
+  if (timeOfDay === "night") {
+    return {
+      color: "rgba(15, 15, 32, 0.78)",
+      blendMode: "multiply",
+      alpha: 0.6,
+    };
+  } else if (timeOfDay === "sunrise") {
+    return {
+      color: "rgba(241, 189, 46, 0.3)",
+      blendMode: "screen",
+      alpha: 0.3,
+    };
+  } else if (timeOfDay === "day") {
+    return { color: null, blendMode: "source-over", alpha: 0 }; // No overlay
+  } else if (timeOfDay === "sunset") {
+    return {
+      color: "rgba(255, 150, 80, 0.4)",
+      blendMode: "multiply",
+      alpha: 0.4,
+    };
+  }
+  return { color: null, blendMode: "source-over", alpha: 0 };
 }

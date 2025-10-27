@@ -28,7 +28,7 @@ export async function handleChoice(choice, tile) {
   }
   if (choice === "2") {
     // Rest
-    const { beforeTime, afterTime } = advanceGameTime(2);
+    const { beforeTime, afterTime } = advanceGameTime(8);
 
     // Apply health bonus for better healing
     let healthBonus = getGroupBonus("health");
@@ -58,12 +58,9 @@ export async function handleChoice(choice, tile) {
       }
     });
 
-    gameState.food -= gameState.group.length * 0.5;
-    gameState.water -= gameState.group.length * 0.5;
-    gameState.gold -= 2;
     updateStatus();
 
-    const timePassedText = `Time passed: 2 hours (${beforeTime.getHours()}:00 -> ${afterTime.getHours()}:00)`;
+    const timePassedText = `Time passed: (${beforeTime.getHours()}:00 -> ${afterTime.getHours()}:00)`;
     let bonusText = bonusHealing > 0 ? ` (+${bonusHealing} bonus)` : "";
 
     await getShowChoiceDialog(

@@ -229,27 +229,27 @@ export function getTile(x, y) {
   } else if (biome === "taiga") {
     if (terrain === "sand") {
       if (r < 0.25) {
-        color = "#191611";
+        color = "#2C4A52";
       } else if (r < 0.5) {
-        color = "#1B1E15";
+        color = "#345B63";
       } else {
-        color = "#1C2618";
+        color = "#3D6A73";
       }
     } else if (terrain === "dirt") {
       if (r < 0.25) {
-        color = "#191611";
+        color = "#1F4D3F";
       } else if (r < 0.5) {
-        color = "#1B1E15";
+        color = "#2A5C4E";
       } else {
-        color = "#1C2618";
+        color = "#356B5D";
       }
     } else {
       if (r < 0.33) {
-        color = "#191611";
+        color = "#1A3A42";
       } else if (r < 0.66) {
-        color = "#1B1E15";
+        color = "#234B53";
       } else {
-        color = "#1C2618";
+        color = "#2C5A62";
       }
     }
   } else if (biome === "desert") {

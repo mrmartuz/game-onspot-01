@@ -9,7 +9,7 @@ import {
   getCheckTileInteractionDialog,
   getShowDeathDialog,
 } from "./interactions.js";
-import { timeConsumption } from "./time_system.js";
+import { timeConsumption, updateTimeColorCache } from "./time_system.js";
 import { setupInputs } from "./input_handlers.js";
 import {
   getStartMenuDialog,
@@ -113,6 +113,7 @@ if (startMenu !== "load") {
 // }
 
 updateGroupBonus();
+updateTimeColorCache();
 addVisitedTile("0,0");
 revealAround();
 setupInputs();
@@ -130,7 +131,10 @@ async function postMove() {
   await getCheckTileInteractionDialog(tile);
   let death = await checkDeath();
   if (death) {
-    await getShowDeathDialog(death);
+    const reloadCheck = await getShowDeathDialog(death);
+    if (reloadCheck === "reload") {
+      location.reload();
+    }
   }
 }
 

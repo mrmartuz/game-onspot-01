@@ -65,7 +65,14 @@ export const gameState = {
   offsetX: 0,
   offsetY: 0,
   last_consume_time: Date.now(),
+  last_consume_game_time: undefined, // Game time (with offset) of last consumption check
   timeOffset: 0, // Manual time adjustments in milliseconds (for actions like rest)
+
+  // Time-based color system
+  currentTimeOfDay: "day", // "night", "sunrise", "day", "sunset"
+  nextTimeOfDay: "day", // Next time period in the cycle
+  transitionFactor: 0.0, // 0.0 = pure current period, 1.0 = pure next period
+  lastTimeUpdate: -1, // Last hour checked to detect time changes
 };
 
 // Character ID generation system - Phase 2.1 Migration

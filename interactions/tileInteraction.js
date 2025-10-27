@@ -432,9 +432,8 @@ export async function checkTileInteraction(tile) {
   ) {
     options.unshift({
       type: "button",
-      label: `😴 Rest (-${gameState.group.length * 0.5}🍞 - ${
-        gameState.group.length * 0.5
-      }💧 -2🪙)`,
+      label: `😴 Rest (-${Math.ceil(gameState.group.length * 0.5)}🍞 - ${Math.ceil(gameState.group.length * 0.5)
+      }💧)`,
       value: "2",
     });
   }
