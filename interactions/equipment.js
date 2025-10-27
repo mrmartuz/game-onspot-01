@@ -2,7 +2,7 @@
 // Equipment has status/material/rarity/type structure with durability and skill bonuses
 // Format: "emoji [item type] material rarity status"
 
-import { weaponEmoji, equipmentEmoji } from "../../gamestate/emoji-database.js";
+import { weaponEmoji, equipmentEmoji } from "../gamestate/emoji-database.js";
 
 // Equipment status levels by item type
 export const equipmentStatus = {
