@@ -15,6 +15,7 @@ import {
   calculateEquipmentWeight,
   calculateTotalEquipmentBonuses,
 } from "./interactions/equipment.js";
+import { getCurrentGameDate, getTimeBasedViewDistance } from "./time_system.js";
 
 export function move(dx, dy) {
   if (gameState.cooldown) return;
@@ -54,9 +55,23 @@ export function move(dx, dy) {
 }
 
 export function revealAround() {
+  // Get current game time
+  const currentGameDate = getCurrentGameDate();
+  const hour = currentGameDate.getHours();
+  const minute = currentGameDate.getMinutes();
+  const second = currentGameDate.getSeconds();
+
   // Apply view bonus for increased view distance
   let viewBonus = getGroupBonus("view");
-  let currentViewDist = gameState.viewDist + Math.floor(viewBonus);
+
+  // Calculate time-based view distance with gradual transitions
+  let currentViewDist = getTimeBasedViewDistance(
+    gameState.viewDist,
+    viewBonus,
+    hour,
+    minute,
+    second
+  );
 
   for (let dx = -currentViewDist; dx <= currentViewDist; dx++) {
     for (let dy = -currentViewDist; dy <= currentViewDist; dy++) {

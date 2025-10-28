@@ -117,6 +117,82 @@ export function updateTimeColorCache() {
   }
 }
 
+export function getTimeBasedViewDistance(
+  baseViewDist,
+  viewBonus,
+  hour,
+  minute,
+  second
+) {
+  // Calculate full view distance with bonuses
+  const fullViewDist = baseViewDist + Math.floor(viewBonus);
+
+  // Night (21:00-05:59): Hard cap at 1 tile, no bonuses
+  if (hour >= 21 || hour < 6) {
+    return 1;
+  }
+
+  // Calculate progress through the current minute (0-1)
+  const progressInMinute = second / 60;
+
+  // Hour 6 (06:00-06:59): Gradual increase from 1 to 50% of full view
+  if (hour === 6) {
+    const targetView = Math.max(1, Math.floor(fullViewDist * 0.5)); // 50% of full
+    const startView = 1;
+
+    // Linear interpolation across the hour (minute 0-59)
+    const progress = minute / 60;
+    const viewDist = Math.round(
+      startView + (targetView - startView) * progress
+    );
+    return Math.max(1, Math.min(viewDist, targetView));
+  }
+
+  // Hour 7 (07:00-07:59): Gradual increase from 50% to 100% of full view
+  if (hour === 7) {
+    const startView = Math.max(1, Math.floor(fullViewDist * 0.5)); // 50% of full
+    const targetView = fullViewDist;
+
+    const progress = minute / 60;
+    const viewDist = Math.round(
+      startView + (targetView - startView) * progress
+    );
+    return Math.max(1, Math.min(viewDist, targetView));
+  }
+
+  // Day (08:00-18:59): Full view distance
+  if (hour >= 8 && hour < 19) {
+    return fullViewDist;
+  }
+
+  // Hour 19 (19:00-19:59): Gradual decrease from 100% to 50% of full view
+  if (hour === 19) {
+    const startView = fullViewDist;
+    const targetView = Math.max(1, Math.floor(fullViewDist * 0.5)); // 50% of full
+
+    const progress = minute / 60;
+    const viewDist = Math.round(
+      startView - (startView - targetView) * progress
+    );
+    return Math.max(1, Math.min(viewDist, startView));
+  }
+
+  // Hour 20 (20:00-20:59): Gradual decrease from 50% to 1 tile
+  if (hour === 20) {
+    const startView = Math.max(1, Math.floor(fullViewDist * 0.5)); // 50% of full
+    const targetView = 1;
+
+    const progress = minute / 60;
+    const viewDist = Math.round(
+      startView - (startView - targetView) * progress
+    );
+    return Math.max(1, viewDist);
+  }
+
+  // Default: full view
+  return fullViewDist;
+}
+
 export async function timeConsumption() {
   // Get current game time
   const currentGameDate = getCurrentGameDate();

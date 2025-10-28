@@ -6,16 +6,35 @@ import {
 } from "./tile.js";
 import { gameState } from "../gamestate/game_variables.js";
 import { hash } from "../utils.js";
+import { getGroupBonus } from "../utils.js";
 import {
   getVisitedTile,
   getCachedTile,
   hasCachedTile,
 } from "../gamestate/gameStateSetGet.js";
-import { updateTimeColorCache } from "../time_system.js";
+import {
+  updateTimeColorCache,
+  getCurrentGameDate,
+  getTimeBasedViewDistance,
+} from "../time_system.js";
 import { canvas } from "../rendering.js";
 
 export function drawRegionalMap(ctx, offsetDeltaX, offsetDeltaY) {
   updateTimeColorCache();
+
+  // Calculate effective view distance for darkening effect
+  const currentGameDate = getCurrentGameDate();
+  const hour = currentGameDate.getHours();
+  const minute = currentGameDate.getMinutes();
+  const second = currentGameDate.getSeconds();
+  const viewBonus = getGroupBonus("view");
+  const effectiveViewDist = getTimeBasedViewDistance(
+    gameState.viewDist,
+    viewBonus,
+    hour,
+    minute,
+    second
+  );
 
   // Render 2 extra tiles on each side for border coverage + movement buffer
   const extraTiles = 2;
@@ -91,6 +110,14 @@ export function drawRegionalMap(ctx, offsetDeltaX, offsetDeltaY) {
           drawX + gameState.tileSize / 2,
           drawY + gameState.tileSize / 2
         );
+      }
+
+      // Apply darkening overlay for tiles outside current view distance
+      const distance =
+        Math.abs(tx - gameState.px) + Math.abs(ty - gameState.py);
+      if (distance > effectiveViewDist) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        ctx.fillRect(drawX, drawY, gameState.tileSize, gameState.tileSize);
       }
     }
   }

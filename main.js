@@ -1,7 +1,7 @@
 import { resize, draw, updateStatus, canvas, ctx } from "./rendering.js";
 import { revealAround } from "./movement.js";
 import { gameState } from "./gamestate/game_variables.js";
-import { updateGroupBonus, checkDeath } from "./utils.js";
+import { updateGroupBonus, checkDeath, getGroupBonus } from "./utils.js";
 import { getTile } from "./rendering/tile.js";
 import { getLoadGameDialog } from "./interactions.js";
 import {
@@ -9,7 +9,12 @@ import {
   getCheckTileInteractionDialog,
   getShowDeathDialog,
 } from "./interactions.js";
-import { timeConsumption, updateTimeColorCache } from "./time_system.js";
+import {
+  timeConsumption,
+  updateTimeColorCache,
+  getCurrentGameDate,
+  getTimeBasedViewDistance,
+} from "./time_system.js";
 import { setupInputs } from "./input_handlers.js";
 import {
   getStartMenuDialog,
@@ -140,12 +145,49 @@ async function postMove() {
 
 let lastFrameTime = 0;
 const targetFrameTime = 1000 / 30;
+// Initialize lastViewDistance based on current time
+const initialGameDate = getCurrentGameDate();
+const initialHour = initialGameDate.getHours();
+const initialMinute = initialGameDate.getMinutes();
+const initialSecond = initialGameDate.getSeconds();
+const initialViewBonus = getGroupBonus("view");
+let lastViewDistance = getTimeBasedViewDistance(
+  gameState.viewDist,
+  initialViewBonus,
+  initialHour,
+  initialMinute,
+  initialSecond
+);
+
 function loop(timestamp) {
   if (timestamp - lastFrameTime < targetFrameTime) {
     requestAnimationFrame(loop);
     return;
   }
   lastFrameTime = timestamp;
+
+  // Check and update view distance if it has changed due to time progression
+  const currentGameDate = getCurrentGameDate();
+  const hour = currentGameDate.getHours();
+  const minute = currentGameDate.getMinutes();
+  const second = currentGameDate.getSeconds();
+  const viewBonus = getGroupBonus("view");
+  const currentViewDist = getTimeBasedViewDistance(
+    gameState.viewDist,
+    viewBonus,
+    hour,
+    minute,
+    second
+  );
+
+  // If view distance has increased, reveal newly visible tiles
+  if (currentViewDist > lastViewDistance) {
+    revealAround();
+    lastViewDistance = currentViewDist;
+  } else if (currentViewDist < lastViewDistance) {
+    // View distance decreased, update tracking
+    lastViewDistance = currentViewDist;
+  }
 
   let offsetDeltaX = 0;
   let offsetDeltaY = 0;
@@ -172,6 +214,19 @@ function loop(timestamp) {
         addVisitedTile(key);
       }
       revealAround();
+      // Update tracked view distance after movement
+      const newGameDate = getCurrentGameDate();
+      const newHour = newGameDate.getHours();
+      const newMinute = newGameDate.getMinutes();
+      const newSecond = newGameDate.getSeconds();
+      const newViewDist = getTimeBasedViewDistance(
+        gameState.viewDist,
+        viewBonus,
+        newHour,
+        newMinute,
+        newSecond
+      );
+      lastViewDistance = newViewDist;
       postMove().then(() => {
         gameState.cooldown = false;
       });
@@ -182,4 +237,5 @@ function loop(timestamp) {
   }
   requestAnimationFrame(loop);
 }
+
 loop();
