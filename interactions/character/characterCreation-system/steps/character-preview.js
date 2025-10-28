@@ -16,7 +16,7 @@ import { skillDatabase } from "../../../../interactions/skills.js";
 import { createMessage, createBackButton } from "../utils/utils-navigation.js";
 import { createCharacterOverview } from "../utils/utils-ui.js";
 import { STAT_CATEGORIES } from "../constants.js";
-import { handleRandomGeneration } from "./random-generation.js";
+import characterGeneration from "../../generation.js";
 
 import { createNavigationResult, NavigationResult } from "../state.js";
 import { statEmoji } from "../../../../gamestate/emoji-database.js";
@@ -84,7 +84,19 @@ export async function showCharacterPreview(
     // Regenerate based on the original method
     switch (generationMethod) {
       case "random":
-        return await handleRandomGeneration();
+        // Generate a new random character and show its preview
+        const newCharacter = await characterGeneration.generateCharacter({
+          usePointAllocation: false,
+        });
+        return await showCharacterPreview(
+          newCharacter,
+          generationMethod,
+          statsResult,
+          nameResult,
+          raceResult,
+          sexResult,
+          classResult
+        );
       case "custom":
         return createNavigationResult(NavigationResult.REGENERATE, {
           nameResult,
@@ -117,8 +129,8 @@ export async function showCharacterPreview(
         classResult,
       });
     }
-    // For random characters, go back to random generation
-    return await handleRandomGeneration();
+    // For random characters, go back to the main choice dialog
+    return "back";
   }
 
   // If no valid action was taken, go back to stats allocation for custom characters
@@ -131,6 +143,6 @@ export async function showCharacterPreview(
       classResult,
     });
   }
-  // For random characters, go back to random generation
-  return await handleRandomGeneration();
+  // For random characters, go back to the main choice dialog
+  return "back";
 }
