@@ -373,6 +373,79 @@ export async function showChoiceDialog(message, components) {
             gameDialog.appendChild(mobileGridContainer);
 
             break;
+          case "character_navigator":
+            const navigatorContainer = document.createElement("div");
+            navigatorContainer.style.display = "flex";
+            navigatorContainer.style.alignItems = "center";
+            navigatorContainer.style.justifyContent = "space-between";
+            navigatorContainer.style.marginBottom = "10px";
+            navigatorContainer.style.gap = "10px";
+
+            // Left arrow button
+            const prevBtn = document.createElement("button");
+            prevBtn.textContent = "<";
+            prevBtn.disabled = !component.canGoPrevious || false;
+            prevBtn.style.boxSizing = "border-box";
+            prevBtn.style.width = "40px";
+            prevBtn.style.height = "40px";
+            prevBtn.style.minWidth = "40px";
+            prevBtn.style.minHeight = "40px";
+            prevBtn.style.maxWidth = "40px";
+            prevBtn.style.maxHeight = "40px";
+            prevBtn.style.padding = "0";
+            prevBtn.style.flexShrink = "0";
+            if (prevBtn.disabled) {
+              prevBtn.style.opacity = "0.5";
+              prevBtn.style.cursor = "not-allowed";
+            }
+            prevBtn.addEventListener("click", () => {
+              if (!prevBtn.disabled) {
+                gameDialog.close(component.onPrevious || "nav_previous");
+              }
+            });
+
+            // Center label/div with character name
+            const nameDiv = document.createElement("div");
+            nameDiv.style.flex = "1";
+            nameDiv.style.textAlign = "center";
+            nameDiv.style.padding = "8px";
+            nameDiv.style.fontSize = "14px";
+            nameDiv.style.width = "100%";
+            nameDiv.style.fontWeight = "bold";
+            const raceEmojiIcon = component.raceEmoji
+              ? component.raceEmoji[component.character.race] || "👤"
+              : "👤";
+            nameDiv.textContent = `${raceEmojiIcon} ${component.character.firstName.toUpperCase()} ${component.character.lastName.toUpperCase()}`;
+
+            // Right arrow button
+            const nextBtn = document.createElement("button");
+            nextBtn.textContent = ">";
+            nextBtn.disabled = !component.canGoNext || false;
+            nextBtn.style.boxSizing = "border-box";
+            nextBtn.style.width = "40px";
+            nextBtn.style.height = "40px";
+            nextBtn.style.minWidth = "40px";
+            nextBtn.style.minHeight = "40px";
+            nextBtn.style.maxWidth = "40px";
+            nextBtn.style.maxHeight = "40px";
+            nextBtn.style.padding = "0";
+            nextBtn.style.flexShrink = "0";
+            if (nextBtn.disabled) {
+              nextBtn.style.opacity = "0.5";
+              nextBtn.style.cursor = "not-allowed";
+            }
+            nextBtn.addEventListener("click", () => {
+              if (!nextBtn.disabled) {
+                gameDialog.close(component.onNext || "nav_next");
+              }
+            });
+
+            navigatorContainer.appendChild(prevBtn);
+            navigatorContainer.appendChild(nameDiv);
+            navigatorContainer.appendChild(nextBtn);
+
+            gameDialog.appendChild(navigatorContainer);
+            break;
           default:
             console.warn(
               "getShowChoiceDialog: Unknown component type: " + component.type

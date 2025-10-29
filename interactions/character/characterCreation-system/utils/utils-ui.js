@@ -204,7 +204,6 @@ export function createCharacterIdentityDisplay(
   // Get race and class data
   const raceData = raceDatabase && raceDatabase[character.race];
   const raceRegion = raceData ? raceData.region : "Unknown Region";
-  const raceName = raceData ? raceData.name.toLowerCase() : "unknown";
   const raceEmojiIcon = raceEmoji[character.race];
 
   const classData = classDatabase[character.class];
