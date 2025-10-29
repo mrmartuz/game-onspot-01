@@ -5,7 +5,6 @@
 import { gameState } from "../gamestate/game_variables.js";
 import { getGroupBonus } from "../utils.js";
 import { getShowChoiceDialog } from "../interactions.js";
-import { showCharacterManagementDialog } from "./characterManagementDialog.js";
 import {
   classEmoji,
   raceEmoji,
@@ -19,6 +18,7 @@ import {
   createCharacterIdentityDisplay,
   createStatDisplayGrid,
 } from "./character/characterCreation-system/utils/utils-ui.js";
+import { showCharacterPreview } from "./character/characterManagement-system/views/character-preview.js";
 
 // Helper function to format character details for display
 function formatCharacterDetails(character) {
@@ -481,8 +481,82 @@ export async function showHealthGroupDialog() {
   const choice = await getShowChoiceDialog(title, components);
 
   if (choice === "char_mgmt") {
-    await showCharacterManagementDialog();
-    return await showHealthGroupDialog(); // Return to health dialog after character management
+    // Open character preview directly
+    const allMembers = gameState.playerCharacter
+      ? [gameState.playerCharacter, ...gameState.group]
+      : gameState.group;
+
+    if (allMembers.length === 0) {
+      return choice; // No characters to show
+    }
+
+    // Format characters array similar to character-list.js
+    const characters = [];
+    let characterIndex = 0;
+
+    if (gameState.playerCharacter) {
+      characters.push({
+        character: gameState.playerCharacter,
+        type: "player",
+        index: characterIndex,
+      });
+      characterIndex++;
+    }
+
+    gameState.group.forEach((member) => {
+      characters.push({
+        character: member,
+        type: "group",
+        index: characterIndex,
+      });
+      characterIndex++;
+    });
+
+    // Start with first character (player if exists, otherwise first group member)
+    let currentIndex = 0;
+
+    // Show preview with navigation capability
+    while (true) {
+      const currentCharacter = characters[currentIndex]?.character;
+      if (!currentCharacter) {
+        break;
+      }
+
+      const previewResult = await showCharacterPreview(
+        currentCharacter,
+        currentIndex,
+        characters
+      );
+
+      // Handle navigation
+      if (previewResult === "nav_previous") {
+        // Go to previous character, wrap to last if at first
+        if (currentIndex > 0) {
+          currentIndex--;
+        } else {
+          currentIndex = characters.length - 1;
+        }
+        continue; // Re-show preview with new character
+      }
+
+      if (previewResult === "nav_next") {
+        // Go to next character, wrap to first if at last
+        if (currentIndex < characters.length - 1) {
+          currentIndex++;
+        } else {
+          currentIndex = 0;
+        }
+        continue; // Re-show preview with new character
+      }
+
+      // Go back to health dialog
+      if (previewResult === "back") {
+        return await showHealthGroupDialog(); // Return to health dialog after character management
+      }
+
+      // Return any other result
+      return previewResult;
+    }
   } else if (choice === "detailed-breakdown") {
     return showDetailedBreakdownDialog();
   }
@@ -545,14 +619,8 @@ export async function showDetailedBreakdownDialog() {
   }
 
   const choice = await getShowChoiceDialog(message, [
-    { type: "button", label: "👥 Character Management", value: "char_mgmt" },
     { type: "button", label: "❌ Close", value: "close" },
   ]);
-
-  if (choice === "char_mgmt") {
-    await showCharacterManagementDialog();
-    return await showDetailedBreakdownDialog(); // Return to detailed breakdown after character management
-  }
 
   return choice;
 }

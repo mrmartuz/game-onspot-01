@@ -119,19 +119,10 @@ export async function showInventoryDialog() {
 
   const components = [
     { type: "message", label: message, value: "" },
-    { type: "button", label: "👥 Character Management", value: "char_mgmt" },
     { type: "button", label: "❌ Close", value: "close" },
   ];
 
   const choice = await getShowChoiceDialog("📦 Party Inventory", components);
-
-  if (choice === "char_mgmt") {
-    const { showCharacterManagementDialog } = await import(
-      "./characterManagementDialog.js"
-    );
-    await showCharacterManagementDialog();
-    return await showInventoryDialog(); // Return to inventory after character management
-  }
 
   return choice;
 }
