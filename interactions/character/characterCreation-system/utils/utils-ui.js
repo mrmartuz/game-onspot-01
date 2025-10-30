@@ -115,6 +115,80 @@ export function createEquipmentDisplay(equipment, slots = EQUIPMENT_SLOTS) {
 }
 
 /**
+ * Create interactive equipment selection display
+ * Slot buttons are clickable and will open item selection dialogs
+ * @param {Object} equipment - Current character equipment object
+ * @param {Object} availableItems - Object with arrays of items for each slot: { weapon: [item1, item2, ...], ... }
+ * @param {Array} slots - Equipment slot configuration
+ * @returns {Array} Array of components including button grid
+ */
+export function createEquipmentSelectionDisplay(
+  equipment,
+  availableItems = {},
+  slots = EQUIPMENT_SLOTS
+) {
+  const components = [];
+
+  components.push({
+    type: "message",
+    label: "\nSELECT EQUIPMENT ⚔️🛡️\n(Click on slot names to choose items)",
+    value: "",
+  });
+
+  // Create button grid with slot names and items side by side
+  const equipmentButtons = [];
+
+  slots.forEach(({ key, label }) => {
+    const item = equipment[key];
+    let displayText;
+
+    if (item) {
+      // Special handling for secondHand to show "(2h-grip)" or "(empty)"
+      if (
+        key === "secondHand" &&
+        (item === "(2h-grip)" || item === "(empty)")
+      ) {
+        displayText = item;
+      } else {
+        displayText = item;
+      }
+    } else {
+      displayText = "(empty)";
+    }
+
+    // Check if slot has available items to select from
+    const hasAvailableItems =
+      availableItems[key] && availableItems[key].length > 0;
+
+    // Push slot name button (left column) - clickable if items available
+    equipmentButtons.push({
+      label: label,
+      value: hasAvailableItems
+        ? `select_equipment_slot_${key}`
+        : `display_equipment_slot_${key}`,
+      disabled: !hasAvailableItems, // Disabled if no items available
+    });
+
+    // Push item button (right column) - display only, not interactive
+    equipmentButtons.push({
+      label: displayText,
+      value: `display_equipment_item_${key}`,
+      disabled: false, // Display only, not interactive
+    });
+  });
+
+  components.push({
+    type: "button_grid",
+    columns: 2,
+    textSize: "11px",
+    gap: "2px",
+    buttons: equipmentButtons,
+  });
+
+  return components;
+}
+
+/**
  * Create dynamic skills button grid display
  * @param {Object} skills - Character skills object
  * @param {Object} skillEmoji - Object containing emoji mappings for skills

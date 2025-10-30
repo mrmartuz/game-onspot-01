@@ -229,9 +229,14 @@ export const characterGeneration = {
         weaponEquipmentType = "hammers";
       }
 
-      equipment.weapon = this.generateEquipmentItem(
+      const safeWeaponType = equipmentAssignment.filterItemTypeByBlacklist(
+        "weapon",
         weaponEquipmentType,
         weaponType
+      );
+      equipment.weapon = this.generateEquipmentItem(
+        weaponEquipmentType,
+        safeWeaponType
       );
 
       // If it's a 2-handed weapon, set secondHand to indicate occupation
@@ -245,7 +250,12 @@ export const characterGeneration = {
 
     // Give shield for fighter class (only if weapon is not 2-handed)
     if (className === "fighter" && equipment.secondHand !== "(2h-grip)") {
-      equipment.secondHand = this.generateEquipmentItem("shields", "shield");
+      const safeShield = equipmentAssignment.filterItemTypeByBlacklist(
+        "secondHand",
+        "shields",
+        "shield"
+      );
+      equipment.secondHand = this.generateEquipmentItem("shields", safeShield);
     }
 
     // Give armor for martial classes
@@ -271,7 +281,12 @@ export const characterGeneration = {
             Math.random() * classData.equipmentPreferences.armor.length
           )
         ];
-      equipment.armor = this.generateEquipmentItem("armor", armorType);
+      const safeArmor = equipmentAssignment.filterItemTypeByBlacklist(
+        "armor",
+        "armor",
+        armorType
+      );
+      equipment.armor = this.generateEquipmentItem("armor", safeArmor);
     }
 
     // Give 1 skill kit based on class starting skills

@@ -1,4 +1,4 @@
-// Character preview step
+// Equipment selection step for character creation
 import {
   getShowChoiceDialog,
   getDialogValue,
@@ -15,36 +15,32 @@ import { skillDatabase } from "../../../../interactions/skills.js";
 
 import { createMessage, createBackButton } from "../utils/utils-navigation.js";
 import {
-  createCharacterOverview,
   createCharacterIdentityDisplay,
   createStatDisplayGrid,
   createSkillsButtonGrid,
-  createEquipmentSelectionDisplay,
-  createEquipmentDisplay,
 } from "../utils/utils-ui.js";
+import { createEquipmentSelectionDisplay } from "../utils/utils-ui.js";
 import {
   generateDiverseItemsForAllSlots,
   showItemSelectionDialog,
   isItem2HandedWeapon,
 } from "../utils/utils-equipment-selection.js";
-import { STAT_CATEGORIES, EQUIPMENT_SLOTS } from "../constants.js";
-import characterGeneration from "../../generation.js";
-
-import { createNavigationResult, NavigationResult } from "../state.js";
+import { EQUIPMENT_SLOTS, STAT_CATEGORIES } from "../constants.js";
 import { statEmoji } from "../../../../gamestate/emoji-database.js";
 import { sexEmoji } from "../../../../gamestate/emoji-database.js";
+
 /**
- * Show character preview and handle final actions
- * @param {Object} character - Generated character
+ * Show equipment selection dialog and handle item selection
+ * @param {Object} character - Character object to modify equipment for
  * @param {string} generationMethod - Method used ("random" or "custom")
  * @param {Object} statsResult - Stats allocation result
  * @param {Object} nameResult - Name selection result
  * @param {string} raceResult - Selected race
  * @param {string} sexResult - Selected sex
  * @param {string} classResult - Selected class
- * @returns {Promise<Object|string>} Action result or navigation result
+ * @returns {Promise<Object>} Modified character with updated equipment
  */
-export async function showCharacterPreview(
+export async function showEquipmentSelection(
   character,
   generationMethod,
   statsResult = null,
@@ -53,14 +49,11 @@ export async function showCharacterPreview(
   sexResult = null,
   classResult = null
 ) {
-  // Generate diverse items only for custom creation (interactive equip)
-  const availableItems =
-    generationMethod === "custom"
-      ? generateDiverseItemsForAllSlots(character.class)
-      : null;
+  // Generate diverse items for all slots
+  const availableItems = generateDiverseItemsForAllSlots(character.class);
 
   while (true) {
-    const message = ``;
+    const message = "";
     let components = [];
 
     // Character identity section
@@ -91,25 +84,19 @@ export async function showCharacterPreview(
     );
     components.push(...skillsComponents);
 
-    // Equipment section
-    const equipmentComponents =
-      generationMethod === "custom"
-        ? createEquipmentSelectionDisplay(character.equipment, availableItems)
-        : createEquipmentDisplay(character.equipment);
+    // Equipment selection section (interactive)
+    const equipmentComponents = createEquipmentSelectionDisplay(
+      character.equipment,
+      availableItems
+    );
     components.push(...equipmentComponents);
 
     // Action buttons
     components.push({
       type: "button",
-      label: "✅ Accept Character",
-      value: "accept",
-      focused: true, // This will be used to set focus
-    });
-
-    components.push({
-      type: "button",
-      label: "🔄 Regenerate",
-      value: "regenerate",
+      label: "✅ Confirm Equipment",
+      value: "confirm",
+      focused: true,
     });
 
     components.push(createBackButton());
@@ -117,37 +104,10 @@ export async function showCharacterPreview(
     const choice = await getShowChoiceDialog(message, components);
     const choiceValue = getDialogValue(choice, "value");
 
-    if (choiceValue === "accept") {
-      return { action: "accept", character };
-    } else if (choiceValue === "regenerate") {
-      // Regenerate based on the original method
-      switch (generationMethod) {
-        case "random":
-          // Generate a new random character and show its preview
-          const newCharacter = await characterGeneration.generateCharacter({
-            usePointAllocation: false,
-          });
-          return await showCharacterPreview(
-            newCharacter,
-            generationMethod,
-            statsResult,
-            nameResult,
-            raceResult,
-            sexResult,
-            classResult
-          );
-        case "custom":
-          return createNavigationResult(NavigationResult.REGENERATE, {
-            nameResult,
-            raceResult,
-            sexResult,
-            classResult,
-          });
-        default:
-          return createNavigationResult(NavigationResult.BACK_TO_MAIN);
-      }
+    if (choiceValue === "confirm") {
+      // Equipment confirmed, return character
+      return character;
     } else if (
-      generationMethod === "custom" &&
       choiceValue &&
       choiceValue.startsWith("select_equipment_slot_")
     ) {
@@ -181,14 +141,15 @@ export async function showCharacterPreview(
             }
           }
 
-          // If secondHand slot is selected and it's not "(empty)" or "(2h-grip)",
-          // and current weapon is 2h, we should clear the weapon's 2h status
+          // If secondHand is selected and it's not "(empty)" or "(2h-grip)",
+          // and current weapon is 2h, clear the weapon's 2h status
           if (
             slotKey === "secondHand" &&
             selectedItem !== "(empty)" &&
             selectedItem !== "(2h-grip)"
           ) {
-            // If we have a 2h weapon, clear it when selecting a shield/second weapon
+            // If we have a 2h weapon, we shouldn't be able to select a secondHand item
+            // But if somehow we do, we need to handle it
             if (isItem2HandedWeapon(character.equipment.weapon)) {
               character.equipment.weapon = null; // Clear 2h weapon
             }
@@ -198,25 +159,15 @@ export async function showCharacterPreview(
         // Continue loop to refresh display
         continue;
       }
-    } else if (choiceValue && choiceValue.startsWith("display_")) {
-      // Display buttons are not interactive, just refresh the dialog
-      continue;
     } else if (choiceValue === "back") {
-      // Go back to stats allocation for custom characters
-      if (generationMethod === "custom") {
-        return createNavigationResult(NavigationResult.BACK_TO_STATS, {
-          statsResult,
-          nameResult,
-          raceResult,
-          sexResult,
-          classResult,
-        });
-      }
-      // For random characters, go back to the main choice dialog
+      // Go back
       return "back";
+    } else if (choiceValue && choiceValue.startsWith("display_")) {
+      // Display buttons, just refresh
+      continue;
     }
 
-    // If we get here, continue the loop (for refresh scenarios)
-    continue;
+    // Default: go back
+    return "back";
   }
 }

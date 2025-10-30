@@ -4,6 +4,7 @@ import {
   equipmentRarity,
   equipmentStatus,
 } from "../equipment.js";
+import { STARTING_EQUIPMENT_LIMITS } from "./characterCreation-system/constants.js";
 import { weaponEmoji, equipmentEmoji } from "../../gamestate/emoji-database.js";
 
 // Equipment assignment system
@@ -115,6 +116,23 @@ export const equipmentAssignment = {
     return "swords";
   },
 
+  // Apply per-slot blacklist on item types; return fallback if desired is blacklisted
+  filterItemTypeByBlacklist: function (
+    slotKey,
+    equipmentType,
+    desiredItemType
+  ) {
+    const blacklist =
+      STARTING_EQUIPMENT_LIMITS?.blacklistItemsBySlot?.[slotKey] || [];
+    if (!blacklist.includes(desiredItemType)) return desiredItemType;
+
+    const typeData = equipmentTypes[equipmentType];
+    if (!typeData || !typeData.items) return desiredItemType;
+
+    const fallback = typeData.items.find((it) => !blacklist.includes(it));
+    return fallback || desiredItemType;
+  },
+
   // Generate starting equipment based on class preferences
   generateStartingEquipment: async function (className) {
     // Import classDatabase dynamically to avoid circular dependency
@@ -144,12 +162,22 @@ export const equipmentAssignment = {
             Math.random() * classData.equipmentPreferences.clothes.length
           )
         ];
-      equipment.clothes = this.generateEquipmentItem("clothes", clothesType);
+      const safeClothes = this.filterItemTypeByBlacklist(
+        "clothes",
+        "clothes",
+        clothesType
+      );
+      equipment.clothes = this.generateEquipmentItem(
+        "clothes",
+        safeClothes,
+        STARTING_EQUIPMENT_LIMITS
+      );
     } else {
       // Fallback to basic clothes if no preferences
       equipment.clothes = this.generateEquipmentItem(
         "clothes",
-        "commoner-clothes"
+        "commoner-clothes",
+        STARTING_EQUIPMENT_LIMITS
       );
     }
 
@@ -176,7 +204,16 @@ export const equipmentAssignment = {
             Math.random() * classData.equipmentPreferences.armor.length
           )
         ];
-      equipment.armor = this.generateEquipmentItem("armor", armorType);
+      const safeArmor = this.filterItemTypeByBlacklist(
+        "armor",
+        "armor",
+        armorType
+      );
+      equipment.armor = this.generateEquipmentItem(
+        "armor",
+        safeArmor,
+        STARTING_EQUIPMENT_LIMITS
+      );
     }
 
     // Generate weapon (1h) - ALWAYS generate a weapon for all characters
@@ -191,7 +228,16 @@ export const equipmentAssignment = {
           )
         ];
       const weaponCategory = this.getWeaponCategory(weaponType);
-      equipment.weapon = this.generateEquipmentItem(weaponCategory, weaponType);
+      const safeWeaponType = this.filterItemTypeByBlacklist(
+        "weapon",
+        weaponCategory,
+        weaponType
+      );
+      equipment.weapon = this.generateEquipmentItem(
+        weaponCategory,
+        safeWeaponType,
+        STARTING_EQUIPMENT_LIMITS
+      );
 
       // If it's a 2-handed weapon, set secondHand to indicate occupation
       if (this.is2HandedWeapon(weaponType)) {
@@ -199,7 +245,11 @@ export const equipmentAssignment = {
       }
     } else {
       // Fallback weapon if no preferences defined
-      equipment.weapon = this.generateEquipmentItem("swords", "sword");
+      equipment.weapon = this.generateEquipmentItem(
+        "swords",
+        "sword",
+        STARTING_EQUIPMENT_LIMITS
+      );
     }
 
     // Generate shield or second weapon (only if weapon is not 2-handed)
@@ -215,9 +265,15 @@ export const equipmentAssignment = {
           )
         ];
       const shieldCategory = this.getWeaponCategory(shieldType);
-      equipment.secondHand = this.generateEquipmentItem(
+      const safeShield = this.filterItemTypeByBlacklist(
+        "secondHand",
         shieldCategory,
         shieldType
+      );
+      equipment.secondHand = this.generateEquipmentItem(
+        shieldCategory,
+        safeShield,
+        STARTING_EQUIPMENT_LIMITS
       );
     }
 
@@ -238,7 +294,18 @@ export const equipmentAssignment = {
           equipmentTypes.container.items &&
           equipmentTypes.container.items.includes(backType)
         ) {
-          equipment.back = this.generateEquipmentItem("container", backType);
+          {
+            const safeBack = this.filterItemTypeByBlacklist(
+              "back",
+              "container",
+              backType
+            );
+            equipment.back = this.generateEquipmentItem(
+              "container",
+              safeBack,
+              STARTING_EQUIPMENT_LIMITS
+            );
+          }
         }
       } else {
         // For 1-handed weapons, allow weapons, ranged, or containers
@@ -257,15 +324,48 @@ export const equipmentAssignment = {
           polearmItems.includes(backType)
         ) {
           const backCategory = this.getWeaponCategory(backType);
-          equipment.back = this.generateEquipmentItem(backCategory, backType);
+          {
+            const safeBack = this.filterItemTypeByBlacklist(
+              "back",
+              backCategory,
+              backType
+            );
+            equipment.back = this.generateEquipmentItem(
+              backCategory,
+              safeBack,
+              STARTING_EQUIPMENT_LIMITS
+            );
+          }
         } else if (
           rangedItems.includes(backType) ||
           crossbowItems.includes(backType)
         ) {
           const backCategory = this.getWeaponCategory(backType);
-          equipment.back = this.generateEquipmentItem(backCategory, backType);
+          {
+            const safeBack = this.filterItemTypeByBlacklist(
+              "back",
+              backCategory,
+              backType
+            );
+            equipment.back = this.generateEquipmentItem(
+              backCategory,
+              safeBack,
+              STARTING_EQUIPMENT_LIMITS
+            );
+          }
         } else if (containerItems.includes(backType)) {
-          equipment.back = this.generateEquipmentItem("container", backType);
+          {
+            const safeBack = this.filterItemTypeByBlacklist(
+              "back",
+              "container",
+              backType
+            );
+            equipment.back = this.generateEquipmentItem(
+              "container",
+              safeBack,
+              STARTING_EQUIPMENT_LIMITS
+            );
+          }
         }
       }
     }
@@ -282,40 +382,81 @@ export const equipmentAssignment = {
 
     if (martialClasses.includes(className)) {
       // Martial classes get whetstone
-      equipment.tool = this.generateEquipmentItem("tool", "whetstone");
+      equipment.tool = this.generateEquipmentItem(
+        "tool",
+        "whetstone",
+        STARTING_EQUIPMENT_LIMITS
+      );
     } else if (crafterClasses.includes(className)) {
       // Crafter classes get specialized kits based on their primary skill
       if (className === "herbalist") {
-        equipment.tool = this.generateEquipmentItem("tool", "herbalist-kit");
+        equipment.tool = this.generateEquipmentItem(
+          "tool",
+          "herbalist-kit",
+          STARTING_EQUIPMENT_LIMITS
+        );
       } else if (className === "craftsman") {
         equipment.tool = this.generateEquipmentItem(
           "tool",
-          "blacksmithing-kit"
+          "blacksmithing-kit",
+          STARTING_EQUIPMENT_LIMITS
         );
       } else if (className === "alchemist") {
-        equipment.tool = this.generateEquipmentItem("tool", "alchemy-kit");
+        equipment.tool = this.generateEquipmentItem(
+          "tool",
+          "alchemy-kit",
+          STARTING_EQUIPMENT_LIMITS
+        );
       }
     } else if (explorerClasses.includes(className)) {
       // Explorer classes get specialized kits
       if (className === "dungeondiver") {
-        equipment.tool = this.generateEquipmentItem("tool", "dungeondiver-kit");
+        equipment.tool = this.generateEquipmentItem(
+          "tool",
+          "dungeondiver-kit",
+          STARTING_EQUIPMENT_LIMITS
+        );
       } else {
-        equipment.tool = this.generateEquipmentItem("tool", "explorer-kit");
+        equipment.tool = this.generateEquipmentItem(
+          "tool",
+          "explorer-kit",
+          STARTING_EQUIPMENT_LIMITS
+        );
       }
     } else if (mageClasses.includes(className)) {
       // Mage classes get specialized kits based on their school
       if (className === "geomancer") {
-        equipment.tool = this.generateEquipmentItem("tool", "geomancer-kit");
+        equipment.tool = this.generateEquipmentItem(
+          "tool",
+          "geomancer-kit",
+          STARTING_EQUIPMENT_LIMITS
+        );
       } else if (className === "pyromancer") {
-        equipment.tool = this.generateEquipmentItem("tool", "pyromancer-kit");
+        equipment.tool = this.generateEquipmentItem(
+          "tool",
+          "pyromancer-kit",
+          STARTING_EQUIPMENT_LIMITS
+        );
       } else if (className === "articaster") {
-        equipment.tool = this.generateEquipmentItem("tool", "articaster-kit");
+        equipment.tool = this.generateEquipmentItem(
+          "tool",
+          "articaster-kit",
+          STARTING_EQUIPMENT_LIMITS
+        );
       } else if (className === "necromancer") {
-        equipment.tool = this.generateEquipmentItem("tool", "necromancer-kit");
+        equipment.tool = this.generateEquipmentItem(
+          "tool",
+          "necromancer-kit",
+          STARTING_EQUIPMENT_LIMITS
+        );
       }
     } else if (className === "monk" || className === "cleric") {
       // Monks and clerics get meditation kit
-      equipment.tool = this.generateEquipmentItem("tool", "meditation-kit");
+      equipment.tool = this.generateEquipmentItem(
+        "tool",
+        "meditation-kit",
+        STARTING_EQUIPMENT_LIMITS
+      );
     } else if (
       classData.equipmentPreferences.tool &&
       classData.equipmentPreferences.tool.length > 0
@@ -325,7 +466,11 @@ export const equipmentAssignment = {
         classData.equipmentPreferences.tool[
           Math.floor(Math.random() * classData.equipmentPreferences.tool.length)
         ];
-      equipment.tool = this.generateEquipmentItem("tool", toolType);
+      equipment.tool = this.generateEquipmentItem(
+        "tool",
+        toolType,
+        STARTING_EQUIPMENT_LIMITS
+      );
     }
 
     return equipment;
@@ -345,12 +490,17 @@ export const equipmentAssignment = {
     // ALWAYS generate clothes first
     equipment.clothes = this.generateEquipmentItem(
       "clothes",
-      "commoner-clothes"
+      "commoner-clothes",
+      STARTING_EQUIPMENT_LIMITS
     );
 
     // ALWAYS generate weapon - this is critical for all characters
     const weaponType = "sword"; // Default fallback
-    equipment.weapon = this.generateEquipmentItem("swords", weaponType);
+    equipment.weapon = this.generateEquipmentItem(
+      "swords",
+      weaponType,
+      STARTING_EQUIPMENT_LIMITS
+    );
 
     // If it's a 2-handed weapon, set secondHand to indicate occupation
     if (this.is2HandedWeapon(weaponType)) {
@@ -395,8 +545,16 @@ export const equipmentAssignment = {
               "crossbows",
               "container",
             ];
-            equipmentType =
-              backTypes[Math.floor(Math.random() * backTypes.length)];
+            // Filter disallowed for back slot
+            const banned =
+              STARTING_EQUIPMENT_LIMITS?.disallowedTypesBySlot?.back || [];
+            const filtered = backTypes.filter((t) => !banned.includes(t));
+            equipmentType = (filtered.length > 0 ? filtered : backTypes)[
+              Math.floor(
+                Math.random() *
+                  (filtered.length > 0 ? filtered.length : backTypes.length)
+              )
+            ];
           }
           break;
         case "tool":
@@ -409,13 +567,17 @@ export const equipmentAssignment = {
         equipmentTypes[equipmentType] &&
         equipmentTypes[equipmentType].items.length > 0
       ) {
-        const itemType =
-          equipmentTypes[equipmentType].items[
-            Math.floor(
-              Math.random() * equipmentTypes[equipmentType].items.length
-            )
-          ];
-        equipment[slot] = this.generateEquipmentItem(equipmentType, itemType);
+        const itemPool = equipmentTypes[equipmentType].items || [];
+        const blacklist =
+          STARTING_EQUIPMENT_LIMITS?.blacklistItemsBySlot?.[slot] || [];
+        const allowedPool = itemPool.filter((it) => !blacklist.includes(it));
+        const source = allowedPool.length > 0 ? allowedPool : itemPool;
+        const itemType = source[Math.floor(Math.random() * source.length)];
+        equipment[slot] = this.generateEquipmentItem(
+          equipmentType,
+          itemType,
+          STARTING_EQUIPMENT_LIMITS
+        );
       }
     });
 
@@ -423,17 +585,28 @@ export const equipmentAssignment = {
   },
 
   // Generate individual equipment item with random properties
-  generateEquipmentItem: function (equipmentType, itemType) {
+  generateEquipmentItem: function (
+    equipmentType,
+    itemType,
+    limits = STARTING_EQUIPMENT_LIMITS
+  ) {
     const typeData = equipmentTypes[equipmentType];
     if (!typeData) return null;
 
     // Random status (weighted toward better condition for starting equipment)
     const statusType = equipmentStatus[typeData.statusType];
     const statusWeights = [0.05, 0.1, 0.2, 0.3, 0.25, 0.08, 0.02]; // Weighted toward "Good" condition
-    const randomStatus = this.weightedRandom(
-      statusType.statuses,
-      statusWeights
-    );
+    let randomStatus = this.weightedRandom(statusType.statuses, statusWeights);
+    // Clamp status to limits
+    if (
+      limits?.maxStatusLevel != null &&
+      randomStatus?.level > limits.maxStatusLevel
+    ) {
+      const clamped = statusType.statuses.find(
+        (s) => s.level === limits.maxStatusLevel
+      );
+      if (clamped) randomStatus = clamped;
+    }
 
     // Random material based on equipment type restrictions
     const materials = Object.keys(equipmentMaterials);
@@ -447,15 +620,20 @@ export const equipmentAssignment = {
     }
 
     const materialWeights = allowedMaterials.map(() => 1); // Equal weight for all allowed materials
-    const randomMaterial = this.weightedRandom(
-      allowedMaterials,
-      materialWeights
-    );
+    let randomMaterial = this.weightedRandom(allowedMaterials, materialWeights);
+    // Enforce per-type material whitelist if provided
+    const limitMats = limits?.allowedMaterialsByType?.[equipmentType];
+    if (limitMats && !limitMats.includes(randomMaterial)) {
+      randomMaterial = limitMats[0] || randomMaterial;
+    }
 
     // Random rarity (weighted toward common rarity, capped at common, floored at scrap)
     const rarities = Object.keys(equipmentRarity);
-    // Only allow scrap, improvised, poor, and common rarities for starting equipment
-    const allowedRarities = ["scrap", "improvised", "poor", "common"];
+    // Only allow scrap..common for starting unless overridden by limits
+    const allowedRarities =
+      limits?.allowedRarities && limits.allowedRarities.length > 0
+        ? limits.allowedRarities
+        : ["scrap", "improvised", "poor", "common"];
     const rarityWeights = [0.1, 0.2, 0.3, 0.4]; // Weighted toward common
     const randomRarity = this.weightedRandom(allowedRarities, rarityWeights);
 
