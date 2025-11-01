@@ -5,6 +5,250 @@ import { getStorageBreakdown } from "../utils.js";
 import { getShowChoiceDialog } from "../interactions.js";
 import { getCurrentGameDate } from "../time_system.js";
 import { getTotalHeadSpace, getAllHeadsForDisplay } from "./loot-system.js";
+import { getGroupInventory } from "./character/characterManagement-system/utils/utils-group-inventory.js";
+import {
+  parseEquipmentString,
+  equipmentTypes,
+  getEquipmentByName,
+  getEquipmentMaterial,
+} from "./equipment.js";
+import { equipmentAssignment } from "./character/equipment-assignment.js";
+
+/**
+ * Get all equipped items from all characters (player + group)
+ * @returns {Set<string>} Set of all equipped item strings
+ */
+function getAllEquippedItems() {
+  const equippedItems = new Set();
+
+  // Get all characters
+  const allCharacters = [];
+  if (gameState.playerCharacter) {
+    allCharacters.push(gameState.playerCharacter);
+  }
+  allCharacters.push(...gameState.group);
+
+  // Collect all equipped items
+  allCharacters.forEach((character) => {
+    if (character.equipment) {
+      Object.values(character.equipment).forEach((item) => {
+        // Add valid equipment items (not null, not special markers like "(2h-grip)" or "(empty)")
+        if (item && typeof item === "string" && !item.startsWith("(")) {
+          equippedItems.add(item);
+        }
+      });
+    }
+  });
+
+  return equippedItems;
+}
+
+/**
+ * Calculate item weight using formula: Math.ceil((baseWeight * material.weight) / 10)
+ * Falls back to defaults if calculation fails
+ * @param {Object} parsed - Parsed equipment string
+ * @param {string} categoryType - Equipment type category name
+ * @returns {number} Item weight
+ */
+function calculateItemWeight(parsed, categoryType) {
+  if (!parsed) return 1;
+
+  // Try to normalize item name to match database keys (remove common suffixes)
+  let itemName = parsed.type;
+  let item = getEquipmentByName(itemName);
+
+  // If not found, try removing common suffixes like "-armor"
+  if (!item && itemName.includes("-")) {
+    const parts = itemName.split("-");
+    // Try the first part (e.g., "chainmail" from "chainmail-armor")
+    item = getEquipmentByName(parts[0]);
+    if (item) {
+      itemName = parts[0];
+    }
+  }
+
+  const material = getEquipmentMaterial(parsed.material);
+
+  // Try to calculate weight using formula
+  if (
+    item &&
+    material &&
+    item.baseWeight !== undefined &&
+    material.weight !== undefined
+  ) {
+    return Math.ceil((item.baseWeight * material.weight) / 10);
+  }
+
+  // Fallback defaults based on category
+  const is2Handed = equipmentAssignment.is2HandedWeapon(parsed.type);
+  const isLeather =
+    parsed.material && parsed.material.toLowerCase() === "leather";
+
+  // Determine category-based defaults
+  if (categoryType === "shields" || categoryType === "great_shields") {
+    return 4; // Shields default
+  } else if (categoryType === "armor") {
+    return isLeather ? 5 : 8; // Leather armor: 5w, Metal armor: 8w
+  } else if (categoryType === "tool") {
+    return 3; // Tools default
+  } else if (
+    is2Handed ||
+    [
+      "great_swords",
+      "great_axes",
+      "polearms",
+      "great_hammers",
+      "bows",
+      "crossbows",
+    ].includes(categoryType)
+  ) {
+    return 7; // 2H weapons default
+  } else if (["swords", "axes", "hammers", "throwing"].includes(categoryType)) {
+    return 3; // 1H weapons default
+  }
+
+  return 1; // Generic default
+}
+
+/**
+ * Categorize and calculate weights for unequipped items
+ * @returns {Object} Object with categorized items and their weights
+ */
+function categorizeUnequippedItems() {
+  const equippedItems = getAllEquippedItems();
+  const groupInventory = getGroupInventory();
+  const categories = {};
+
+  groupInventory.forEach((itemString) => {
+    // Skip if item is equipped
+    if (equippedItems.has(itemString)) {
+      return;
+    }
+
+    const parsed = parseEquipmentString(itemString);
+    if (!parsed) return;
+
+    // Find which equipment type this item belongs to
+    let categoryType = null;
+    let categoryName = null;
+
+    for (const [typeName, typeData] of Object.entries(equipmentTypes)) {
+      if (typeData.items && typeData.items.includes(parsed.type)) {
+        categoryType = typeName;
+        categoryName = typeData.name;
+        break;
+      }
+    }
+
+    // If not found in equipmentTypes, try to determine from parsed type
+    if (!categoryType) {
+      // Check if it's a 2H weapon
+      if (equipmentAssignment.is2HandedWeapon(parsed.type)) {
+        // Determine which 2H category
+        if (parsed.type.includes("sword")) {
+          categoryType = "great_swords";
+          categoryName = "Great Swords";
+        } else if (parsed.type.includes("axe")) {
+          categoryType = "great_axes";
+          categoryName = "Great Axes";
+        } else if (
+          parsed.type.includes("hammer") ||
+          parsed.type.includes("maul")
+        ) {
+          categoryType = "great_hammers";
+          categoryName = "Great Hammers";
+        } else if (parsed.type.includes("bow")) {
+          categoryType = "bows";
+          categoryName = "Bows";
+        } else if (parsed.type.includes("crossbow")) {
+          categoryType = "crossbows";
+          categoryName = "Crossbows";
+        } else {
+          categoryType = "polearms";
+          categoryName = "Polearms";
+        }
+      } else {
+        // Default to "Other" if we can't categorize
+        categoryType = "other";
+        categoryName = "Other";
+      }
+    }
+
+    if (!categories[categoryType]) {
+      categories[categoryType] = {
+        name: categoryName,
+        items: [],
+      };
+    }
+
+    const weight = calculateItemWeight(parsed, categoryType);
+    categories[categoryType].items.push({
+      itemString,
+      parsed,
+      weight,
+    });
+  });
+
+  return categories;
+}
+
+/**
+ * Format categorized items into display string
+ * @param {Object} categories - Categorized items object
+ * @returns {string} Formatted string for display
+ */
+function formatCategorizedItems(categories) {
+  if (Object.keys(categories).length === 0) {
+    return "\n**Unequipped Items:**\n  (none)";
+  }
+
+  let result = "\n**Unequipped Items:**\n";
+
+  // Define category order for display
+  const categoryOrder = [
+    "swords",
+    "axes",
+    "hammers",
+    "throwing",
+    "great_swords",
+    "great_axes",
+    "great_hammers",
+    "polearms",
+    "bows",
+    "crossbows",
+    "shields",
+    "great_shields",
+    "armor",
+    "tool",
+    "clothes",
+    "accessory",
+    "container",
+    "other",
+  ];
+
+  categoryOrder.forEach((categoryType) => {
+    if (categories[categoryType] && categories[categoryType].items.length > 0) {
+      const category = categories[categoryType];
+      const sortedItems = category.items.sort((a, b) => {
+        const nameA = a.itemString.toLowerCase();
+        const nameB = b.itemString.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+
+      let categoryTotalWeight = 0;
+      const itemsText = sortedItems
+        .map((item) => {
+          categoryTotalWeight += item.weight;
+          return `  ${item.itemString} (${item.weight}w)`;
+        })
+        .join("\n");
+
+      result += `\n**${category.name}:** (${categoryTotalWeight}w total)\n${itemsText}`;
+    }
+  });
+
+  return result;
+}
 
 function getNextConsumptionTimes() {
   const currentGameDate = getCurrentGameDate();
@@ -116,6 +360,11 @@ export async function showInventoryDialog() {
       .toString()
       .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}\n` +
     `**Storage Capacity:** ${maxStorage}`;
+
+  // Get and format unequipped items
+  const categorizedItems = categorizeUnequippedItems();
+  const itemsDisplay = formatCategorizedItems(categorizedItems);
+  message += itemsDisplay;
 
   const components = [
     { type: "message", label: message, value: "" },

@@ -37,6 +37,9 @@ export const gameState = {
   // Monster Head Loot System
   monsterHeads: [], // Array of {race, rarity, level, inventorySize, timestamp, id}
 
+  // Group Inventory System - Stores unequipped items from all characters
+  groupInventory: [], // Array of equipment item strings
+
   groupBonus: {
     navigation: 0,
     discovery: 0,

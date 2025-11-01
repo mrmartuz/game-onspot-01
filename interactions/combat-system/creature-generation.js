@@ -160,6 +160,11 @@ export async function generateCreature(creatureTemplate, x, y, index) {
     template.race
   );
 
+  console.log(
+    `[MONSTER GENERATION] Created monster ${monster.name} (${monster.race}, ${monster.class}) with equipment:`,
+    monster.equipment
+  );
+
   // Generate discovery and detection messages
   monster.discoveryMessage = getRandomDiscoveryMessage(monster);
   monster.detectionMessage = getRandomDetectionMessage(monster);
@@ -202,43 +207,178 @@ export function scaleCreatureStats(baseStats, race) {
   return scaledStats;
 }
 
+/**
+ * Map item name to equipment type key
+ * @param {string} itemName - Item name (e.g., "sword", "axe", "shield")
+ * @returns {string|null} Equipment type key (e.g., "swords", "axes", "shields") or null if not found
+ */
+function getEquipmentTypeForItem(itemName) {
+  if (!itemName || typeof itemName !== "string") return null;
+
+  // Check each equipment type to find which one contains this item
+  for (const [equipmentTypeKey, typeData] of Object.entries(equipmentTypes)) {
+    if (typeData.items && typeData.items.includes(itemName)) {
+      return equipmentTypeKey;
+    }
+  }
+
+  // Fallback mappings for common item names that might not be in the database
+  const fallbackMap = {
+    sword: "swords",
+    shortsword: "swords",
+    longsword: "swords",
+    rapier: "swords",
+    scimitar: "swords",
+    broadsword: "swords",
+    sabre: "swords",
+    axe: "axes",
+    "hand-axe": "axes",
+    hatchet: "axes",
+    tomahawk: "axes",
+    club: "hammers",
+    mace: "hammers",
+    warhammer: "hammers",
+    flail: "hammers",
+    morningstar: "hammers",
+    shield: "shields",
+    buckler: "shields",
+    "round-shield": "shields",
+    "kite-shield": "shields",
+    bow: "bows",
+    longbow: "bows",
+    shortbow: "bows",
+    crossbow: "crossbows",
+    dagger: "throwing",
+    javelin: "throwing",
+    "throwing-axe": "throwing",
+    spear: "polearms",
+    halberd: "polearms",
+    poleaxe: "polearms",
+    staff: "polearms",
+    quarterstaff: "polearms",
+  };
+
+  return fallbackMap[itemName] || null;
+}
+
+/**
+ * Check if a race is a beast (animals that shouldn't have weapons/armor)
+ * @param {string} race - Race name
+ * @returns {boolean} True if the race is a beast
+ */
+function isBeastRace(race) {
+  if (!race) return false;
+
+  const beastRaces = [
+    "Wolf",
+    "Bear",
+    "MountainLion",
+    "Mountain Lion",
+    // Add other beast races as needed
+  ];
+
+  return beastRaces.includes(race);
+}
+
 export async function generateCreatureEquipment(className, race) {
   // Import classDatabase dynamically to avoid circular dependency
   const { classDatabase } = await import("../combat/classes.js");
   const classData = classDatabase[className];
   if (!classData) {
-    console.warn(`Class data not found for: ${className}`);
+    console.warn(
+      `[EQUIPMENT GENERATION] Class data not found for: ${className}`
+    );
     return {};
   }
 
   const equipment = {};
 
+  // Beasts don't use weapons or armor - they use natural attacks
+  if (isBeastRace(race)) {
+    console.log(
+      `[EQUIPMENT GENERATION] Skipping weapon/armor generation for beast race: ${race}`
+    );
+    return equipment; // Return empty equipment for beasts
+  }
+
   // Generate weapon based on class preferences
   if (classData.equipmentPreferences?.weapon) {
-    const weaponType =
+    const weaponItemName =
       classData.equipmentPreferences.weapon[
         Math.floor(Math.random() * classData.equipmentPreferences.weapon.length)
       ];
-    equipment.weapon = generateEquipmentItem("weapon1h", weaponType);
+    const equipmentType = getEquipmentTypeForItem(weaponItemName);
+
+    if (equipmentType) {
+      equipment.weapon = generateEquipmentItem(equipmentType, weaponItemName);
+      if (equipment.weapon) {
+        console.log(
+          `[EQUIPMENT GENERATION] Generated weapon for ${className}: ${equipment.weapon}`
+        );
+      } else {
+        console.warn(
+          `[EQUIPMENT GENERATION] Failed to generate weapon for ${className}, item: ${weaponItemName}, type: ${equipmentType}`
+        );
+      }
+    } else {
+      console.warn(
+        `[EQUIPMENT GENERATION] Could not find equipment type for weapon item: ${weaponItemName}`
+      );
+    }
   }
 
   // Generate armor based on class preferences
   if (classData.equipmentPreferences?.armor) {
-    const armorType =
+    const armorItemName =
       classData.equipmentPreferences.armor[
         Math.floor(Math.random() * classData.equipmentPreferences.armor.length)
       ];
-    equipment.armor = generateEquipmentItem("armor", armorType);
+    // Armor items should always use "armor" type
+    equipment.armor = generateEquipmentItem("armor", armorItemName);
+    if (equipment.armor) {
+      console.log(
+        `[EQUIPMENT GENERATION] Generated armor for ${className}: ${equipment.armor}`
+      );
+    } else {
+      console.warn(
+        `[EQUIPMENT GENERATION] Failed to generate armor for ${className}, item: ${armorItemName}`
+      );
+    }
   }
 
   // Generate shield if applicable
   if (classData.equipmentPreferences?.shield) {
-    const shieldType =
+    const shieldItemName =
       classData.equipmentPreferences.shield[
         Math.floor(Math.random() * classData.equipmentPreferences.shield.length)
       ];
-    equipment.secondHand = generateEquipmentItem("shield", shieldType);
+    const equipmentType = getEquipmentTypeForItem(shieldItemName);
+
+    if (equipmentType) {
+      equipment.secondHand = generateEquipmentItem(
+        equipmentType,
+        shieldItemName
+      );
+      if (equipment.secondHand) {
+        console.log(
+          `[EQUIPMENT GENERATION] Generated shield for ${className}: ${equipment.secondHand}`
+        );
+      } else {
+        console.warn(
+          `[EQUIPMENT GENERATION] Failed to generate shield for ${className}, item: ${shieldItemName}, type: ${equipmentType}`
+        );
+      }
+    } else {
+      console.warn(
+        `[EQUIPMENT GENERATION] Could not find equipment type for shield item: ${shieldItemName}`
+      );
+    }
   }
+
+  console.log(
+    `[EQUIPMENT GENERATION] Final equipment for ${className}:`,
+    equipment
+  );
 
   return equipment;
 }
@@ -388,16 +528,44 @@ function generateLootTable(monster) {
 }
 
 function generateRandomLootItem(level) {
-  const equipmentTypes = ["weapon1h", "armor", "shield", "tool"];
-  const randomType =
-    equipmentTypes[Math.floor(Math.random() * equipmentTypes.length)];
+  // Use valid equipment type keys
+  const validEquipmentTypeKeys = [
+    "swords",
+    "axes",
+    "hammers",
+    "armor",
+    "shields",
+    "tool",
+    "bows",
+  ];
+  const randomTypeKey =
+    validEquipmentTypeKeys[
+      Math.floor(Math.random() * validEquipmentTypeKeys.length)
+    ];
 
-  const typeData = equipmentTypes[randomType];
-  if (!typeData) return null;
+  const typeData = equipmentTypes[randomTypeKey];
+  if (!typeData || !typeData.items || typeData.items.length === 0) {
+    console.warn(
+      `[LOOT GENERATION] Invalid equipment type or no items: ${randomTypeKey}`
+    );
+    return null;
+  }
 
   const randomItem =
     typeData.items[Math.floor(Math.random() * typeData.items.length)];
-  return generateEquipmentItem(randomType, randomItem);
+  const generatedItem = generateEquipmentItem(randomTypeKey, randomItem);
+
+  if (generatedItem) {
+    console.log(
+      `[LOOT GENERATION] Generated random loot item: ${generatedItem}`
+    );
+  } else {
+    console.warn(
+      `[LOOT GENERATION] Failed to generate item for type: ${randomTypeKey}, item: ${randomItem}`
+    );
+  }
+
+  return generatedItem;
 }
 
 function generateSpecialAbilities(monster) {

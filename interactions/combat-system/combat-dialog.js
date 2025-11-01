@@ -1345,8 +1345,10 @@ async function handleResolutionPhase(status) {
       [{ type: "button", label: "Continue", value: "ok" }]
     );
 
-    // Show harvest dialog after victory
+    // Show harvest dialog after victory (includes equipment looting)
     await handleHarvestDialog();
+    // Show equipment looting dialog
+    await handleEquipmentLootDialog();
 
     // Sync all skill and health changes back to gameState
     syncSkillsToGameState();
@@ -1516,6 +1518,160 @@ function handlePostCombatDeaths() {
   if (removedCount > 0) {
     gameState.group = aliveGroupMembers;
     "[DEATH] Removed", removedCount, "dead group members";
+  }
+}
+
+// Handle equipment looting dialog after combat victory
+async function handleEquipmentLootDialog() {
+  console.log("[LOOT DIALOG] Starting equipment loot dialog");
+  
+  const defeatedMonsters = combatState.monsters.filter(
+    (monster) => monster.isDead() || monster.isUnconscious()
+  );
+
+  console.log(
+    `[LOOT DIALOG] Defeated monsters count: ${defeatedMonsters.length}`
+  );
+
+  if (defeatedMonsters.length === 0) {
+    console.log("[LOOT DIALOG] No defeated monsters, skipping loot dialog");
+    return; // No monsters to loot
+  }
+
+  // Collect all equipment from defeated monsters
+  const lootableEquipment = [];
+  defeatedMonsters.forEach((monster, index) => {
+    console.log(
+      `[LOOT DIALOG] Checking monster ${index}: ${monster.name} (${monster.race}), equipment:`,
+      monster.equipment
+    );
+    
+    if (monster.equipment) {
+      Object.entries(monster.equipment).forEach(([slot, item]) => {
+        if (item && typeof item === "string" && !item.startsWith("(")) {
+          console.log(
+            `[LOOT DIALOG] Found lootable item in slot ${slot}: ${item}`
+          );
+          lootableEquipment.push({
+            monster: monster,
+            monsterIndex: index,
+            slot: slot,
+            item: item,
+          });
+        }
+      });
+    } else {
+      console.log(
+        `[LOOT DIALOG] Monster ${monster.name} has no equipment object`
+      );
+    }
+  });
+
+  console.log(
+    `[LOOT DIALOG] Total lootable equipment items: ${lootableEquipment.length}`
+  );
+
+  if (lootableEquipment.length === 0) {
+    console.log(
+      "[LOOT DIALOG] No equipment found on defeated monsters, skipping loot dialog"
+    );
+    return; // No equipment to loot
+  }
+
+  // Import group inventory functions
+  const { addToGroupInventory } = await import(
+    "../character/characterManagement-system/utils/utils-group-inventory.js"
+  );
+
+  let lootMessage = "⚔️ **LOOT EQUIPMENT**\n\n";
+  lootMessage += "Equipment found on defeated monsters:\n\n";
+
+  // Create loot options
+  const lootOptions = [];
+  const groupedByMonster = {};
+
+  // Group equipment by monster
+  lootableEquipment.forEach((loot) => {
+    if (!groupedByMonster[loot.monsterIndex]) {
+      groupedByMonster[loot.monsterIndex] = {
+        monster: loot.monster,
+        items: [],
+      };
+    }
+    groupedByMonster[loot.monsterIndex].items.push(loot);
+  });
+
+  // Create UI for each monster's equipment
+  Object.entries(groupedByMonster).forEach(([monsterIndex, data]) => {
+    const monster = data.monster;
+    const emoji = getRaceEmoji(monster.race);
+
+    lootMessage += `${emoji} ${monster.race} (Level ${monster.level}):\n`;
+
+    data.items.forEach((loot, itemIndex) => {
+      const displayText =
+        loot.item.length > 50 ? loot.item.substring(0, 47) + "..." : loot.item;
+      lootMessage += `  • ${displayText}\n`;
+
+      // Add checkbox for each item
+      lootOptions.push({
+        type: "checkbox",
+        value: `loot_${monsterIndex}_${itemIndex}`,
+        label: `${emoji} ${monster.race} - ${displayText}`,
+        checked: false,
+      });
+    });
+    lootMessage += "\n";
+  });
+
+  lootOptions.push({
+    type: "button",
+    label: "✅ Loot Selected",
+    value: "loot",
+  });
+  lootOptions.push({
+    type: "button",
+    label: "❌ Skip Loot",
+    value: "skip",
+  });
+
+  const lootResult = await getShowChoiceDialog(lootMessage, lootOptions);
+
+  if (lootResult === "skip") {
+    return;
+  }
+
+  if (lootResult === "loot" || lootResult.value === "loot") {
+    let lootedCount = 0;
+    const lootedItems = [];
+
+    Object.entries(groupedByMonster).forEach(([monsterIndex, data]) => {
+      data.items.forEach((loot, itemIndex) => {
+        const checkboxValue = `loot_${monsterIndex}_${itemIndex}`;
+        if (lootResult[checkboxValue]) {
+          // Add item to group inventory
+          addToGroupInventory(loot.item);
+          lootedCount++;
+          const displayText =
+            loot.item.length > 40
+              ? loot.item.substring(0, 37) + "..."
+              : loot.item;
+          lootedItems.push(displayText);
+        }
+      });
+    });
+
+    if (lootedCount > 0) {
+      const lootSummary = `✅ Looted ${lootedCount} equipment item${
+        lootedCount > 1 ? "s" : ""
+      }:\n${lootedItems.join("\n")}`;
+      await getShowChoiceDialog(lootSummary, [
+        { type: "button", label: "OK", value: "ok" },
+      ]);
+      logEvent(
+        `⚔️ Looted ${lootedCount} equipment item${lootedCount > 1 ? "s" : ""}`
+      );
+    }
   }
 }
 

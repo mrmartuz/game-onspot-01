@@ -73,46 +73,138 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
   const detectionBonus = calculateDetectionBonus();
   `Detection bonus: ${detectionBonus}`;
 
+  // // Generate monsters based on location and detection
+  // const baseMonsterCount = Math.floor(Math.random() * 3) + 1; // 1-3 monsters
+  // const groupMemberCount = gameState.group ? gameState.group.length : 1;
+  // const monsterCount = Math.min(
+  //   1,
+  //   Math.max(1, baseMonsterCount + Math.floor(groupMemberCount / 2))
+  // );
+
+  // console.log(
+  //   "baseMonsterCount",
+  //   baseMonsterCount,
+  //   "groupMemberCount",
+  //   groupMemberCount,
+  //   "monsterCount",
+  //   monsterCount
+  // );
+  // const monsterTypes = [
+  //   "goblin",
+  //   "goblin_scout",
+  //   "goblin_shaman",
+  //   "orc",
+  //   "orc_scout",
+  //   "orc_warrior",
+  //   "orc_raider",
+  //   "wolf",
+  //   "wolf_young",
+  //   "wolf_alpha",
+  //   "bear",
+  //   "bear_black",
+  //   "bear_grizzly",
+  //   "troll",
+  //   "troll_warrior",
+  //   "mountainLion",
+  //   "mountain_lion_young",
+  //   "mountain_lion_adult",
+  //   "mountain_lion_hunter",
+  //   "screamer",
+  //   "stalker",
+  // ];
+  // const selectedTypes = monsterTypes
+  //   .sort(() => 0.5 - Math.random())
+  //   .slice(0, monsterCount);
+
+  // const monsters = await generateMonsters(
+  //   monsterCount,
+  //   selectedTypes[0],
+  //   ex,
+  //   ey
+  // );
+  // `Generated ${monsters.length} monsters`;
+
   // Generate monsters based on location and detection
-  const baseMonsterCount = Math.floor(Math.random() * 3) + 1; // 1-3 monsters
+  const baseMonsterCount = Math.floor(Math.random() * 3) + 1; // 1-3 base
   const groupMemberCount = gameState.group ? gameState.group.length : 1;
-  const monsterCount =
-    baseMonsterCount + Math.min(1, Math.floor(groupMemberCount / 2));
 
-  console.log("monsterCount", monsterCount);
-  const monsterTypes = [
-    "goblin",
-    "goblin_scout",
-    "goblin_shaman",
-    "orc",
-    "orc_scout",
-    "orc_warrior",
-    "orc_raider",
-    "wolf",
-    "wolf_young",
-    "wolf_alpha",
-    "bear",
-    "bear_black",
-    "bear_grizzly",
-    "troll",
-    "troll_warrior",
-    "mountainLion",
-    "mountain_lion_young",
-    "mountain_lion_adult",
-    "mountain_lion_hunter",
-    "screamer",
-    "stalker",
-  ];
-  const selectedTypes = monsterTypes
-    .sort(() => 0.5 - Math.random())
-    .slice(0, monsterCount);
+  // Tier monsters by difficulty (early: goblins/wolves; mid: orcs/mountain lions; late: bears/trolls/demons)
+  const monsterTiers = {
+    early: [
+      "goblin",
+      "goblin_scout",
+      "goblin_shaman",
+      "wolf",
+      "wolf_young",
+      "wolf_alpha",
+    ],
+    mid: [
+      "orc",
+      "orc_scout",
+      "orc_warrior",
+      "orc_raider",
+      "mountainLion",
+      "mountain_lion_young",
+      "mountain_lion_adult",
+      "mountain_lion_hunter",
+    ],
+    late: [
+      "bear",
+      "bear_black",
+      "bear_grizzly",
+      "troll",
+      "troll_warrior",
+      "screamer",
+      "stalker",
+    ],
+  };
 
-  const monsters = await generateMonsters(
-    monsterCount,
-    selectedTypes[0],
-    ex,
-    ey
+  // Determine tier based on group size (advancement indicator)
+  let tier = "early";
+  if (groupMemberCount >= 5) {
+    tier = "late";
+  } else if (groupMemberCount >= 3) {
+    tier = "mid";
+  }
+
+  // Adjust monster count based on tier and group size
+  let minCount = 1;
+  let maxCount = 3;
+  if (tier === "early") {
+    minCount = 2; // Goblins/wolves: ~2
+    maxCount = 2;
+  } else if (tier === "mid") {
+    minCount = 3; // Orcs/mountain lions: 3-5
+    maxCount = 5;
+  } else if (tier === "late") {
+    minCount = 4; // Bears/demons: 4-6+
+    maxCount = 6 + Math.floor(groupMemberCount / 3); // Scales further with large groups
+  }
+  const monsterCount = Math.min(
+    Math.max(minCount, baseMonsterCount + Math.floor(groupMemberCount / 2)),
+    maxCount
   );
+
+  // Randomly select one type from the current tier
+  const monsterTypes = monsterTiers[tier];
+  const selectedType =
+    monsterTypes[Math.floor(Math.random() * monsterTypes.length)];
+
+  console.log(
+    "baseMonsterCount",
+    baseMonsterCount,
+    "groupMemberCount",
+    groupMemberCount,
+    "tier",
+    tier,
+    "monsterCount",
+    monsterCount,
+    "selectedType",
+    selectedType
+  );
+
+  // Generate monsters (all of the same type, as in your original)
+  const monsters = await generateMonsters(monsterCount, selectedType, ex, ey);
   `Generated ${monsters.length} monsters`;
 
   // Generate allies
