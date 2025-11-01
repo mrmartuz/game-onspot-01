@@ -8,7 +8,7 @@ export async function showDeathDialog(death) {
     await getShowChoiceDialog("You died fighting! ☠️", [
       { type: "button", label: "🔄 Restart Game", value: "reload" },
     ]);
-    value = "reload";
+  value = "reload";
   } else if (death === "gold") {
     await getShowChoiceDialog("You paid your debt with your life! ☠️", [
       { type: "button", label: "🔄 Restart Game", value: "reload" },
@@ -52,6 +52,8 @@ export async function showDeathDialog(death) {
   if (value === "reload") {
     setTimeout(() => {
       location.reload();
-    }, 3000);
+    }, 1000);
   }
 }
+
+
