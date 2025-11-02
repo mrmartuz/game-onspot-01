@@ -85,6 +85,16 @@ export { getCombatStatus, handleEnhancedCombat } from "./combat-loop.js";
 // Combat dialog (orchestrator)
 export { handleEnhancedCombatDialog } from "./combat-dialog.js";
 
+// Group generation
+export * from "./group-generation.js";
+export * from "./group-generation-integration.js";
+
+// Location systems
+export * from "./location-rooms.js";
+export * from "./location-tracking.js";
+export * from "./location-rewards.js";
+export * from "./deterministic-generation.js";
+
 // Combat phases
 export {
   handleDetectionPhase,

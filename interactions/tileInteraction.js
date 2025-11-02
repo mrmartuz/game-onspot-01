@@ -11,6 +11,13 @@ import {
 import { recruitmentDialog } from "./recruitmentDialog.js";
 import { recruitmentSystem } from "./recruitmentSystem.js";
 import { handleChoice } from "./handleChoice.js";
+import {
+  getLocationStatus,
+  getNextUnclearedRoom,
+  isLocationFullyCleared,
+  isLocationVisited,
+} from "./combat-system/location-rooms.js";
+import { getLocationBehaviorType } from "./combat-system/databases/location-rules.js";
 
 // Helper function to check if there's enough storage space for water
 function hasSpaceForWater(amount = 10) {
@@ -85,11 +92,12 @@ async function showMinimalMenuAfterRecruitment(tile) {
     });
   }
 
-  // Add fight option for monster caves
-  if (tile.location === "monster caves" || tile.entity === "monster") {
+  // Add fight option for monster caves, caves, volcano, or monster entities
+  const fightLabel = getFightButtonLabel(tile);
+  if (fightLabel) {
     options.unshift({
       type: "button",
-      label: "Fight the monsters",
+      label: fightLabel,
       value: "9",
     });
   }
@@ -109,15 +117,67 @@ async function showMinimalMenuAfterRecruitment(tile) {
   }
 }
 
+/**
+ * Get fight button label based on location/entity status
+ * Shows room progression for multi-room locations
+ * @param {Object} tile - Tile object
+ * @returns {string} Fight button label or null
+ */
+function getFightButtonLabel(tile) {
+  const x = gameState.px;
+  const y = gameState.py;
+  
+  // Check for entity encounters
+  if (tile.entity === "monster" || tile.entity === "beast") {
+    return "⚔️ Fight the monsters";
+  }
+  
+  // Check for location encounters
+  if (tile.location && ["cave", "monster caves", "volcano"].includes(tile.location)) {
+    const locationStatus = getLocationStatus(x, y);
+    
+    if (locationStatus) {
+      // Location has been visited, show room progression
+      const nextRoom = getNextUnclearedRoom(x, y);
+      const totalRooms = locationStatus.totalRooms;
+      const clearedCount = locationStatus.clearedCount;
+      
+      if (nextRoom === -1) {
+        // All rooms cleared
+        if (isLocationFullyCleared(x, y)) {
+          return `🏆 Location Cleared (${clearedCount}/${totalRooms} rooms)`;
+        }
+      } else {
+        // Show current room info
+        const roomNumber = nextRoom + 1;
+        const behaviorType = getLocationBehaviorType(tile.location);
+        const isBossRoom = roomNumber === totalRooms;
+        
+        if (isBossRoom) {
+          return `⚔️ Fight Boss (Room ${roomNumber}/${totalRooms})`;
+        } else {
+          return `⚔️ Enter Room ${roomNumber}/${totalRooms}`;
+        }
+      }
+    } else {
+      // First time entering location
+      return "⚔️ Enter the " + (tile.location === "volcano" ? "volcano" : tile.location);
+    }
+  }
+  
+  return null;
+}
+
 // Helper function to show menu after entity interaction (with trade option for armies)
 async function showMenuAfterEntityInteraction(tile) {
   let options = [{ type: "button", label: "🚶 Leave", value: "1" }];
 
-  // Add fight option for monster caves
-  if (tile.location === "monster caves" || tile.entity === "monster") {
+  // Add fight option for monster caves, caves, volcano, or monster entities
+  const fightLabel = getFightButtonLabel(tile);
+  if (fightLabel) {
     options.unshift({
       type: "button",
-      label: "Fight the monsters",
+      label: fightLabel,
       value: "9",
     });
   }
@@ -171,8 +231,9 @@ export async function checkTileInteraction(tile) {
       }
 
       // After rescue attempt, show combat option
+      const fightLabel = getFightButtonLabel(tile);
       const combatChoice = await getShowChoiceDialog(`At ${tile.entity}`, [
-        { type: "button", label: "⚔️ Fight", value: "fight" },
+        { type: "button", label: fightLabel || "⚔️ Fight", value: "fight" },
         { type: "button", label: "🚶 Leave", value: "leave" },
       ]);
 
@@ -284,10 +345,11 @@ export async function checkTileInteraction(tile) {
         }
 
         // Show combat option for locations with monsters
-        if (tile.location === "monster caves" || tile.entity === "monster") {
+        const fightLabel = getFightButtonLabel(tile);
+        if (fightLabel) {
           components.push({
             type: "button",
-            label: "Fight the monsters",
+            label: fightLabel,
             value: "9",
           });
         }
@@ -485,10 +547,12 @@ export async function checkTileInteraction(tile) {
   if (tile.entity === "animal") {
     options.unshift({ type: "button", label: "🏹 Hunt", value: "7" });
   }
-  if (tile.location === "monster caves") {
+  // Add fight option for locations and entities
+  const fightLabel = getFightButtonLabel(tile);
+  if (fightLabel) {
     options.unshift({
       type: "button",
-      label: "Fight the monsters!",
+      label: fightLabel,
       value: "9",
     });
   }

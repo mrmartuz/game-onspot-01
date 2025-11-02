@@ -98,6 +98,8 @@ export class Monster extends CombatEntity {
   constructor(name, maxHealth, detectionValue = 0, x = 0, y = 0) {
     super(name, maxHealth, "monster");
     this.detectionValue = detectionValue;
+    this.isLeader = false; // Whether this monster is a leader of its group
+    this.fleeState = false; // Whether this monster is set to flee (will flee on next turn)
     this.x = x;
     this.y = y;
     this.creatureType = null;
@@ -236,6 +238,11 @@ export class Monster extends CombatEntity {
   getEquipmentInitiativeBonus() {
     if (!this.equipment?.armor) return 0;
     return getEquipmentInitiativeModifier(this.equipment.armor);
+  }
+
+  // Override isFleeing to check fleeState
+  isFleeing() {
+    return super.isFleeing() || this.fleeState;
   }
 }
 

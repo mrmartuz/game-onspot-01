@@ -42,6 +42,9 @@ import {
   createCombatActionButtons,
   createEngagementActionButtons,
 } from "./combat-ui.js";
+import { trackLocationClearing } from "./location-tracking.js";
+import { grantLocationRewards, hasLocationRewards } from "./location-rewards.js";
+import { getLocationStatus, isLocationFullyCleared } from "./location-rooms.js";
 
 // Helper function wrapper for updatePositionsForEngagement
 function updatePositionsForEngagement(playerChoice, enemyChoice) {
@@ -802,6 +805,11 @@ async function executeAttack(attacker, target) {
   if (hitRoll <= hitChance) {
     const actualDamage = target.takeDamage(damage);
     `[ATTACK HIT] ${attacker.name} hits ${target.name} for ${actualDamage} damage!`;
+    
+    // Check if leader died (for monsters)
+    if (target.role === "monster" && target.isLeader && target.isDead()) {
+      checkLeaderDeath(target);
+    }
 
     // Progress combat skills for successful attack
     if (attacker.character) {
@@ -969,6 +977,13 @@ async function handleMonsterTurn(monster) {
     return;
   }
 
+  // Check if monster has fleeState set - if so, flee now
+  if (monster.fleeState) {
+    `[MONSTER FLEE] ${monster.name} flees in terror!`;
+    monster.flee();
+    return;
+  }
+
   // Simple AI for monsters
   const combatState = getCombatState();
   const aliveAllies = combatState.allies.filter(
@@ -992,6 +1007,9 @@ export async function handleResolutionPhase(status) {
   ("=== RESOLUTION PHASE ===");
 
   if (status.victory) {
+    // Track room clearing for locations
+    await trackLocationRoomClearing();
+
     await getShowChoiceDialog(
       "🏆 VICTORY!\n\nAll enemies have been defeated!\nYour group celebrates their victory.",
       [{ type: "button", label: "Continue", value: "ok" }]
@@ -1495,4 +1513,104 @@ function getCombatStatus() {
     defeat: aliveAllies.length === 0,
     combatActive: aliveAllies.length > 0 && aliveMonsters.length > 0,
   };
+}
+
+/**
+ * Check if leader died and process morale check
+ * @param {Monster} leader - The leader monster that died
+ */
+function checkLeaderDeath(leader) {
+  const combatState = getCombatState();
+  ("[LEADER DEATH] Leader died! Processing morale check...");
+  
+  // Process morale check for all remaining monsters
+  processMoraleCheck();
+}
+
+/**
+ * Process morale check when leader dies
+ * Uses health ratio to determine flee chance
+ * If enemies are winning (higher health%), lower flee chance
+ */
+function processMoraleCheck() {
+  const combatState = getCombatState();
+  const aliveAllies = combatState.allies.filter(
+    (a) => !a.isDead() && !a.isFleeing() && !a.isUnconscious()
+  );
+  const aliveMonsters = combatState.monsters.filter(
+    (m) => !m.isDead() && !m.isFleeing() && !m.isUnconscious()
+  );
+  
+  if (aliveMonsters.length === 0) {
+    return;
+  }
+  
+  // Calculate health ratios
+  const totalAllyHealth = aliveAllies.reduce((sum, ally) => sum + Math.max(0, ally.currentHealth), 0);
+  const totalAllyMaxHealth = aliveAllies.reduce((sum, ally) => sum + ally.maxHealth, 0);
+  const allyHealthRatio = totalAllyMaxHealth > 0 ? totalAllyHealth / totalAllyMaxHealth : 0;
+  
+  const totalMonsterHealth = aliveMonsters.reduce((sum, monster) => sum + Math.max(0, monster.currentHealth), 0);
+  const totalMonsterMaxHealth = aliveMonsters.reduce((sum, monster) => sum + monster.maxHealth, 0);
+  const monsterHealthRatio = totalMonsterMaxHealth > 0 ? totalMonsterHealth / totalMonsterMaxHealth : 0;
+  
+  // Base flee chance: 70%
+  let fleeChance = 0.70;
+  
+  // Adjust based on health ratio
+  // If enemies are winning (monster health ratio > ally health ratio), reduce flee chance
+  if (monsterHealthRatio > allyHealthRatio) {
+    const healthAdvantage = monsterHealthRatio - allyHealthRatio;
+    // Reduce flee chance by up to 40% if enemies are winning significantly
+    fleeChance = Math.max(0.30, fleeChance - (healthAdvantage * 0.40));
+  }
+  
+  // If enemies are at 60%+ health, set flee chance to 30%
+  if (monsterHealthRatio >= 0.60) {
+    fleeChance = 0.30;
+  }
+  
+  ("[MORALE CHECK] Ally health ratio: " + allyHealthRatio.toFixed(2) + 
+   ", Monster health ratio: " + monsterHealthRatio.toFixed(2) + 
+   ", Flee chance: " + (fleeChance * 100).toFixed(0) + "%");
+  
+  // Apply morale check to each monster
+  for (const monster of aliveMonsters) {
+    const roll = Math.random();
+    if (roll <= fleeChance) {
+      monster.fleeState = true;
+      ("[MORALE] " + monster.name + " will flee on next turn!");
+    }
+  }
+}
+
+/**
+ * Track room clearing after combat victory
+ */
+async function trackLocationRoomClearing() {
+  const combatState = getCombatState();
+  const locationType = combatState.locationType;
+  const roomIndex = combatState.roomIndex;
+  
+  if (!locationType || roomIndex === -1) {
+    // Not a location encounter, nothing to track
+    return;
+  }
+  
+  // Track the cleared room
+  const x = gameState.px;
+  const y = gameState.py;
+  trackLocationClearing(x, y, locationType, roomIndex);
+  
+  // Check if location is fully cleared and grant rewards
+  if (isLocationFullyCleared(x, y)) {
+    if (hasLocationRewards(x, y)) {
+      const reward = grantLocationRewards(x, y, locationType, true);
+      if (reward.granted) {
+        await getShowChoiceDialog(reward.message, [
+          { type: "button", label: "OK", value: "ok" }
+        ]);
+      }
+    }
+  }
 }

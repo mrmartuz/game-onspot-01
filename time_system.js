@@ -5,6 +5,10 @@ import {
 } from "./gamestate/game_variables.js";
 import { gameState } from "./gamestate/game_variables.js";
 import { getShowDeathDialog } from "./interactions.js";
+import {
+  processWeeklyRefills,
+  cleanupFilledLocations,
+} from "./interactions/combat-system/location-tracking.js";
 
 export function getCurrentGameDate() {
   const elapsed_real_ms = Date.now() - game_start_real;
@@ -283,4 +287,46 @@ export async function timeConsumption() {
   // Update both real time and game time for next consumption check
   gameState.last_consume_time = Date.now();
   gameState.last_consume_game_time = currentGameDate.getTime();
+  
+  // Weekly checks for location refills
+  checkWeeklyEvents(currentGameDate);
+}
+
+/**
+ * Check and process weekly events (location refills)
+ * Runs automatically based on in-game time
+ * @param {Date} currentGameDate - Current game date
+ */
+function checkWeeklyEvents(currentGameDate) {
+  // Initialize lastWeeklyCheck if not set
+  if (!gameState.lastWeeklyCheck) {
+    gameState.lastWeeklyCheck = currentGameDate.getTime();
+    return;
+  }
+  
+  const lastCheckDate = new Date(gameState.lastWeeklyCheck);
+  const daysSinceLastCheck = Math.floor(
+    (currentGameDate.getTime() - gameState.lastWeeklyCheck) / (24 * 60 * 60 * 1000)
+  );
+  
+  // Check if at least 7 days (1 week) have passed
+  if (daysSinceLastCheck >= 7) {
+    // Process weekly location refills
+    processWeeklyLocationRefills();
+    
+    // Update last weekly check time
+    gameState.lastWeeklyCheck = currentGameDate.getTime();
+  }
+}
+
+/**
+ * Process weekly location refills
+ * Called automatically when a week passes
+ */
+function processWeeklyLocationRefills() {
+  // Process weekly refills for all tracked locations
+  processWeeklyRefills();
+  
+  // Cleanup locations where all rooms are filled
+  cleanupFilledLocations();
 }

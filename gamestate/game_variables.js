@@ -56,6 +56,8 @@ export const gameState = {
   killPoints: 0,
   events: [],
   discoveredLocations: [], // Track discovered locations separately from event logs
+  clearedLocations: [], // Track cleared locations/rooms with state
+  // Structure: [{x, y, locationType, behaviorType, totalRooms, clearedRooms: boolean[], bossAlive, bossType, lastCheck, lastCleared, stashCollected}]
   moving: false,
   moveStartTime: 0,
   moveDuration: 0,
@@ -76,6 +78,7 @@ export const gameState = {
   nextTimeOfDay: "day", // Next time period in the cycle
   transitionFactor: 0.0, // 0.0 = pure current period, 1.0 = pure next period
   lastTimeUpdate: -1, // Last hour checked to detect time changes
+  lastWeeklyCheck: null, // Timestamp of last weekly check for location refills
 };
 
 // Character ID generation system - Phase 2.1 Migration
@@ -98,3 +101,86 @@ export const game_start_date = new Date(
     .padStart(2, "0")}:00:00`
 );
 export const acceleration = 720; // 1 game day per 2 real minutes (86400 seconds / 120 seconds = 720)
+
+// Location tracking helper functions
+
+/**
+ * Add a cleared location entry
+ * @param {Object} locationData - Location data object
+ */
+export function addClearedLocation(locationData) {
+  if (!gameState.clearedLocations) {
+    gameState.clearedLocations = [];
+  }
+  
+  // Check if location already exists
+  const existing = getClearedLocation(locationData.x, locationData.y);
+  if (existing) {
+    updateClearedLocation(locationData.x, locationData.y, locationData);
+    return;
+  }
+  
+  gameState.clearedLocations.push({
+    x: locationData.x,
+    y: locationData.y,
+    locationType: locationData.locationType,
+    behaviorType: locationData.behaviorType,
+    totalRooms: locationData.totalRooms,
+    clearedRooms: locationData.clearedRooms || [],
+    bossAlive: locationData.bossAlive !== undefined ? locationData.bossAlive : true,
+    bossType: locationData.bossType || null,
+    lastCheck: locationData.lastCheck || Date.now(),
+    lastCleared: locationData.lastCleared || null,
+    stashCollected: locationData.stashCollected || false,
+  });
+}
+
+/**
+ * Update an existing cleared location
+ * @param {number} x - X coordinate
+ * @param {number} y - Y coordinate
+ * @param {Object} updates - Partial location data to update
+ */
+export function updateClearedLocation(x, y, updates) {
+  if (!gameState.clearedLocations) {
+    return;
+  }
+  
+  const location = getClearedLocation(x, y);
+  if (!location) {
+    return;
+  }
+  
+  Object.assign(location, updates);
+}
+
+/**
+ * Remove a cleared location from tracking
+ * @param {number} x - X coordinate
+ * @param {number} y - Y coordinate
+ */
+export function removeClearedLocation(x, y) {
+  if (!gameState.clearedLocations) {
+    return;
+  }
+  
+  gameState.clearedLocations = gameState.clearedLocations.filter(
+    loc => !(loc.x === x && loc.y === y)
+  );
+}
+
+/**
+ * Get a cleared location entry
+ * @param {number} x - X coordinate
+ * @param {number} y - Y coordinate
+ * @returns {Object} Location data or null
+ */
+export function getClearedLocation(x, y) {
+  if (!gameState.clearedLocations) {
+    return null;
+  }
+  
+  return gameState.clearedLocations.find(
+    loc => loc.x === x && loc.y === y
+  ) || null;
+}
