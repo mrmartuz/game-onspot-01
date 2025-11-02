@@ -12,6 +12,11 @@ import {
 } from "../equipment.js";
 import { Monster } from "./entities.js";
 import { weaponEmoji, equipmentEmoji } from "../../gamestate/emoji-database.js";
+import { scaleCreatureStats, getClassHealthBonus } from "./creature-scaling.js";
+import {
+  calculateExperienceValue,
+  generateLootTable,
+} from "./creature-loot.js";
 
 // Determine AI behavior based on creature template and characteristics
 function determineAIBehavior(template, monster) {
@@ -126,7 +131,7 @@ export async function generateCreature(creatureTemplate, x, y, index) {
 
   // Calculate health based on scaled stats
   const baseHealth = Math.floor(scaledStats.CON * 2 + 10);
-  const classBonus = await getClassHealthBonus(template.class);
+  const classBonus = getClassHealthBonus(template.class);
   const maxHealth = baseHealth + classBonus;
 
   // Create proper Monster instance
@@ -183,28 +188,6 @@ export async function generateCreature(creatureTemplate, x, y, index) {
   monster.vulnerabilities = generateVulnerabilities(monster.race);
 
   return monster;
-}
-
-export function scaleCreatureStats(baseStats, race) {
-  const raceData = raceDatabase[race];
-  if (!raceData) {
-    console.warn(`Race data not found for: ${race}`);
-    return baseStats;
-  }
-
-  const scaledStats = { ...baseStats };
-
-  // Apply race stat bonuses
-  Object.keys(raceData.statBonuses).forEach((stat) => {
-    scaledStats[stat] += raceData.statBonuses[stat];
-  });
-
-  // Ensure stats are within reasonable bounds
-  Object.keys(scaledStats).forEach((stat) => {
-    scaledStats[stat] = Math.max(1, Math.min(25, scaledStats[stat]));
-  });
-
-  return scaledStats;
 }
 
 /**
@@ -448,125 +431,6 @@ export async function generateTeamComposition(
 }
 
 // Helper functions
-async function getClassHealthBonus(className) {
-  // Import classDatabase dynamically to avoid circular dependency
-  const { classDatabase } = await import("../combat/classes.js");
-  const classData = classDatabase[className];
-  if (!classData) return 0;
-
-  const healthBonuses = {
-    fighter: 2,
-    paladin: 3,
-    cleric: 2,
-    ranger: 1,
-    hunter: 1,
-    archer: 0,
-    brute: 4,
-    martial_artist: 1,
-    monk: 1,
-    explorer: 1,
-    dungeondiver: 2,
-    craftsman: 0,
-    alchemist: 0,
-    herbalist: 0,
-    pyromancer: 0,
-    necromancer: 0,
-    articaster: 0,
-    geomancer: 0,
-  };
-
-  return healthBonuses[className] || 0;
-}
-
-function calculateExperienceValue(monster) {
-  const baseExp = monster.level * 10;
-  const rarityMultiplier = {
-    common: 1,
-    uncommon: 1.5,
-    rare: 2,
-    legendary: 3,
-    epic: 4,
-    mythic: 5,
-  };
-
-  return Math.floor(baseExp * (rarityMultiplier[monster.rarity] || 1));
-}
-
-function generateLootTable(monster) {
-  const lootTable = [];
-
-  // Base loot chance based on rarity
-  const lootChances = {
-    common: 0.3,
-    uncommon: 0.5,
-    rare: 0.7,
-    legendary: 0.9,
-    epic: 1.0,
-    mythic: 1.0,
-  };
-
-  const lootChance = lootChances[monster.rarity] || 0.3;
-
-  if (Math.random() < lootChance) {
-    // Generate random loot item
-    lootTable.push({
-      type: "equipment",
-      item: generateRandomLootItem(monster.level),
-      chance: 1.0,
-    });
-  }
-
-  // Always drop gold
-  const goldAmount = Math.floor(monster.level * 5 * (Math.random() + 0.5));
-  lootTable.push({
-    type: "gold",
-    amount: goldAmount,
-    chance: 1.0,
-  });
-
-  return lootTable;
-}
-
-function generateRandomLootItem(level) {
-  // Use valid equipment type keys
-  const validEquipmentTypeKeys = [
-    "swords",
-    "axes",
-    "hammers",
-    "armor",
-    "shields",
-    "tool",
-    "bows",
-  ];
-  const randomTypeKey =
-    validEquipmentTypeKeys[
-      Math.floor(Math.random() * validEquipmentTypeKeys.length)
-    ];
-
-  const typeData = equipmentTypes[randomTypeKey];
-  if (!typeData || !typeData.items || typeData.items.length === 0) {
-    console.warn(
-      `[LOOT GENERATION] Invalid equipment type or no items: ${randomTypeKey}`
-    );
-    return null;
-  }
-
-  const randomItem =
-    typeData.items[Math.floor(Math.random() * typeData.items.length)];
-  const generatedItem = generateEquipmentItem(randomTypeKey, randomItem);
-
-  if (generatedItem) {
-    console.log(
-      `[LOOT GENERATION] Generated random loot item: ${generatedItem}`
-    );
-  } else {
-    console.warn(
-      `[LOOT GENERATION] Failed to generate item for type: ${randomTypeKey}, item: ${randomItem}`
-    );
-  }
-
-  return generatedItem;
-}
 
 function generateSpecialAbilities(monster) {
   const abilities = [];

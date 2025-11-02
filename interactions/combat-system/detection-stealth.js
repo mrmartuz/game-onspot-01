@@ -1,4 +1,7 @@
 // Detection and stealth systems for combat
+import { parseEquipmentString } from "../equipment.js";
+import { getArmorStealthModifier } from "./databases/armor-initiative-modifiers.js";
+
 export function calculateDetectionBonus() {
   // Calculate detection bonus based on party composition and skills
   let detectionBonus = 0;
@@ -94,10 +97,10 @@ export function calculateStealthModifier() {
 
   // Penalty for heavy armor
   if (player && player.equipment && player.equipment.armor) {
-    const armor = player.equipment.armor.toLowerCase();
-    if (armor.includes("plate")) stealthModifier -= 3;
-    else if (armor.includes("chainmail")) stealthModifier -= 2;
-    else if (armor.includes("leather")) stealthModifier -= 1;
+    const parsed = parseEquipmentString(player.equipment.armor);
+    if (parsed) {
+      stealthModifier += getArmorStealthModifier(parsed.type);
+    }
   }
 
   return stealthModifier;

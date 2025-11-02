@@ -3,6 +3,17 @@ import {
   calculateCharacterHealth,
   progressSkill,
 } from "./character-calculations.js";
+import {
+  getWeaponDamageBonus,
+  getArmorDefenseBonus,
+  getShieldDefenseBonus,
+  getEquipmentInitiativeModifier,
+} from "./equipment-combat-helpers.js";
+import {
+  getSkillDamageBonus,
+  getSkillAccuracyBonus,
+  getSkillInitiativeBonus,
+} from "./combat-calculations.js";
 
 export class CombatEntity {
   constructor(name, maxHealth, role = null) {
@@ -156,7 +167,13 @@ export class Monster extends CombatEntity {
     // Base damage calculation for monsters
     const baseDamage = Math.floor(this.stats.STR / 2) + 1;
     const weaponBonus = this.getWeaponDamageBonus();
-    const skillBonus = this.getSkillDamageBonus();
+    
+    // Create a mock character-like object for skill bonus calculation
+    const mockCharacter = {
+      equipment: this.equipment,
+      skills: this.skills,
+    };
+    const skillBonus = getSkillDamageBonus(mockCharacter);
 
     return baseDamage + weaponBonus + skillBonus;
   }
@@ -165,14 +182,21 @@ export class Monster extends CombatEntity {
     // Base defense calculation for monsters
     const baseDefense = Math.floor(this.stats.CON / 2);
     const armorBonus = this.getArmorDefenseBonus();
+    const shieldBonus = this.getShieldDefenseBonus();
 
-    return baseDefense + armorBonus;
+    return baseDefense + armorBonus + shieldBonus;
   }
 
   getAccuracy() {
     // Base accuracy calculation for monsters
     const baseAccuracy = Math.floor(this.stats.DEX / 2) + 10;
-    const skillBonus = this.getSkillAccuracyBonus();
+    
+    // Create a mock character-like object for skill bonus calculation
+    const mockCharacter = {
+      equipment: this.equipment,
+      skills: this.skills,
+    };
+    const skillBonus = getSkillAccuracyBonus(mockCharacter);
 
     return baseAccuracy + skillBonus;
   }
@@ -182,99 +206,36 @@ export class Monster extends CombatEntity {
     const baseInitiative =
       Math.floor(this.stats.DEX / 2) + Math.floor(this.stats.WIS / 2);
     const equipmentBonus = this.getEquipmentInitiativeBonus();
+    
+    // Create a mock character-like object for skill bonus calculation
+    const mockCharacter = {
+      equipment: this.equipment,
+      skills: this.skills,
+    };
+    const skillBonus = getSkillInitiativeBonus(mockCharacter);
 
-    return baseInitiative + equipmentBonus;
+    return baseInitiative + equipmentBonus + skillBonus;
   }
 
   // Helper methods for damage and defense calculations
   getWeaponDamageBonus() {
     if (!this.equipment?.weapon) return 0;
-
-    // Parse weapon damage from equipment string
-    const weapon = this.equipment.weapon.toLowerCase();
-
-    // Basic weapon damage bonuses based on weapon type
-    if (weapon.includes("sword")) return 2;
-    if (weapon.includes("axe")) return 3;
-    if (weapon.includes("mace")) return 2;
-    if (weapon.includes("spear")) return 1;
-    if (weapon.includes("bow")) return 1;
-    if (weapon.includes("dagger")) return 1;
-
-    return 1; // Default weapon bonus
-  }
-
-  getSkillDamageBonus() {
-    if (!this.skills) return 0;
-
-    // Get relevant combat skills
-    const combatSkills = ["swords", "bows", "polearms", "unarmed"];
-    let totalBonus = 0;
-
-    combatSkills.forEach((skill) => {
-      if (this.skills[skill]) {
-        totalBonus += Math.floor(this.skills[skill] / 2);
-      }
-    });
-
-    return totalBonus;
+    return getWeaponDamageBonus(this.equipment.weapon);
   }
 
   getArmorDefenseBonus() {
     if (!this.equipment?.armor) return 0;
-
-    // Parse armor defense from equipment string
-    const armor = this.equipment.armor.toLowerCase();
-
-    // Basic armor defense bonuses
-    if (armor.includes("leather")) return 1;
-    if (armor.includes("chain")) return 2;
-    if (armor.includes("plate")) return 3;
-    if (armor.includes("scale")) return 2;
-
-    return 0; // No armor
+    return getArmorDefenseBonus(this.equipment.armor);
   }
 
-  getSkillAccuracyBonus() {
-    if (!this.skills) return 0;
-
-    // Get relevant accuracy skills
-    const accuracySkills = ["swords", "bows", "polearms", "unarmed"];
-    let totalBonus = 0;
-
-    accuracySkills.forEach((skill) => {
-      if (this.skills[skill]) {
-        totalBonus += Math.floor(this.skills[skill] / 3);
-      }
-    });
-
-    return totalBonus;
+  getShieldDefenseBonus() {
+    if (!this.equipment?.secondHand) return 0;
+    return getShieldDefenseBonus(this.equipment.secondHand);
   }
 
   getEquipmentInitiativeBonus() {
-    if (!this.equipment) return 0;
-
-    let bonus = 0;
-
-    // Light weapons give initiative bonus
-    if (this.equipment.weapon) {
-      const weapon = this.equipment.weapon.toLowerCase();
-      if (weapon.includes("dagger") || weapon.includes("bow")) {
-        bonus += 1;
-      }
-    }
-
-    // Heavy armor reduces initiative
-    if (this.equipment.armor) {
-      const armor = this.equipment.armor.toLowerCase();
-      if (armor.includes("plate")) {
-        bonus -= 2;
-      } else if (armor.includes("chain")) {
-        bonus -= 1;
-      }
-    }
-
-    return bonus;
+    if (!this.equipment?.armor) return 0;
+    return getEquipmentInitiativeModifier(this.equipment.armor);
   }
 }
 

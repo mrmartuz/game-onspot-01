@@ -6,6 +6,7 @@ import {
   calculateCharacterAccuracy,
   calculateCharacterInitiative,
   progressSkill,
+  getPrimaryWeaponSkill,
 } from "./character-calculations.js";
 import { generateMonsters, generateCreature } from "./creature-generation.js";
 import {
@@ -16,6 +17,11 @@ import {
 } from "./detection-stealth.js";
 import { allyAI, monsterAI, generateAllies } from "./ai.js";
 import { gameState } from "../../gamestate/game_variables.js";
+import {
+  getMonsterTypesByTier,
+  determineMonsterTier,
+  getMonsterCountForTier,
+} from "./databases/monster-tiers.js";
 
 // Main combat loop and player actions
 export function getCombatStatus(allies, monsters, turnCount = 0) {
@@ -128,67 +134,22 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
   const baseMonsterCount = Math.floor(Math.random() * 3) + 1; // 1-3 base
   const groupMemberCount = gameState.group ? gameState.group.length : 1;
 
-  // Tier monsters by difficulty (early: goblins/wolves; mid: orcs/mountain lions; late: bears/trolls/demons)
-  const monsterTiers = {
-    early: [
-      "goblin",
-      "goblin_scout",
-      "goblin_shaman",
-      "wolf",
-      "wolf_young",
-      "wolf_alpha",
-    ],
-    mid: [
-      "orc",
-      "orc_scout",
-      "orc_warrior",
-      "orc_raider",
-      "mountainLion",
-      "mountain_lion_young",
-      "mountain_lion_adult",
-      "mountain_lion_hunter",
-    ],
-    late: [
-      "bear",
-      "bear_black",
-      "bear_grizzly",
-      "troll",
-      "troll_warrior",
-      "screamer",
-      "stalker",
-    ],
-  };
+  // Determine tier based on group size using database helper
+  const tier = determineMonsterTier(groupMemberCount);
 
-  // Determine tier based on group size (advancement indicator)
-  let tier = "early";
-  if (groupMemberCount >= 5) {
-    tier = "late";
-  } else if (groupMemberCount >= 3) {
-    tier = "mid";
-  }
+  // Get monster types for the selected tier from database
+  const tierMonsterTypes = getMonsterTypesByTier(tier);
 
-  // Adjust monster count based on tier and group size
-  let minCount = 1;
-  let maxCount = 3;
-  if (tier === "early") {
-    minCount = 2; // Goblins/wolves: ~2
-    maxCount = 2;
-  } else if (tier === "mid") {
-    minCount = 3; // Orcs/mountain lions: 3-5
-    maxCount = 5;
-  } else if (tier === "late") {
-    minCount = 4; // Bears/demons: 4-6+
-    maxCount = 6 + Math.floor(groupMemberCount / 3); // Scales further with large groups
-  }
-  const monsterCount = Math.min(
-    Math.max(minCount, baseMonsterCount + Math.floor(groupMemberCount / 2)),
-    maxCount
+  // Calculate monster count using database helper
+  const monsterCount = getMonsterCountForTier(
+    tier,
+    baseMonsterCount,
+    groupMemberCount
   );
 
   // Randomly select one type from the current tier
-  const monsterTypes = monsterTiers[tier];
   const selectedType =
-    monsterTypes[Math.floor(Math.random() * monsterTypes.length)];
+    tierMonsterTypes[Math.floor(Math.random() * tierMonsterTypes.length)];
 
   console.log(
     "baseMonsterCount",
@@ -375,74 +336,7 @@ export async function handleEnhancedCombat(ex, ey, isOnTile = false) {
   return finalStatus;
 }
 
-function getPrimaryWeaponSkill(character) {
-  // Determine primary weapon skill based on equipment
-  const weapon = character.equipment?.weapon;
-  if (!weapon) return "unarmed";
-
-  const weaponType = weapon.toLowerCase();
-
-  // Map weapon types to specific skills - order matters for overlapping names
-  if (
-    weaponType.includes("greatsword") ||
-    weaponType.includes("claymore") ||
-    weaponType.includes("zweihander")
-  )
-    return "great_swords";
-  if (weaponType.includes("sword") || weaponType.includes("skrith-blade"))
-    return "swords";
-  if (
-    weaponType.includes("greataxe") ||
-    weaponType.includes("battleaxe") ||
-    weaponType.includes("vrakgul-axe")
-  )
-    return "great_axes";
-  if (weaponType.includes("axe")) return "axes";
-  if (
-    weaponType.includes("spear") ||
-    weaponType.includes("halberd") ||
-    weaponType.includes("polearm") ||
-    weaponType.includes("staff") ||
-    weaponType.includes("quarterstaff") ||
-    weaponType.includes("scythe") ||
-    weaponType.includes("pike") ||
-    weaponType.includes("glaive")
-  )
-    return "polearms";
-  if (
-    weaponType.includes("maul") ||
-    weaponType.includes("great-hammer") ||
-    weaponType.includes("gormith-hammer")
-  )
-    return "great_hammers";
-  if (
-    weaponType.includes("mace") ||
-    weaponType.includes("club") ||
-    weaponType.includes("warhammer") ||
-    weaponType.includes("flail") ||
-    weaponType.includes("morningstar")
-  )
-    return "hammers";
-  if (
-    weaponType.includes("crossbow") ||
-    weaponType.includes("gormith-crossbow")
-  )
-    return "crossbows";
-  if (weaponType.includes("bow") || weaponType.includes("lyssarion-bow"))
-    return "bows";
-  if (
-    weaponType.includes("dagger") ||
-    weaponType.includes("javelin") ||
-    weaponType.includes("throwing") ||
-    weaponType.includes("sling") ||
-    weaponType.includes("skrith-nedle")
-  )
-    return "throwing";
-  if (weaponType.includes("shield") || weaponType.includes("aurethine-shield"))
-    return "shields";
-
-  return "unarmed";
-}
+// getPrimaryWeaponSkill is now imported from character-calculations.js
 
 // Sync health from combat entities back to gameState (for combat-loop.js)
 function syncHealthToGameStateLoop(allies) {

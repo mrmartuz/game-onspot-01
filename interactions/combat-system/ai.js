@@ -4,6 +4,7 @@ import {
   calculateCharacterAccuracy,
   calculateCharacterHealth,
   progressSkill,
+  getPrimaryWeaponSkill,
 } from "./character-calculations.js";
 import { gameState } from "../../gamestate/game_variables.js";
 import { Ally } from "./entities.js";
@@ -296,74 +297,7 @@ function executeDefend(entity) {
   `${entity.name} takes a defensive stance!`;
 }
 
-function getPrimaryWeaponSkill(character) {
-  // Determine primary weapon skill based on equipment
-  const weapon = character.equipment?.weapon;
-  if (!weapon) return "unarmed";
-
-  const weaponType = weapon.toLowerCase();
-
-  // Map weapon types to specific skills - order matters for overlapping names
-  if (
-    weaponType.includes("greatsword") ||
-    weaponType.includes("claymore") ||
-    weaponType.includes("zweihander")
-  )
-    return "great_swords";
-  if (weaponType.includes("sword") || weaponType.includes("skrith-blade"))
-    return "swords";
-  if (
-    weaponType.includes("greataxe") ||
-    weaponType.includes("battleaxe") ||
-    weaponType.includes("vrakgul-axe")
-  )
-    return "great_axes";
-  if (weaponType.includes("axe")) return "axes";
-  if (
-    weaponType.includes("spear") ||
-    weaponType.includes("halberd") ||
-    weaponType.includes("polearm") ||
-    weaponType.includes("staff") ||
-    weaponType.includes("quarterstaff") ||
-    weaponType.includes("scythe") ||
-    weaponType.includes("pike") ||
-    weaponType.includes("glaive")
-  )
-    return "polearms";
-  if (
-    weaponType.includes("maul") ||
-    weaponType.includes("great-hammer") ||
-    weaponType.includes("gormith-hammer")
-  )
-    return "great_hammers";
-  if (
-    weaponType.includes("mace") ||
-    weaponType.includes("club") ||
-    weaponType.includes("warhammer") ||
-    weaponType.includes("flail") ||
-    weaponType.includes("morningstar")
-  )
-    return "hammers";
-  if (
-    weaponType.includes("crossbow") ||
-    weaponType.includes("gormith-crossbow")
-  )
-    return "crossbows";
-  if (weaponType.includes("bow") || weaponType.includes("lyssarion-bow"))
-    return "bows";
-  if (
-    weaponType.includes("dagger") ||
-    weaponType.includes("javelin") ||
-    weaponType.includes("throwing") ||
-    weaponType.includes("sling") ||
-    weaponType.includes("skrith-nedle")
-  )
-    return "throwing";
-  if (weaponType.includes("shield") || weaponType.includes("aurethine-shield"))
-    return "shields";
-
-  return "unarmed";
-}
+// getPrimaryWeaponSkill is now imported from character-calculations.js
 
 // Helper function to determine AI personality based on character class
 function determineAIPersonality(character) {
