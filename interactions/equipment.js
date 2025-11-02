@@ -2347,6 +2347,25 @@ export function calculateEquipmentValue(equipmentString) {
   );
 }
 
+// Calculate item sell value based on material
+// Low value materials (cost ≤ 2) = 1g
+// Metals (cost > 2) = 50% of material cost
+export function calculateItemSellValue(itemString) {
+  const parsed = parseEquipmentString(itemString);
+  if (!parsed) return 0;
+
+  const material = getEquipmentMaterial(parsed.material);
+  if (!material) return 0;
+
+  // Low value materials: wood, bone, cloth, cotton, wool, leather, stone, etc.
+  if (material.cost <= 2) {
+    return 1;
+  }
+
+  // Metals: iron, steel, bronze, etc. - depreciated value (50% of material cost)
+  return Math.floor(material.cost * 0.5);
+}
+
 // Equipment weight calculations
 export function calculateEquipmentWeight(equipmentString) {
   const parsed = parseEquipmentString(equipmentString);

@@ -16,7 +16,19 @@ import {
   removeHeadFromInventory,
   getAllHeadsForDisplay,
 } from "./loot-system.js";
-import { getRaceEmoji } from "../gamestate/emoji-database.js";
+import {
+  getRaceEmoji,
+  raceEmoji,
+  classEmoji,
+  sexEmoji,
+} from "../gamestate/emoji-database.js";
+import { parseEquipmentString, calculateItemSellValue } from "./equipment.js";
+import {
+  getGroupInventory,
+  removeFromGroupInventory,
+} from "./character/characterManagement-system/utils/utils-group-inventory.js";
+import { raceDatabase } from "./character/races.js";
+import { classDatabase } from "./combat/classes.js";
 
 export async function handleChoice(choice, tile) {
   if (choice === "close") {
@@ -82,54 +94,92 @@ export async function handleChoice(choice, tile) {
       // Determine location type for pricing
       const locationType = tile?.location || "village";
 
-      // Create trade options
-      const tradeOptions = [
+      // Create trade options as button grid (2 columns)
+      const tradeButtons = [
         {
-          type: "button",
           label: `📥 Buy food 🍞 (${Math.floor(
             10 * (1 - buyDiscount)
           )} for 10g)`,
           value: "1",
         },
         {
-          type: "button",
           label: `📥 Sell food 🍞 (10 for ${Math.floor(3 * (1 + sellBonus))}g)`,
           value: "2",
         },
         {
-          type: "button",
           label: `📥 Buy water 💧 (${Math.floor(
             10 * (1 - buyDiscount)
           )} for 10g)`,
           value: "3",
         },
         {
-          type: "button",
           label: `📥 Sell water 💧 (10 for ${Math.floor(
             3 * (1 + sellBonus)
           )}g)`,
           value: "4",
         },
         {
-          type: "button",
+          label: `📥 Buy wood 🪵 (5 for 10g)`,
+          value: "buy_wood",
+        },
+        {
           label: `📤 Sell wood 🪵 (5 for ${Math.floor(10 * (1 + sellBonus))}g)`,
           value: "5",
         },
-        { type: "button", label: "📥 Buy cart 🛒 (100g for 1)", value: "6" },
+        { label: "📥 Buy cart 🛒 (100g for 1)", value: "6" },
+        {
+          label: `📤 Sell cart 🛒 (1 for ${Math.floor(50 * (1 + sellBonus))}g)`,
+          value: "sell_cart",
+        },
       ];
 
-      // Add monster head selling options if available
+      // Add monster head selling option if available
       if (gameState.monsterHeads.length > 0) {
-        tradeOptions.push({
-          type: "button",
+        tradeButtons.push({
           label: "🏺 Sell Monster Heads",
           value: "heads",
         });
+      } else {
+        tradeButtons.push({
+          label: "🏺 Sell Monster Heads",
+          value: "heads",
+          disabled: true,
+        });
       }
 
-      tradeOptions.push({ type: "button", label: "❌ Close", value: "close" });
+      // Check if there are items to sell
+      const allSellableItems = getAllSellableItems();
+      if (allSellableItems.length > 0) {
+        tradeButtons.push({
+          label: `📦 Sell Items (${allSellableItems.length} available)`,
+          value: "sell_items",
+        });
+      } else {
+        tradeButtons.push({
+          label: "📦 Sell Items",
+          value: "sell_items",
+          disabled: true,
+        });
+      }
 
-      let t = await getShowChoiceDialog("Trade options:", tradeOptions);
+      const tradeComponents = [
+        {
+          type: "button_grid",
+          columns: 2,
+          textSize: "12px",
+          gap: "2px",
+          buttons: tradeButtons,
+        },
+      ];
+      const components = [];
+      const closeButton = {
+        type: "button",
+        label: "❌ Close",
+        value: "close",
+      };
+      components.push(...tradeComponents);
+      components.push(closeButton);
+      let t = await getShowChoiceDialog("Trade options:", components);
 
       if (t === "close") {
         trading = false;
@@ -208,6 +258,33 @@ export async function handleChoice(choice, tile) {
             { type: "button", label: "OK", value: "ok" },
           ]);
         }
+      } else if (t === "buy_wood") {
+        if (gameState.gold >= 10) {
+          gameState.wood += 5;
+          gameState.gold -= 10;
+          updateStatus();
+          tradeDesc = "📥 Bought 5 wood 🪵 for 10g";
+        } else {
+          await getShowChoiceDialog("Not enough gold! ⚠️", [
+            { type: "button", label: "OK", value: "ok" },
+          ]);
+        }
+      } else if (t === "sell_cart") {
+        if (gameState.carts >= 1) {
+          gameState.carts -= 1;
+          let actualGold = Math.floor(50 * (1 + sellBonus));
+          gameState.gold += actualGold;
+          updateStatus();
+          tradeDesc = `📤 Sold 1 cart 🛒 for ${actualGold}g`;
+        } else {
+          await getShowChoiceDialog("Not enough carts! ⚠️", [
+            { type: "button", label: "OK", value: "ok" },
+          ]);
+        }
+      } else if (t === "sell_items") {
+        // Handle item selling
+        await handleItemSelling(locationType, sellBonus);
+        tradeDesc = "Item selling completed";
       } else if (t === "heads") {
         // Handle monster head selling
         await handleMonsterHeadSelling(locationType, interactBonus);
@@ -356,6 +433,268 @@ async function handleMonsterHeadSelling(locationType, interactBonus) {
         // If no more heads, exit selling loop
         if (gameState.monsterHeads.length === 0) {
           selling = false;
+        }
+      }
+    }
+  }
+}
+
+// Format character identity display string (similar to createCharacterIdentityDisplay)
+function formatCharacterIdentity(character) {
+  if (!character) return "Unknown";
+
+  // Get race and class data
+  const raceData = raceDatabase[character.race];
+  const raceRegion = raceData ? raceData.region : "Unknown";
+  const raceEmojiIcon = raceEmoji[character.race] || "👤";
+
+  const classData = classDatabase[character.class];
+  const className = classData ? classData.name : "Unknown";
+  const classEmojiIcon = classEmoji[character.class] || "❓";
+
+  // Format: RaceEmoji FirstName LastName | Sex SexEmoji RaceRegion RaceEmoji ClassName ClassEmoji lvl.X
+  const firstName = character.firstName || "";
+  const lastName = character.lastName || "";
+  const fullName =
+    firstName && lastName
+      ? `${raceEmojiIcon} ${firstName.toUpperCase()} ${lastName.toUpperCase()}`
+      : character.name || "Unknown";
+
+  const details = `${character.sex || ""} ${
+    sexEmoji[character.sex] || ""
+  } ${raceRegion} ${raceEmojiIcon} ${className} ${classEmojiIcon} lvl.${
+    character.level || 1
+  }`;
+
+  return `${fullName} | ${details}`;
+}
+
+// Get all sellable items organized by character ownership
+// Returns array of { type: 'character' | 'inventory', character?: object, name: string, items: [{ itemString, slotKey? }] }
+function getOrganizedSellableItems() {
+  const organized = [];
+
+  // Get equipped items from all characters
+  const allCharacters = [];
+  if (gameState.playerCharacter) {
+    allCharacters.push({
+      character: gameState.playerCharacter,
+      name: formatCharacterIdentity(gameState.playerCharacter),
+    });
+  }
+  gameState.group.forEach((char) => {
+    allCharacters.push({
+      character: char,
+      name: formatCharacterIdentity(char),
+    });
+  });
+
+  allCharacters.forEach(({ character, name }) => {
+    if (character.equipment) {
+      const characterItems = [];
+      Object.entries(character.equipment).forEach(([slotKey, item]) => {
+        // Add valid equipment items (not null, not special markers like "(2h-grip)" or "(empty)")
+        if (item && typeof item === "string" && !item.startsWith("(")) {
+          const sellValue = calculateItemSellValue(item);
+          if (sellValue > 0) {
+            characterItems.push({ itemString: item, slotKey });
+          }
+        }
+      });
+
+      if (characterItems.length > 0) {
+        organized.push({
+          type: "character",
+          character: character,
+          name: name,
+          items: characterItems,
+        });
+      }
+    }
+  });
+
+  // Get items from group inventory (unequipped)
+  const groupInventory = getGroupInventory();
+  const inventoryItems = [];
+  groupInventory.forEach((item) => {
+    const sellValue = calculateItemSellValue(item);
+    if (sellValue > 0) {
+      inventoryItems.push({ itemString: item });
+    }
+  });
+
+  if (inventoryItems.length > 0) {
+    organized.push({
+      type: "inventory",
+      name: "Group Inventory",
+      items: inventoryItems,
+    });
+  }
+
+  return organized;
+}
+
+// Get all sellable items (flat list) - kept for backward compatibility
+function getAllSellableItems() {
+  const organized = getOrganizedSellableItems();
+  const allItems = [];
+
+  organized.forEach((section) => {
+    section.items.forEach(({ itemString }) => {
+      allItems.push(itemString);
+    });
+  });
+
+  return allItems;
+}
+
+// Handle item selling dialog
+async function handleItemSelling(locationType, sellBonus) {
+  const organizedItems = getOrganizedSellableItems();
+
+  if (organizedItems.length === 0) {
+    await getShowChoiceDialog("You have no items to sell!", [
+      { type: "button", label: "OK", value: "ok" },
+    ]);
+    return;
+  }
+
+  let selling = true;
+  while (selling) {
+    // Re-fetch items in case inventory changed
+    const currentOrganized = getOrganizedSellableItems();
+
+    if (currentOrganized.length === 0) {
+      await getShowChoiceDialog("No more items to sell!", [
+        { type: "button", label: "OK", value: "ok" },
+      ]);
+      selling = false;
+      continue;
+    }
+
+    let sellMessage = `📦 **SELL ITEMS**\n\n`;
+    sellMessage += `Location: ${locationType}\n`;
+    sellMessage += `Sell Bonus: +${(sellBonus * 100).toFixed(0)}%\n\n`;
+
+    const sellButtons = [];
+    const itemMap = []; // Maps index to { itemString, character, slotKey, type }
+
+    currentOrganized.forEach((section) => {
+      // Add character/inventory section header (disabled button)
+      sellButtons.push({
+        label: `${section.name}`,
+        value: `header_${section.type}`,
+        disabled: true,
+      });
+      sellMessage += `\n${section.name}:\n`;
+
+      // Add items for this section
+      section.items.forEach(({ itemString, slotKey }) => {
+        const baseValue = calculateItemSellValue(itemString);
+        const sellValue = Math.floor(baseValue * (1 + sellBonus));
+
+        // Truncate long item names for display
+        const parsed = parseEquipmentString(itemString);
+        let displayName = itemString;
+        if (parsed) {
+          // Show item type and material
+          displayName = `${parsed.type} (${parsed.material})`;
+        }
+        if (displayName.length > 40) {
+          displayName = displayName.substring(0, 37) + "...";
+        }
+
+        const index = itemMap.length;
+        itemMap.push({
+          itemString,
+          character: section.character || null,
+          slotKey: slotKey || null,
+          type: section.type,
+        });
+
+        sellMessage += `  • ${displayName} - ${sellValue}g\n`;
+
+        sellButtons.push({
+          label: `  ${displayName} - ${sellValue}g`,
+          value: `sell_item_${index}`,
+        });
+      });
+    });
+
+    sellButtons.push({
+      label: "❌ Close",
+      value: "close",
+    });
+
+    const sellComponents = [
+      {
+        type: "button_grid",
+        columns: 1,
+        textSize: "11px",
+        gap: "2px",
+        buttons: sellButtons,
+      },
+    ];
+
+    const sellChoice = await getShowChoiceDialog(sellMessage, sellComponents);
+
+    if (sellChoice === "close") {
+      selling = false;
+      continue;
+    }
+
+    if (sellChoice.startsWith("sell_item_")) {
+      const itemIndex = parseInt(sellChoice.split("_")[2]);
+      const itemData = itemMap[itemIndex];
+
+      if (itemData && itemData.itemString) {
+        const baseValue = calculateItemSellValue(itemData.itemString);
+        const sellValue = Math.floor(baseValue * (1 + sellBonus));
+
+        let removed = false;
+
+        // Remove based on item source
+        if (itemData.type === "inventory") {
+          // Remove from group inventory
+          removed = removeFromGroupInventory(itemData.itemString);
+        } else if (itemData.character && itemData.slotKey) {
+          // Remove from equipped items
+          if (itemData.character.equipment) {
+            if (
+              itemData.character.equipment[itemData.slotKey] ===
+              itemData.itemString
+            ) {
+              itemData.character.equipment[itemData.slotKey] = null;
+              // Handle 2h weapon cleanup
+              if (
+                itemData.slotKey === "weapon" &&
+                itemData.character.equipment.secondHand === "(2h-grip)"
+              ) {
+                itemData.character.equipment.secondHand = null;
+              }
+              removed = true;
+            }
+          }
+        }
+
+        if (removed) {
+          gameState.gold += sellValue;
+          updateStatus();
+
+          const parsed = parseEquipmentString(itemData.itemString);
+          let displayName = itemData.itemString;
+          if (parsed) {
+            displayName = `${parsed.type} (${parsed.material})`;
+          }
+          if (displayName.length > 40) {
+            displayName = displayName.substring(0, 37) + "...";
+          }
+
+          const sellSummary = `✅ Sold ${displayName} for ${sellValue}g`;
+          await getShowChoiceDialog(sellSummary, [
+            { type: "button", label: "OK", value: "ok" },
+          ]);
+          logEvent(sellSummary);
         }
       }
     }
