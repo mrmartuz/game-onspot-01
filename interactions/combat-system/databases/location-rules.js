@@ -168,3 +168,4 @@ export function isBossRoom(roomIndex, totalRooms) {
   return roomIndex === totalRooms - 1;
 }
 
+

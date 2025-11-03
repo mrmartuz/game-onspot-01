@@ -225,9 +225,10 @@ export function createSkillsButtonGrid(
       const skillData = skillDatabase[skillKey];
       const skillName = skillData ? skillData.name : skillKey;
       const emoji = skillEmoji[skillKey] || "📊";
+      const formattedLevel = Number.parseFloat(level).toFixed(2);
 
       return {
-        label: `${emoji} ${level} ${skillName}`,
+        label: `${emoji} ${formattedLevel} ${skillName}`,
         value: `display_skill_${skillKey}`,
         disabled: false, // Display only, not interactive
       };

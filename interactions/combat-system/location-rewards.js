@@ -89,3 +89,4 @@ export function hasLocationRewards(x, y) {
          (behaviorType === "monster-cave" || behaviorType === "dragon-cave" || behaviorType === "volcano");
 }
 
+

@@ -51,6 +51,7 @@ export const raceEmoji = {
   Dwarf: "🧙",
   Orc: "👹",
   Goblin: "👺",
+  Kobold: "👺",
   Demon: "👿",
   Angel: "👼",
   Undead: "💀",
