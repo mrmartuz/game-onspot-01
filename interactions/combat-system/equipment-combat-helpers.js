@@ -11,6 +11,7 @@ import {
   getWeaponMapping,
   getPrimaryWeaponSkillFromItem,
   getWeaponBaseDamageFromItem,
+  getWeaponCategoryFromItem,
 } from "./databases/weapon-mapping.js";
 import {
   getWeaponDamageBonus as getMaterialWeaponDamageBonus,
@@ -211,5 +212,44 @@ export function getCharacterEquipmentBonuses(character) {
   }
   
   return bonuses;
+}
+
+/**
+ * Check if weapon is ranged
+ * @param {string} equipmentString - Weapon equipment string
+ * @returns {boolean} True if weapon is ranged
+ */
+export function isRangedWeapon(equipmentString) {
+  if (!equipmentString) return false;
+  
+  const parsed = parseEquipmentString(equipmentString);
+  if (!parsed) return false;
+  
+  const category = getWeaponCategoryFromItem(parsed.type);
+  if (!category) return false;
+  
+  const rangedCategories = ["bows", "crossbows", "throwing"];
+  return rangedCategories.includes(category);
+}
+
+/**
+ * Get ammo type for a weapon
+ * @param {string} equipmentString - Weapon equipment string
+ * @returns {string|null} Ammo type ("arrows", "bolts", "stones") or null if not ranged
+ */
+export function getAmmoType(equipmentString) {
+  if (!equipmentString) return null;
+  
+  const parsed = parseEquipmentString(equipmentString);
+  if (!parsed) return null;
+  
+  const category = getWeaponCategoryFromItem(parsed.type);
+  if (!category) return null;
+  
+  if (category === "bows") return "arrows";
+  if (category === "crossbows") return "bolts";
+  if (category === "throwing") return "stones";
+  
+  return null; // Not a ranged weapon
 }
 

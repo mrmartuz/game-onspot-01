@@ -155,6 +155,9 @@ export async function generateCreature(creatureTemplate, x, y, index) {
   monster.lootTable = [];
   monster.experienceValue = 0;
   monster.stats = scaledStats;
+  
+  // Set size from template (default to 1x1 if not specified)
+  monster.size = template.size || { width: 1, height: 1 };
 
   // Generate skills
   monster.skills = { ...template.skills };
@@ -164,6 +167,15 @@ export async function generateCreature(creatureTemplate, x, y, index) {
     template.class,
     template.race
   );
+
+  // Initialize ammo if monster has ranged weapon
+  const { isRangedWeapon, getAmmoType } = await import("./equipment-combat-helpers.js");
+  if (monster.equipment?.weapon && isRangedWeapon(monster.equipment.weapon)) {
+    const ammoType = getAmmoType(monster.equipment.weapon);
+    if (ammoType) {
+      monster.ammo[ammoType] = 20; // Default 20 ammo
+    }
+  }
 
   console.log(
     `[MONSTER GENERATION] Created monster ${monster.name} (${monster.race}, ${monster.class}) with equipment:`,

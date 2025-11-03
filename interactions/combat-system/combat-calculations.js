@@ -9,6 +9,7 @@ import {
   getShieldDefenseBonus,
   getWeaponAccuracyBonus,
   getEquipmentInitiativeModifier,
+  isRangedWeapon,
 } from "./equipment-combat-helpers.js";
 
 // Database imports
@@ -184,9 +185,17 @@ export function calculateCharacterDefense(character) {
 
 /**
  * Calculate total character accuracy
+ * Uses full DEX for ranged weapons, DEX/2 for melee
  */
 export function calculateCharacterAccuracy(character) {
-  const baseAccuracy = Math.floor(character.stats.DEX / 2) + 10;
+  const weapon = character.equipment?.weapon;
+  const isRanged = weapon && isRangedWeapon(weapon);
+  
+  // Use full DEX for ranged weapons, DEX/2 for melee
+  const baseAccuracy = isRanged 
+    ? character.stats.DEX + 10
+    : Math.floor(character.stats.DEX / 2) + 10;
+  
   const weaponBonus = getEquipmentAccuracyBonus(character);
   const skillBonus = getSkillAccuracyBonus(character);
   const classBonus = getClassAccuracyBonus(character.class);
@@ -205,6 +214,7 @@ export function calculateCharacterInitiative(character) {
 
   return baseInitiative + equipmentBonus + skillBonus;
 }
+
 
 
 

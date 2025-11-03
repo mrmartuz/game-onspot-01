@@ -32,6 +32,13 @@ import {
   getCombatStateProperty,
 } from "./combat-state.js";
 import { updateCombatPositions } from "./combat-grid.js";
+import { isInMeleeRange, hasLineOfSight } from "./combat-range.js";
+import { isRangedWeapon } from "./equipment-combat-helpers.js";
+import {
+  calculateMovementRange,
+  moveEntity,
+  getAdjacentTiles,
+} from "./combat-movement.js";
 import {
   formatMonsterList,
   formatAllyList,
@@ -43,7 +50,10 @@ import {
   createEngagementActionButtons,
 } from "./combat-ui.js";
 import { trackLocationClearing } from "./location-tracking.js";
-import { grantLocationRewards, hasLocationRewards } from "./location-rewards.js";
+import {
+  grantLocationRewards,
+  hasLocationRewards,
+} from "./location-rewards.js";
 import { getLocationStatus, isLocationFullyCleared } from "./location-rooms.js";
 
 // Helper function wrapper for updatePositionsForEngagement
@@ -717,8 +727,17 @@ async function handlePlayerTurn(player) {
   const choice = await getShowChoiceDialog(combatMessage, choices);
 
   switch (choice) {
-    case "attack":
-      await handlePlayerAttack(player, aliveMonsters);
+    case "advance":
+      await handleAdvance(player);
+      break;
+    case "retreat":
+      await handleRetreat(player);
+      break;
+    case "melee_attack":
+      await handleMeleeAttack(player, aliveMonsters);
+      break;
+    case "ranged_attack":
+      await handleRangedAttack(player, aliveMonsters);
       break;
     case "defend":
       await handlePlayerDefend(player);
@@ -726,8 +745,14 @@ async function handlePlayerTurn(player) {
     case "protect":
       await handlePlayerProtect(player);
       break;
-    case "retreat":
-      return await handleGroupRetreat();
+    case "flee_alone":
+      return await handleFleeAlone(player);
+    case "flee_group":
+      return await handleFleeGroup(player);
+    // Legacy support for old button values
+    case "attack":
+      await handlePlayerAttack(player, aliveMonsters);
+      break;
     case "flee":
       return await handlePlayerFlee();
   }
@@ -757,6 +782,348 @@ async function handlePlayerAttack(player, targets) {
   }
 }
 
+/**
+ * Helper function to advance an entity toward a target
+ * @param {Object} entity - Entity to advance
+ * @param {Object} target - Target to advance toward
+ * @param {Object} combatState - Combat state
+ * @returns {boolean} True if movement was successful
+ */
+function advanceTowardTarget(entity, target, combatState) {
+  const entityPos = getEntityPosition(entity, combatState);
+  const targetPos = getEntityPosition(target, combatState);
+
+  if (!entityPos || !targetPos) return false;
+
+  // Calculate movement range
+  const dex = entity.character?.stats?.DEX || entity.stats?.DEX || 10;
+  const armor =
+    entity.character?.equipment?.armor || entity.equipment?.armor || null;
+  const movementRange = calculateMovementRange(dex, armor);
+
+  // Calculate direction toward target
+  const rowDiff = targetPos.row - entityPos.row;
+  const colDiff = targetPos.col - entityPos.col;
+
+  // Normalize direction
+  const rowDir = rowDiff > 0 ? 1 : rowDiff < 0 ? -1 : 0;
+  const colDir = colDiff > 0 ? 1 : colDiff < 0 ? -1 : 0;
+
+  // Move up to movement range toward target
+  const newRow = Math.max(
+    0,
+    Math.min(9, entityPos.row + rowDir * movementRange)
+  );
+  const newCol = Math.max(
+    0,
+    Math.min(9, entityPos.col + colDir * movementRange)
+  );
+
+  // Try to move
+  return moveEntity(entity, newRow, newCol, combatState);
+}
+
+/**
+ * Handle advance movement - player selects target first, then advances
+ * @param {Object} player - Player entity
+ */
+async function handleAdvance(player) {
+  const combatState = getCombatState();
+  const playerPos = getEntityPosition(player, combatState);
+
+  if (!playerPos) {
+    await getShowChoiceDialog("❌ Cannot find player position!", [
+      { type: "button", label: "Continue", value: "ok" },
+    ]);
+    return;
+  }
+
+  const aliveMonsters = combatState.monsters.filter(
+    (m) => !m.isDead() && !m.isFleeing() && !m.isUnconscious()
+  );
+
+  if (aliveMonsters.length === 0) {
+    await getShowChoiceDialog("❌ No enemies to advance toward!", [
+      { type: "button", label: "Continue", value: "ok" },
+    ]);
+    return;
+  }
+
+  // Let player choose target (similar to attack)
+  if (aliveMonsters.length === 1) {
+    // Only one target, advance toward it
+    const target = aliveMonsters[0];
+    if (advanceTowardTarget(player, target, combatState)) {
+      await getShowChoiceDialog(
+        `⬆️ ${player.name} advances toward ${target.name}!`,
+        [{ type: "button", label: "Continue", value: "ok" }]
+      );
+    } else {
+      await getShowChoiceDialog(`❌ ${player.name} cannot advance - blocked!`, [
+        { type: "button", label: "Continue", value: "ok" },
+      ]);
+    }
+  } else {
+    // Multiple targets, let player choose
+    let targetMessage = `⬆️ CHOOSE TARGET TO ADVANCE TOWARD\n\n`;
+    targetMessage += formatMonsterList(aliveMonsters, "combat");
+
+    const targetChoices = aliveMonsters.map((target, index) =>
+      createTargetChoice(target, index)
+    );
+
+    const targetChoice = await getShowChoiceDialog(
+      targetMessage,
+      targetChoices
+    );
+    const targetIndex = parseInt(targetChoice.split("_")[1]);
+    const selectedTarget = aliveMonsters[targetIndex];
+
+    if (selectedTarget) {
+      if (advanceTowardTarget(player, selectedTarget, combatState)) {
+        await getShowChoiceDialog(
+          `⬆️ ${player.name} advances toward ${selectedTarget.name}!`,
+          [{ type: "button", label: "Continue", value: "ok" }]
+        );
+      } else {
+        await getShowChoiceDialog(
+          `❌ ${player.name} cannot advance - blocked!`,
+          [{ type: "button", label: "Continue", value: "ok" }]
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Handle retreat movement - move away from nearest enemy
+ * @param {Object} player - Player entity
+ */
+async function handleRetreat(player) {
+  const combatState = getCombatState();
+  const playerPos = getEntityPosition(player, combatState);
+
+  if (!playerPos) {
+    await getShowChoiceDialog("❌ Cannot find player position!", [
+      { type: "button", label: "Continue", value: "ok" },
+    ]);
+    return;
+  }
+
+  // Find nearest enemy
+  let nearestEnemy = null;
+  let nearestDistance = Infinity;
+
+  const aliveMonsters = combatState.monsters.filter(
+    (m) => !m.isDead() && !m.isFleeing() && !m.isUnconscious()
+  );
+
+  for (const monster of aliveMonsters) {
+    const monsterPos = getEntityPosition(monster, combatState);
+    if (!monsterPos) continue;
+
+    const distance =
+      Math.abs(monsterPos.row - playerPos.row) +
+      Math.abs(monsterPos.col - playerPos.col);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestEnemy = monster;
+    }
+  }
+
+  if (!nearestEnemy) {
+    await getShowChoiceDialog("❌ No enemies to retreat from!", [
+      { type: "button", label: "Continue", value: "ok" },
+    ]);
+    return;
+  }
+
+  // Calculate movement range
+  const dex = player.character?.stats?.DEX || player.stats?.DEX || 10;
+  const armor =
+    player.character?.equipment?.armor || player.equipment?.armor || null;
+  const movementRange = calculateMovementRange(dex, armor);
+
+  // Calculate target position (move away from enemy)
+  const enemyPos = getEntityPosition(nearestEnemy, combatState);
+  const rowDiff = enemyPos.row - playerPos.row;
+  const colDiff = enemyPos.col - playerPos.col;
+
+  // Normalize direction (reverse)
+  const rowDir = rowDiff > 0 ? -1 : rowDiff < 0 ? 1 : 0;
+  const colDir = colDiff > 0 ? -1 : colDiff < 0 ? 1 : 0;
+
+  // Move up to movement range away from enemy
+  const newRow = Math.max(
+    0,
+    Math.min(9, playerPos.row + rowDir * movementRange)
+  );
+  const newCol = Math.max(
+    0,
+    Math.min(9, playerPos.col + colDir * movementRange)
+  );
+
+  // Try to move
+  if (moveEntity(player, newRow, newCol, combatState)) {
+    await getShowChoiceDialog(
+      `⬇️ ${player.name} retreats from ${nearestEnemy.name}!`,
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+  } else {
+    await getShowChoiceDialog(`❌ ${player.name} cannot retreat - blocked!`, [
+      { type: "button", label: "Continue", value: "ok" },
+    ]);
+  }
+}
+
+/**
+ * Handle melee attack - only allow if adjacent
+ * @param {Object} player - Player entity
+ * @param {Array} targets - Available targets
+ */
+async function handleMeleeAttack(player, targets) {
+  const combatState = getCombatState();
+  const playerPos = getEntityPosition(player, combatState);
+
+  // Filter targets in melee range
+  const meleeTargets = targets.filter((target) => {
+    const targetPos = getEntityPosition(target, combatState);
+    if (!targetPos) return false;
+    return isInMeleeRange(
+      playerPos.row,
+      playerPos.col,
+      targetPos.row,
+      targetPos.col
+    );
+  });
+
+  if (meleeTargets.length === 0) {
+    await getShowChoiceDialog(
+      "❌ No enemies in melee range! You must be adjacent to attack with melee weapons.",
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+    return;
+  }
+
+  if (meleeTargets.length === 1) {
+    await executeAttack(player, meleeTargets[0]);
+  } else {
+    // Multiple targets, let player choose
+    let targetMessage = `⚔️ CHOOSE MELEE TARGET\n\n`;
+    targetMessage += formatMonsterList(meleeTargets, "combat");
+
+    const targetChoices = meleeTargets.map((target, index) =>
+      createTargetChoice(target, index)
+    );
+
+    const targetChoice = await getShowChoiceDialog(
+      targetMessage,
+      targetChoices
+    );
+    const targetIndex = parseInt(targetChoice.split("_")[1]);
+    const selectedTarget = meleeTargets[targetIndex];
+
+    await executeAttack(player, selectedTarget);
+  }
+}
+
+/**
+ * Handle ranged attack - only allow if line of sight
+ * @param {Object} player - Player entity
+ * @param {Array} targets - Available targets
+ */
+async function handleRangedAttack(player, targets) {
+  const combatState = getCombatState();
+  const playerPos = getEntityPosition(player, combatState);
+
+  // Check if player has ranged weapon
+  const weapon =
+    player.character?.equipment?.weapon || player.equipment?.weapon;
+  if (!isRangedWeapon(weapon)) {
+    await getShowChoiceDialog("❌ You don't have a ranged weapon equipped!", [
+      { type: "button", label: "Continue", value: "ok" },
+    ]);
+    return;
+  }
+
+  // Check if player has ammo
+  if (!player.hasAmmo()) {
+    await getShowChoiceDialog(
+      "🏹 Out of ammo! Switch to melee weapon or fight unarmed?",
+      [
+        { type: "button", label: "Switch to Melee/Unarmed", value: "switch" },
+        { type: "button", label: "Cancel", value: "cancel" },
+      ]
+    );
+    return;
+  }
+
+  // Filter targets with line of sight
+  const rangedTargets = targets.filter((target) => {
+    const targetPos = getEntityPosition(target, combatState);
+    if (!targetPos) return false;
+    return hasLineOfSight(
+      playerPos.row,
+      playerPos.col,
+      targetPos.row,
+      targetPos.col,
+      combatState
+    );
+  });
+
+  if (rangedTargets.length === 0) {
+    await getShowChoiceDialog("❌ No enemies with direct line of sight!", [
+      { type: "button", label: "Continue", value: "ok" },
+    ]);
+    return;
+  }
+
+  if (rangedTargets.length === 1) {
+    await executeAttack(player, rangedTargets[0]);
+  } else {
+    // Multiple targets, let player choose
+    let targetMessage = `🏹 CHOOSE RANGED TARGET\n\n`;
+    targetMessage += formatMonsterList(rangedTargets, "combat");
+
+    const targetChoices = rangedTargets.map((target, index) =>
+      createTargetChoice(target, index)
+    );
+
+    const targetChoice = await getShowChoiceDialog(
+      targetMessage,
+      targetChoices
+    );
+    const targetIndex = parseInt(targetChoice.split("_")[1]);
+    const selectedTarget = rangedTargets[targetIndex];
+
+    await executeAttack(player, selectedTarget);
+  }
+}
+
+/**
+ * Get entity position from combat state
+ * @param {Object} entity - Entity (Monster or Ally)
+ * @param {Object} combatState - Combat state
+ * @returns {Object|null} Position object with row and col, or null
+ */
+function getEntityPosition(entity, combatState) {
+  // Check if entity is an ally
+  const allyIndex = combatState.allies.findIndex((a) => a === entity);
+  if (allyIndex >= 0) {
+    const allyKey = `ally_${allyIndex}`;
+    return combatState.positions.allies[allyKey] || null;
+  }
+
+  // Check if entity is a monster
+  const monsterIndex = combatState.monsters.findIndex((m) => m === entity);
+  if (monsterIndex >= 0) {
+    const monsterKey = `monster_${monsterIndex}`;
+    return combatState.positions.monsters[monsterKey] || null;
+  }
+
+  return null;
+}
+
 async function executeAttack(attacker, target) {
   `[ATTACK ATTEMPT] ${attacker.name} (${
     attacker.character?.race || attacker.race || "unknown"
@@ -780,6 +1147,77 @@ async function executeAttack(attacker, target) {
     return;
   }
 
+  const combatState = getCombatState();
+
+  // Get positions
+  const attackerPos = getEntityPosition(attacker, combatState);
+  const targetPos = getEntityPosition(target, combatState);
+
+  if (!attackerPos || !targetPos) {
+    `[ATTACK ERROR] Cannot find positions for attacker or target`;
+    return;
+  }
+
+  // Get weapon type
+  const weapon =
+    attacker.character?.equipment?.weapon || attacker.equipment?.weapon;
+  const isRanged = isRangedWeapon(weapon);
+
+  // Check range restrictions
+  if (isRanged) {
+    // Ranged weapon: Check line of sight and ammo
+    if (
+      !hasLineOfSight(
+        attackerPos.row,
+        attackerPos.col,
+        targetPos.row,
+        targetPos.col,
+        combatState
+      )
+    ) {
+      await getShowChoiceDialog(
+        `❌ Cannot attack ${target.name} - No line of sight!`,
+        [{ type: "button", label: "Continue", value: "ok" }]
+      );
+      return;
+    }
+
+    if (!attacker.hasAmmo()) {
+      // Show dialog to switch to melee/unarmed
+      const switchResult = await getShowChoiceDialog(
+        `🏹 Out of ammo! Switch to melee weapon or fight unarmed?`,
+        [
+          { type: "button", label: "Switch to Melee/Unarmed", value: "switch" },
+          { type: "button", label: "Cancel", value: "cancel" },
+        ]
+      );
+
+      if (switchResult === "switch") {
+        attacker.switchToMelee();
+        // Try attack again with melee weapon
+        return await executeAttack(attacker, target);
+      } else {
+        return; // Cancel attack
+      }
+    }
+  } else {
+    // Melee weapon: Check if adjacent
+    if (
+      !isInMeleeRange(
+        attackerPos.row,
+        attackerPos.col,
+        targetPos.row,
+        targetPos.col
+      )
+    ) {
+      await getShowChoiceDialog(
+        `❌ Cannot attack ${target.name} - Not in melee range! You must be adjacent to attack with melee weapons.`,
+        [{ type: "button", label: "Continue", value: "ok" }]
+      );
+      return;
+    }
+  }
+
   const damage = attacker.character
     ? calculateCharacterDamage(attacker.character)
     : attacker.getDamage();
@@ -801,11 +1239,28 @@ async function executeAttack(attacker, target) {
     1
   )}`;
 
+  // Consume ammo for ranged attacks (before attack roll)
+  if (isRanged) {
+    attacker.consumeAmmo();
+  }
+
   // Generate combat grid with attacker highlighted
   if (hitRoll <= hitChance) {
     const actualDamage = target.takeDamage(damage);
     `[ATTACK HIT] ${attacker.name} hits ${target.name} for ${actualDamage} damage!`;
-    
+
+    // Set hit effect for visual feedback
+    const allyIndex = combatState.allies.findIndex((a) => a === target);
+    const targetId =
+      allyIndex >= 0
+        ? `ally_${allyIndex}`
+        : `monster_${combatState.monsters.findIndex((m) => m === target)}`;
+    if (!combatState.hitEffects) {
+      combatState.hitEffects = {};
+    }
+    combatState.hitEffects[targetId] = "hit";
+    setCombatStateProperty("hitEffects", combatState.hitEffects);
+
     // Check if leader died (for monsters)
     if (target.role === "monster" && target.isLeader && target.isDead()) {
       checkLeaderDeath(target);
@@ -835,8 +1290,27 @@ async function executeAttack(attacker, target) {
     );
 
     await getShowChoiceDialog(attackMessage, choices);
+
+    // Clear hit effect after dialog closes
+    if (combatState.hitEffects && combatState.hitEffects[targetId]) {
+      delete combatState.hitEffects[targetId];
+      setCombatStateProperty("hitEffects", combatState.hitEffects);
+    }
   } else {
     `[ATTACK MISS] ${attacker.name} misses ${target.name}!`;
+
+    // Set miss effect for visual feedback
+    const allyIndex = combatState.allies.findIndex((a) => a === target);
+    const targetId =
+      allyIndex >= 0
+        ? `ally_${allyIndex}`
+        : `monster_${combatState.monsters.findIndex((m) => m === target)}`;
+    if (!combatState.hitEffects) {
+      combatState.hitEffects = {};
+    }
+    combatState.hitEffects[targetId] = "miss";
+    setCombatStateProperty("hitEffects", combatState.hitEffects);
+
     const attackMessage = formatAttackMessage(attacker, target, 0, false);
     const choices = createDialogChoicesWithGrid(
       "combat",
@@ -845,6 +1319,12 @@ async function executeAttack(attacker, target) {
     );
 
     await getShowChoiceDialog(attackMessage, choices);
+
+    // Clear miss effect after dialog closes
+    if (combatState.hitEffects && combatState.hitEffects[targetId]) {
+      delete combatState.hitEffects[targetId];
+      setCombatStateProperty("hitEffects", combatState.hitEffects);
+    }
   }
 }
 
@@ -930,6 +1410,108 @@ async function handlePlayerFlee() {
   }
 }
 
+/**
+ * Handle flee alone - player loses all party and group inventory, part of gold
+ * @param {Object} player - Player entity
+ */
+async function handleFleeAlone(player) {
+  const confirm = await getShowChoiceDialog(
+    "⚠️ FLEE ALONE\n\nYou will lose:\n- All party members\n- All group inventory\n- Part of your gold\n\nAre you sure?",
+    [
+      { type: "button", label: "Yes, Flee Alone", value: "confirm" },
+      { type: "button", label: "Cancel", value: "cancel" },
+    ]
+  );
+
+  if (confirm !== "confirm") {
+    return; // Cancel
+  }
+
+  const fleeSuccess = Math.random() < 0.8; // 80% chance
+
+  if (fleeSuccess) {
+    // Remove all party members
+    gameState.group = [];
+
+    // Clear group inventory
+    gameState.groupInventory = [];
+
+    // Lose part of gold (30-50%)
+    const goldLoss = Math.floor(gameState.gold * (0.3 + Math.random() * 0.2));
+    gameState.gold = Math.max(0, gameState.gold - goldLoss);
+
+    await getShowChoiceDialog(
+      `🏃 FLEE ALONE SUCCESSFUL\n\nYou escaped, but lost:\n- All party members\n- All group inventory\n- ${goldLoss} gold\n\nYou are now alone.`,
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+
+    // End combat
+    setCombatStateProperty("combatActive", false);
+    return "fled";
+  } else {
+    await getShowChoiceDialog(
+      "🏃 FLEE FAILED\n\nYou couldn't escape!\nCombat continues.",
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+    // Continue combat
+  }
+}
+
+/**
+ * Handle flee group - player loses part of group inventory and gold, keeps equipped items
+ * @param {Object} player - Player entity
+ */
+async function handleFleeGroup(player) {
+  const confirm = await getShowChoiceDialog(
+    "⚠️ FLEE GROUP\n\nYou will lose:\n- Part of group inventory (food and items)\n- Part of your gold\n\nYou keep equipped items.\n\nAre you sure?",
+    [
+      { type: "button", label: "Yes, Flee Group", value: "confirm" },
+      { type: "button", label: "Cancel", value: "cancel" },
+    ]
+  );
+
+  if (confirm !== "confirm") {
+    return; // Cancel
+  }
+
+  const fleeSuccess = Math.random() < 0.8; // 80% chance
+
+  if (fleeSuccess) {
+    // Remove part of group inventory (food and items, not equipment)
+    const groupInventory = gameState.groupInventory || [];
+    const itemsToRemove = Math.floor(
+      groupInventory.length * (0.3 + Math.random() * 0.2)
+    );
+
+    // Remove food and items (not equipped items)
+    const removedItems = [];
+    for (let i = 0; i < itemsToRemove && groupInventory.length > 0; i++) {
+      const randomIndex = Math.floor(Math.random() * groupInventory.length);
+      const item = groupInventory.splice(randomIndex, 1)[0];
+      removedItems.push(item);
+    }
+
+    // Lose part of gold (20-30%)
+    const goldLoss = Math.floor(gameState.gold * (0.2 + Math.random() * 0.1));
+    gameState.gold = Math.max(0, gameState.gold - goldLoss);
+
+    await getShowChoiceDialog(
+      `🏃 FLEE GROUP SUCCESSFUL\n\nYour group escaped, but lost:\n- ${removedItems.length} items from group inventory\n- ${goldLoss} gold\n\nEquipped items were kept.`,
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+
+    // End combat
+    setCombatStateProperty("combatActive", false);
+    return "fled";
+  } else {
+    await getShowChoiceDialog(
+      "🏃 FLEE FAILED\n\nYour group couldn't escape!\nCombat continues.",
+      [{ type: "button", label: "Continue", value: "ok" }]
+    );
+    // Continue combat
+  }
+}
+
 // Ally turn handler
 async function handleAllyTurn(ally) {
   `[ALLY TURN] ${ally.name} (${ally.character?.race || "unknown"}) - Status: ${
@@ -958,8 +1540,62 @@ async function handleAllyTurn(ally) {
 
   if (aliveMonsters.length === 0) return;
 
+  // Select target
   const target =
     aliveMonsters[Math.floor(Math.random() * aliveMonsters.length)];
+
+  // Check if ally has melee weapon
+  const weapon = ally.character?.equipment?.weapon || ally.equipment?.weapon;
+  const hasMeleeWeapon = !weapon || !isRangedWeapon(weapon);
+
+  // Get positions
+  const allyPos = getEntityPosition(ally, combatState);
+  const targetPos = getEntityPosition(target, combatState);
+
+  // If melee weapon and not in range, advance first
+  if (hasMeleeWeapon && allyPos && targetPos) {
+    const inMeleeRange = isInMeleeRange(
+      allyPos.row,
+      allyPos.col,
+      targetPos.row,
+      targetPos.col
+    );
+
+    if (!inMeleeRange) {
+      // Advance toward target
+      const moved = advanceTowardTarget(ally, target, combatState);
+      if (moved) {
+        `[ALLY MOVEMENT] ${ally.name} advances toward ${target.name}`;
+        // Re-check position after movement
+        const newAllyPos = getEntityPosition(ally, combatState);
+        const stillInRange =
+          newAllyPos &&
+          isInMeleeRange(
+            newAllyPos.row,
+            newAllyPos.col,
+            targetPos.row,
+            targetPos.col
+          );
+        // If still not in range, can't attack this turn
+        if (!stillInRange) {
+          return; // Can't reach target this turn
+        }
+      } else {
+        // Can't move, try to attack anyway if somehow in range
+        const stillInRange = isInMeleeRange(
+          allyPos.row,
+          allyPos.col,
+          targetPos.row,
+          targetPos.col
+        );
+        if (!stillInRange) {
+          return; // Can't reach target
+        }
+      }
+    }
+  }
+
+  // Attack target
   await executeAttack(ally, target);
 }
 
@@ -998,7 +1634,61 @@ async function handleMonsterTurn(monster) {
 
   if (aliveAllies.length === 0) return;
 
+  // Select target
   const target = aliveAllies[Math.floor(Math.random() * aliveAllies.length)];
+
+  // Check if monster has melee weapon
+  const weapon = monster.equipment?.weapon;
+  const hasMeleeWeapon = !weapon || !isRangedWeapon(weapon);
+
+  // Get positions
+  const monsterPos = getEntityPosition(monster, combatState);
+  const targetPos = getEntityPosition(target, combatState);
+
+  // If melee weapon and not in range, advance first
+  if (hasMeleeWeapon && monsterPos && targetPos) {
+    const inMeleeRange = isInMeleeRange(
+      monsterPos.row,
+      monsterPos.col,
+      targetPos.row,
+      targetPos.col
+    );
+
+    if (!inMeleeRange) {
+      // Advance toward target
+      const moved = advanceTowardTarget(monster, target, combatState);
+      if (moved) {
+        `[MONSTER MOVEMENT] ${monster.name} advances toward ${target.name}`;
+        // Re-check position after movement
+        const newMonsterPos = getEntityPosition(monster, combatState);
+        const stillInRange =
+          newMonsterPos &&
+          isInMeleeRange(
+            newMonsterPos.row,
+            newMonsterPos.col,
+            targetPos.row,
+            targetPos.col
+          );
+        // If still not in range, can't attack this turn
+        if (!stillInRange) {
+          return; // Can't reach target this turn
+        }
+      } else {
+        // Can't move, try to attack anyway if somehow in range
+        const stillInRange = isInMeleeRange(
+          monsterPos.row,
+          monsterPos.col,
+          targetPos.row,
+          targetPos.col
+        );
+        if (!stillInRange) {
+          return; // Can't reach target
+        }
+      }
+    }
+  }
+
+  // Attack target
   await executeAttack(monster, target);
 }
 
@@ -1374,7 +2064,9 @@ async function handleEquipmentLootDialog() {
 
       data.items.forEach((loot) => {
         const displayText =
-          loot.item.length > 40 ? loot.item.substring(0, 37) + "..." : loot.item;
+          loot.item.length > 40
+            ? loot.item.substring(0, 37) + "..."
+            : loot.item;
 
         const index = currentLootMap.length;
         currentLootMap.push(loot);
@@ -1406,7 +2098,10 @@ async function handleEquipmentLootDialog() {
       },
     ];
 
-    const lootResult = await getShowChoiceDialog(lootMessage, currentLootComponents);
+    const lootResult = await getShowChoiceDialog(
+      lootMessage,
+      currentLootComponents
+    );
 
     if (lootResult === "skip") {
       looting = false;
@@ -1420,7 +2115,10 @@ async function handleEquipmentLootDialog() {
       remainingLootable.forEach((loot) => {
         addToGroupInventory(loot.item);
         // Remove item from monster equipment
-        if (loot.monster.equipment && loot.monster.equipment[loot.slot] === loot.item) {
+        if (
+          loot.monster.equipment &&
+          loot.monster.equipment[loot.slot] === loot.item
+        ) {
           loot.monster.equipment[loot.slot] = null;
         }
         lootedCount++;
@@ -1434,7 +2132,9 @@ async function handleEquipmentLootDialog() {
           { type: "button", label: "OK", value: "ok" },
         ]);
         logEvent(
-          `⚔️ Auto-looted ${lootedCount} equipment item${lootedCount > 1 ? "s" : ""}`
+          `⚔️ Auto-looted ${lootedCount} equipment item${
+            lootedCount > 1 ? "s" : ""
+          }`
         );
       }
       looting = false;
@@ -1448,7 +2148,10 @@ async function handleEquipmentLootDialog() {
       if (loot) {
         addToGroupInventory(loot.item);
         // Remove item from monster equipment
-        if (loot.monster.equipment && loot.monster.equipment[loot.slot] === loot.item) {
+        if (
+          loot.monster.equipment &&
+          loot.monster.equipment[loot.slot] === loot.item
+        ) {
           loot.monster.equipment[loot.slot] = null;
         }
         const displayText =
@@ -1642,7 +2345,7 @@ function getCombatStatus() {
 function checkLeaderDeath(leader) {
   const combatState = getCombatState();
   ("[LEADER DEATH] Leader died! Processing morale check...");
-  
+
   // Process morale check for all remaining monsters
   processMoraleCheck();
 }
@@ -1660,46 +2363,64 @@ function processMoraleCheck() {
   const aliveMonsters = combatState.monsters.filter(
     (m) => !m.isDead() && !m.isFleeing() && !m.isUnconscious()
   );
-  
+
   if (aliveMonsters.length === 0) {
     return;
   }
-  
+
   // Calculate health ratios
-  const totalAllyHealth = aliveAllies.reduce((sum, ally) => sum + Math.max(0, ally.currentHealth), 0);
-  const totalAllyMaxHealth = aliveAllies.reduce((sum, ally) => sum + ally.maxHealth, 0);
-  const allyHealthRatio = totalAllyMaxHealth > 0 ? totalAllyHealth / totalAllyMaxHealth : 0;
-  
-  const totalMonsterHealth = aliveMonsters.reduce((sum, monster) => sum + Math.max(0, monster.currentHealth), 0);
-  const totalMonsterMaxHealth = aliveMonsters.reduce((sum, monster) => sum + monster.maxHealth, 0);
-  const monsterHealthRatio = totalMonsterMaxHealth > 0 ? totalMonsterHealth / totalMonsterMaxHealth : 0;
-  
+  const totalAllyHealth = aliveAllies.reduce(
+    (sum, ally) => sum + Math.max(0, ally.currentHealth),
+    0
+  );
+  const totalAllyMaxHealth = aliveAllies.reduce(
+    (sum, ally) => sum + ally.maxHealth,
+    0
+  );
+  const allyHealthRatio =
+    totalAllyMaxHealth > 0 ? totalAllyHealth / totalAllyMaxHealth : 0;
+
+  const totalMonsterHealth = aliveMonsters.reduce(
+    (sum, monster) => sum + Math.max(0, monster.currentHealth),
+    0
+  );
+  const totalMonsterMaxHealth = aliveMonsters.reduce(
+    (sum, monster) => sum + monster.maxHealth,
+    0
+  );
+  const monsterHealthRatio =
+    totalMonsterMaxHealth > 0 ? totalMonsterHealth / totalMonsterMaxHealth : 0;
+
   // Base flee chance: 70%
-  let fleeChance = 0.70;
-  
+  let fleeChance = 0.7;
+
   // Adjust based on health ratio
   // If enemies are winning (monster health ratio > ally health ratio), reduce flee chance
   if (monsterHealthRatio > allyHealthRatio) {
     const healthAdvantage = monsterHealthRatio - allyHealthRatio;
     // Reduce flee chance by up to 40% if enemies are winning significantly
-    fleeChance = Math.max(0.30, fleeChance - (healthAdvantage * 0.40));
+    fleeChance = Math.max(0.3, fleeChance - healthAdvantage * 0.4);
   }
-  
+
   // If enemies are at 60%+ health, set flee chance to 30%
-  if (monsterHealthRatio >= 0.60) {
-    fleeChance = 0.30;
+  if (monsterHealthRatio >= 0.6) {
+    fleeChance = 0.3;
   }
-  
-  ("[MORALE CHECK] Ally health ratio: " + allyHealthRatio.toFixed(2) + 
-   ", Monster health ratio: " + monsterHealthRatio.toFixed(2) + 
-   ", Flee chance: " + (fleeChance * 100).toFixed(0) + "%");
-  
+
+  "[MORALE CHECK] Ally health ratio: " +
+    allyHealthRatio.toFixed(2) +
+    ", Monster health ratio: " +
+    monsterHealthRatio.toFixed(2) +
+    ", Flee chance: " +
+    (fleeChance * 100).toFixed(0) +
+    "%";
+
   // Apply morale check to each monster
   for (const monster of aliveMonsters) {
     const roll = Math.random();
     if (roll <= fleeChance) {
       monster.fleeState = true;
-      ("[MORALE] " + monster.name + " will flee on next turn!");
+      "[MORALE] " + monster.name + " will flee on next turn!";
     }
   }
 }
@@ -1711,24 +2432,24 @@ async function trackLocationRoomClearing() {
   const combatState = getCombatState();
   const locationType = combatState.locationType;
   const roomIndex = combatState.roomIndex;
-  
+
   if (!locationType || roomIndex === -1) {
     // Not a location encounter, nothing to track
     return;
   }
-  
+
   // Track the cleared room
   const x = gameState.px;
   const y = gameState.py;
   trackLocationClearing(x, y, locationType, roomIndex);
-  
+
   // Check if location is fully cleared and grant rewards
   if (isLocationFullyCleared(x, y)) {
     if (hasLocationRewards(x, y)) {
       const reward = grantLocationRewards(x, y, locationType, true);
       if (reward.granted) {
         await getShowChoiceDialog(reward.message, [
-          { type: "button", label: "OK", value: "ok" }
+          { type: "button", label: "OK", value: "ok" },
         ]);
       }
     }

@@ -1,7 +1,11 @@
 // Combat grid generation and position management
 // Handles grid visualization and positioning of combatants
 
-import { getCombatState, setCombatStateProperty, getCombatStateProperty } from "./combat-state.js";
+import {
+  getCombatState,
+  setCombatStateProperty,
+  getCombatStateProperty,
+} from "./combat-state.js";
 import { getRaceEmoji } from "../../gamestate/emoji-database.js";
 
 const GRID_SIZE = 10;
@@ -9,21 +13,55 @@ const GRID_SIZE = 10;
 // Define spiral positions for allies (top area)
 const ALLY_POSITIONS = [
   // Core positions for allies (rows 0-2)
-  [0, 4], [0, 5], [0, 6], // Top row
-  [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], // Middle row
-  [2, 2], [2, 3], [2, 4], [2, 5], [2, 6], [2, 7], [2, 8], // Bottom row
+  [0, 4],
+  [0, 5],
+  [0, 6], // Top row
+  [1, 3],
+  [1, 4],
+  [1, 5],
+  [1, 6],
+  [1, 7], // Middle row
+  [2, 2],
+  [2, 3],
+  [2, 4],
+  [2, 5],
+  [2, 6],
+  [2, 7],
+  [2, 8], // Bottom row
   // Extended positions if needed
-  [0, 3], [0, 7], [1, 2], [1, 8], [2, 1], [2, 9],
+  [0, 3],
+  [0, 7],
+  [1, 2],
+  [1, 8],
+  [2, 1],
+  [2, 9],
 ];
 
 // Define spiral positions for monsters (bottom area)
 const MONSTER_POSITIONS = [
   // Core positions for monsters (rows 7-9)
-  [7, 2], [7, 3], [7, 4], [7, 5], [7, 6], [7, 7], [7, 8], // Top row
-  [8, 3], [8, 4], [8, 5], [8, 6], [8, 7], // Middle row
-  [9, 4], [9, 5], [9, 6], // Bottom row
+  [7, 2],
+  [7, 3],
+  [7, 4],
+  [7, 5],
+  [7, 6],
+  [7, 7],
+  [7, 8], // Top row
+  [8, 3],
+  [8, 4],
+  [8, 5],
+  [8, 6],
+  [8, 7], // Middle row
+  [9, 4],
+  [9, 5],
+  [9, 6], // Bottom row
   // Extended positions if needed
-  [7, 1], [7, 9], [8, 2], [8, 8], [9, 3], [9, 7],
+  [7, 1],
+  [7, 9],
+  [8, 2],
+  [8, 8],
+  [9, 3],
+  [9, 7],
 ];
 
 /**
@@ -63,6 +101,57 @@ export function initializeCombatPositions() {
 }
 
 /**
+ * Get emoji position for a creature based on its size
+ * @param {number} row - Top-left corner row
+ * @param {number} col - Top-left corner column
+ * @param {Object} size - Size object with width and height
+ * @returns {Object} Position object with emojiRow and emojiCol
+ */
+function getEmojiPosition(row, col, size) {
+  const width = size.width || 1;
+  const height = size.height || 1;
+
+  // For 1x1: center tile (same as anchor)
+  if (width === 1 && height === 1) {
+    return { emojiRow: row, emojiCol: col };
+  }
+
+  // For 2x1 (trolls): top-left tile (same as anchor)
+  if (width === 2 && height === 1) {
+    return { emojiRow: row, emojiCol: col };
+  }
+
+  // For 1x2 (bears): top tile (same as anchor)
+  if (width === 1 && height === 2) {
+    return { emojiRow: row, emojiCol: col };
+  }
+
+  // For 2x2: top-left tile (same as anchor)
+  if (width === 2 && height === 2) {
+    return { emojiRow: row, emojiCol: col };
+  }
+
+  // For 2x3: center-left tile (row: center, col: left)
+  if (width === 2 && height === 3) {
+    return { emojiRow: row + 1, emojiCol: col }; // Center row, left column
+  }
+
+  // For 3x3: center tile
+  if (width === 3 && height === 3) {
+    return { emojiRow: row + 1, emojiCol: col + 1 }; // Center of 3x3
+  }
+
+  // For 4x4: center 2x2 area (rows 1-2, cols 1-2 from top-left)
+  if (width === 4 && height === 4) {
+    // Place emoji in the center 2x2 area - use top-left of center area
+    return { emojiRow: row + 1, emojiCol: col + 1 };
+  }
+
+  // Default: use top-left corner
+  return { emojiRow: row, emojiCol: col };
+}
+
+/**
  * Generate combat grid for visualization
  * @param {string} phase - Current combat phase
  * @param {Object} currentCombatant - Currently active combatant (optional)
@@ -71,104 +160,129 @@ export function initializeCombatPositions() {
 export function generateCombatGrid(phase, currentCombatant = null) {
   const combatState = getCombatState();
   const tiles = {};
+  const hitEffects = combatState.hitEffects || {};
 
-  // Add allies to grid
-  Object.keys(combatState.positions.allies).forEach((allyId) => {
-    const position = combatState.positions.allies[allyId];
-    // Extract index from ally key (ally_0, ally_1, etc.)
-    const allyIndex = parseInt(allyId.split("_")[1]);
-    const ally = combatState.allies[allyIndex];
+  // Helper function to add a creature to the grid
+  const addCreatureToGrid = (entity, position, isAlly, entityId) => {
+    if (!entity || !position) return;
 
-    if (ally && position) {
-      const cellKey = `${position.row}-${position.col}`;
-      // Show different emojis based on ally status
-      let emoji;
-      if (ally.isDead()) {
-        emoji = "💀"; // Dead
-      } else if (ally.isUnconscious()) {
-        emoji = "😵"; // Unconscious
+    const size = entity.size || { width: 1, height: 1 };
+    const occupiedTiles = entity.getOccupiedTiles(position.row, position.col);
+
+    // Get emoji position
+    const { emojiRow, emojiCol } = getEmojiPosition(
+      position.row,
+      position.col,
+      size
+    );
+    const emojiCellKey = `${emojiRow}-${emojiCol}`;
+
+    // Determine emoji based on status
+    let emoji;
+    if (entity.isDead()) {
+      emoji = "💀"; // Dead
+    } else if (entity.isUnconscious()) {
+      emoji = "😵"; // Unconscious
+    } else {
+      // Check for hit effects
+      const hitEffect = hitEffects[entityId];
+      if (hitEffect === "hit") {
+        emoji = "💥"; // Hit
+      } else if (hitEffect === "miss") {
+        emoji = "🌬"; // Miss
       } else {
-        emoji = getRaceEmoji(ally.character?.race || ally.race); // Conscious
+        emoji = getRaceEmoji(entity.character?.race || entity.race);
       }
-      const name = ally.name || `Ally ${allyIndex + 1}`;
-      // Add ID to name for better identification
-      const displayName = `${name} (#${ally.combatId + 1})`;
+    }
 
-      // Determine background color
-      let backgroundColor = "#4169E1"; // Royal Blue for allies
-      if (ally.isPlayer) {
+    // Determine display name
+    const name = entity.name || (isAlly ? `Ally` : `Monster`);
+    const displayName = `${name} (#${entity.combatId + 1})`;
+
+    // Determine background color
+    let backgroundColor;
+    if (isAlly) {
+      backgroundColor = "#4169E1"; // Royal Blue for allies
+      if (entity.isPlayer) {
         backgroundColor = "#FFD700"; // Gold for player
       }
-
       // Change background color if this is the current combatant
       if (
         currentCombatant &&
-        ((ally.isPlayer && currentCombatant.isPlayer) ||
-          (ally.character && currentCombatant.character && ally.character === currentCombatant.character))
+        ((entity.isPlayer && currentCombatant.isPlayer) ||
+          (entity.character &&
+            currentCombatant.character &&
+            entity.character === currentCombatant.character))
       ) {
-        backgroundColor = "#00FF00"; // Green for current combatant
+        backgroundColor = "#FFFFFF"; // White for current combatant
       }
-
-      tiles[cellKey] = {
-        emoji,
-        name: displayName,
-        backgroundColor,
-        description: `${displayName} - HP: ${ally.currentHealth}/${ally.maxHealth}`,
-      };
-    }
-  });
-
-  // Add monsters to grid
-  Object.keys(combatState.positions.monsters).forEach((monsterId) => {
-    const position = combatState.positions.monsters[monsterId];
-    // Extract index from monster key (monster_0, monster_1, etc.)
-    const monsterIndex = parseInt(monsterId.split("_")[1]);
-    const monster = combatState.monsters[monsterIndex];
-
-    if (monster && position) {
-      const cellKey = `${position.row}-${position.col}`;
+    } else {
+      // Monster
       const enemiesDetected =
         phase === "detection" ? combatState.enemiesDetected : true;
 
-      let emoji, backgroundColor, name;
-
       if (enemiesDetected || phase !== "detection") {
-        // Show monster details with status-based emoji
-        if (monster.isDead()) {
-          emoji = "💀"; // Dead
-        } else if (monster.isUnconscious()) {
-          emoji = "😵"; // Unconscious
-        } else {
-          emoji = getRaceEmoji(monster.race); // Conscious
-        }
-        name = `${monster.name} (#${monster.combatId + 1})`;
-        backgroundColor = "#DC143C"; // Crimson for enemies
-
+        backgroundColor = "#CC6969"; // Light red for enemies
         // Change background color if this is the current combatant
         if (
           currentCombatant &&
           !currentCombatant.character &&
           !currentCombatant.isPlayer &&
-          monster.combatId === currentCombatant.combatId
+          entity.combatId === currentCombatant.combatId
         ) {
-          backgroundColor = "#00FF00"; // Green for current combatant
+          backgroundColor = "#FFFFFF"; // White for current combatant
         }
       } else {
-        // Show unknown enemy indicator
-        emoji = "❓";
-        name = "Unknown Enemy";
+        // Unknown enemy
         backgroundColor = "#808080"; // Gray for unknown
+        emoji = "❓";
+      }
+    }
+
+    // Add all occupied tiles to grid
+    occupiedTiles.forEach(([tileRow, tileCol]) => {
+      // Check bounds
+      if (
+        tileRow < 0 ||
+        tileRow >= GRID_SIZE ||
+        tileCol < 0 ||
+        tileCol >= GRID_SIZE
+      ) {
+        return;
       }
 
+      const cellKey = `${tileRow}-${tileCol}`;
+      const isEmojiTile = tileRow === emojiRow && tileCol === emojiCol;
+
       tiles[cellKey] = {
-        emoji,
-        name,
+        emoji: isEmojiTile ? emoji : "", // Only show emoji on designated tile
+        name: displayName,
         backgroundColor,
-        description: enemiesDetected
-          ? `${name} - HP: ${monster.currentHealth}/${monster.maxHealth}`
-          : "Unknown threat detected",
+        description: isAlly
+          ? `${displayName} - HP: ${entity.currentHealth}/${entity.maxHealth}`
+          : phase === "detection" && !combatState.enemiesDetected
+          ? "Unknown threat detected"
+          : `${displayName} - HP: ${entity.currentHealth}/${entity.maxHealth}`,
+        isPartOfCreature: !isEmojiTile, // Mark non-emoji tiles
+        creatureId: entityId, // Store creature ID for click detection
       };
-    }
+    });
+  };
+
+  // Add allies to grid
+  Object.keys(combatState.positions.allies).forEach((allyId) => {
+    const position = combatState.positions.allies[allyId];
+    const allyIndex = parseInt(allyId.split("_")[1]);
+    const ally = combatState.allies[allyIndex];
+    addCreatureToGrid(ally, position, true, allyId);
+  });
+
+  // Add monsters to grid
+  Object.keys(combatState.positions.monsters).forEach((monsterId) => {
+    const position = combatState.positions.monsters[monsterId];
+    const monsterIndex = parseInt(monsterId.split("_")[1]);
+    const monster = combatState.monsters[monsterIndex];
+    addCreatureToGrid(monster, position, false, monsterId);
   });
 
   return tiles;
@@ -221,4 +335,3 @@ function getMovementDistance(choice) {
       return 0; // Stay at same position
   }
 }
-

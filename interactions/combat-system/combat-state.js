@@ -26,6 +26,7 @@ export function createInitialCombatState() {
     playerEngagementBonus: null,
     enemyEngagementBonus: null,
     enemyEngagementChoice: null,
+    hitEffects: {}, // Visual feedback for hits/misses {entityId: "hit"|"miss"}
   };
 }
 
@@ -59,6 +60,7 @@ export function setCombatStateProperty(key, value) {
 export function getCombatStateProperty(key) {
   return combatState[key];
 }
+
 
 
 

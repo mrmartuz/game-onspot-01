@@ -555,6 +555,7 @@ export const creatureTemplates = {
     level: 4,
     rarity: "uncommon",
     inventorySize: 3,
+    size: { width: 2, height: 1 },
     baseStats: {
       STR: 18,
       DEX: 4,
@@ -597,6 +598,7 @@ export const creatureTemplates = {
     level: 5,
     rarity: "uncommon",
     inventorySize: 3,
+    size: { width: 2, height: 1 },
     baseStats: {
       STR: 20,
       DEX: 5,
@@ -639,6 +641,7 @@ export const creatureTemplates = {
     level: 7,
     rarity: "rare",
     inventorySize: 4,
+    size: { width: 2, height: 1 },
     baseStats: {
       STR: 22,
       DEX: 4,
@@ -681,6 +684,7 @@ export const creatureTemplates = {
     level: 8,
     rarity: "rare",
     inventorySize: 5,
+    size: { width: 2, height: 1 },
     baseStats: {
       STR: 24,
       DEX: 3,
@@ -809,6 +813,7 @@ export const creatureTemplates = {
     level: 8,
     rarity: "rare",
     inventorySize: 8,
+    size: { width: 2, height: 3 },
     baseStats: {
       STR: 20,
       DEX: 12,
@@ -852,6 +857,7 @@ export const creatureTemplates = {
     level: 12,
     rarity: "legendary",
     inventorySize: 15,
+    size: { width: 3, height: 3 },
     baseStats: {
       STR: 24,
       DEX: 10,
@@ -1064,6 +1070,7 @@ export const creatureTemplates = {
     level: 3,
     rarity: "uncommon",
     inventorySize: 1,
+    size: { width: 1, height: 2 },
     baseStats: {
       STR: 16,
       DEX: 8,
@@ -1106,6 +1113,7 @@ export const creatureTemplates = {
     level: 3,
     rarity: "common",
     inventorySize: 1,
+    size: { width: 1, height: 2 },
     baseStats: {
       STR: 16,
       DEX: 8,
@@ -1148,6 +1156,7 @@ export const creatureTemplates = {
     level: 5,
     rarity: "uncommon",
     inventorySize: 1,
+    size: { width: 1, height: 2 },
     baseStats: {
       STR: 20,
       DEX: 6,
@@ -1399,6 +1408,7 @@ export const creatureTemplates = {
     level: 2,
     rarity: "uncommon",
     inventorySize: 1,
+    size: { width: 2, height: 1 },
     baseStats: {
       STR: 6,
       DEX: 14,
@@ -1440,6 +1450,7 @@ export const creatureTemplates = {
     level: 3,
     rarity: "rare",
     inventorySize: 2,
+    size: { width: 2, height: 2 },
     baseStats: {
       STR: 10,
       DEX: 16,
@@ -1482,6 +1493,7 @@ export const creatureTemplates = {
     level: 5,
     rarity: "rare",
     inventorySize: 3,
+    size: { width: 2, height: 3 },
     baseStats: {
       STR: 14,
       DEX: 12,
@@ -1523,6 +1535,7 @@ export const creatureTemplates = {
     level: 10,
     rarity: "legendary",
     inventorySize: 8,
+    size: { width: 2, height: 3 },
     baseStats: {
       STR: 20,
       DEX: 16,
@@ -1564,6 +1577,7 @@ export const creatureTemplates = {
     level: 12,
     rarity: "legendary",
     inventorySize: 10,
+    size: { width: 3, height: 3 },
     baseStats: {
       STR: 18,
       DEX: 14,
@@ -1606,6 +1620,7 @@ export const creatureTemplates = {
     level: 15,
     rarity: "legendary",
     inventorySize: 15,
+    size: { width: 4, height: 4 },
     baseStats: {
       STR: 24,
       DEX: 16,

@@ -8,6 +8,8 @@ import {
   getArmorDefenseBonus,
   getShieldDefenseBonus,
   getEquipmentInitiativeModifier,
+  isRangedWeapon,
+  getAmmoType,
 } from "./equipment-combat-helpers.js";
 import {
   getSkillDamageBonus,
@@ -120,6 +122,12 @@ export class Monster extends CombatEntity {
     this.specialAbilities = [];
     this.resistances = {};
     this.vulnerabilities = {};
+    this.size = { width: 1, height: 1 }; // Default size for single-tile creatures
+    this.ammo = {
+      arrows: 0,
+      bolts: 0,
+      stones: 0,
+    };
   }
 
   takeDamage(amount) {
@@ -244,6 +252,73 @@ export class Monster extends CombatEntity {
   isFleeing() {
     return super.isFleeing() || this.fleeState;
   }
+
+  /**
+   * Get all tiles occupied by this creature
+   * @param {number} row - Top-left corner row position
+   * @param {number} col - Top-left corner column position
+   * @returns {Array<[number, number]>} Array of [row, col] tuples
+   */
+  getOccupiedTiles(row, col) {
+    const tiles = [];
+    for (let r = 0; r < this.size.height; r++) {
+      for (let c = 0; c < this.size.width; c++) {
+        tiles.push([row + r, col + c]);
+      }
+    }
+    return tiles;
+  }
+
+  /**
+   * Get the anchor position (top-left corner)
+   * @returns {Object} Position object with row and col
+   */
+  getAnchorPosition() {
+    // This will be set by combat grid system
+    return { row: this.combatRow || 0, col: this.combatCol || 0 };
+  }
+
+  /**
+   * Check if entity has ammo for current weapon
+   * @returns {boolean} True if has ammo or weapon is melee
+   */
+  hasAmmo() {
+    if (!this.equipment?.weapon) return true; // No weapon or unarmed
+    if (!isRangedWeapon(this.equipment.weapon)) return true; // Melee weapon
+    
+    const ammoType = getAmmoType(this.equipment.weapon);
+    if (!ammoType) return true; // Not a ranged weapon
+    
+    return this.ammo[ammoType] > 0;
+  }
+
+  /**
+   * Consume 1 ammo when attacking
+   */
+  consumeAmmo() {
+    if (!this.equipment?.weapon) return;
+    if (!isRangedWeapon(this.equipment.weapon)) return;
+    
+    const ammoType = getAmmoType(this.equipment.weapon);
+    if (ammoType && this.ammo[ammoType] > 0) {
+      this.ammo[ammoType]--;
+    }
+  }
+
+  /**
+   * Switch to melee weapon from inventory or unarmed
+   * This will be implemented to check character inventory for melee weapons
+   */
+  switchToMelee() {
+    // For monsters, just set weapon to null (unarmed)
+    if (this.equipment) {
+      if (!isRangedWeapon(this.equipment.weapon)) {
+        return; // Already has melee weapon
+      }
+      // Set to unarmed for now
+      this.equipment.weapon = null;
+    }
+  }
 }
 
 export class Ally extends CombatEntity {
@@ -262,6 +337,20 @@ export class Ally extends CombatEntity {
     this.preferredTargets = []; // Target preferences for AI
     this.specialAbilities = [];
     this.statusEffects = [];
+    this.size = { width: 1, height: 1 }; // Default size for single-tile creatures
+    this.ammo = {
+      arrows: 0,
+      bolts: 0,
+      stones: 0,
+    };
+    
+    // Initialize ammo if character has ranged weapon
+    if (character?.equipment?.weapon) {
+      const ammoType = getAmmoType(character.equipment.weapon);
+      if (ammoType) {
+        this.ammo[ammoType] = 20; // Default 20 ammo
+      }
+    }
   }
 
   takeDamage(amount) {
@@ -326,5 +415,74 @@ export class Ally extends CombatEntity {
 
   isFleeing() {
     return this.status === "fleeing";
+  }
+
+  /**
+   * Get all tiles occupied by this creature
+   * @param {number} row - Top-left corner row position
+   * @param {number} col - Top-left corner column position
+   * @returns {Array<[number, number]>} Array of [row, col] tuples
+   */
+  getOccupiedTiles(row, col) {
+    const tiles = [];
+    for (let r = 0; r < this.size.height; r++) {
+      for (let c = 0; c < this.size.width; c++) {
+        tiles.push([row + r, col + c]);
+      }
+    }
+    return tiles;
+  }
+
+  /**
+   * Get the anchor position (top-left corner)
+   * @returns {Object} Position object with row and col
+   */
+  getAnchorPosition() {
+    // This will be set by combat grid system
+    return { row: this.combatRow || 0, col: this.combatCol || 0 };
+  }
+
+  /**
+   * Check if entity has ammo for current weapon
+   * @returns {boolean} True if has ammo or weapon is melee
+   */
+  hasAmmo() {
+    if (!this.character?.equipment?.weapon) return true; // No weapon or unarmed
+    if (!isRangedWeapon(this.character.equipment.weapon)) return true; // Melee weapon
+    
+    const ammoType = getAmmoType(this.character.equipment.weapon);
+    if (!ammoType) return true; // Not a ranged weapon
+    
+    return this.ammo[ammoType] > 0;
+  }
+
+  /**
+   * Consume 1 ammo when attacking
+   */
+  consumeAmmo() {
+    if (!this.character?.equipment?.weapon) return;
+    if (!isRangedWeapon(this.character.equipment.weapon)) return;
+    
+    const ammoType = getAmmoType(this.character.equipment.weapon);
+    if (ammoType && this.ammo[ammoType] > 0) {
+      this.ammo[ammoType]--;
+    }
+  }
+
+  /**
+   * Switch to melee weapon from inventory or unarmed
+   * This will be implemented to check character inventory for melee weapons
+   */
+  switchToMelee() {
+    // For now, just set weapon to null (unarmed)
+    // TODO: Check inventory for melee weapons
+    if (this.character && this.character.equipment) {
+      // Look for melee weapon in inventory or keep current if melee
+      if (!isRangedWeapon(this.character.equipment.weapon)) {
+        return; // Already has melee weapon
+      }
+      // Set to unarmed for now
+      this.character.equipment.weapon = null;
+    }
   }
 }

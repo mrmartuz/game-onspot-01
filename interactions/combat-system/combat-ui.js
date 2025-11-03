@@ -24,10 +24,14 @@ export function formatMonsterEntry(monster, index, format = "combat") {
   const id = `#${monster.combatId + 1}`;
 
   if (format === "engagement") {
-    return `${index + 1}. ${monster.name} (${id}) (${monster.race} ${emoji} ${monster.class} Lv.${monster.level})`;
+    return `${index + 1}. ${monster.name} (${id}) (${monster.race} ${emoji} ${
+      monster.class
+    } Lv.${monster.level})`;
   } else {
     // combat format (default)
-    return `${index + 1}. ${monster.name} (${id}) ${emoji} (${monster.currentHealth}/${monster.maxHealth} HP)`;
+    return `${index + 1}. ${monster.name} (${id}) ${emoji} (${
+      monster.currentHealth
+    }/${monster.maxHealth} HP)`;
   }
 }
 
@@ -103,7 +107,9 @@ export function createTargetChoice(target, index) {
   }
   return {
     type: "button",
-    label: `${target.name} (#${target.combatId + 1}) ${emoji} (${target.currentHealth}/${target.maxHealth} HP)`,
+    label: `${target.name} (#${target.combatId + 1}) ${emoji} (${
+      target.currentHealth
+    }/${target.maxHealth} HP)`,
     value: `target_${index}`,
   };
 }
@@ -115,12 +121,13 @@ export function createTargetChoice(target, index) {
  * @param {Object} currentCombatant - Optional current combatant for grid generation
  * @returns {Array} Dialog choices array with grid and buttons
  */
-export function createDialogChoicesWithGrid(phase, buttons, currentCombatant = null) {
+export function createDialogChoicesWithGrid(
+  phase,
+  buttons,
+  currentCombatant = null
+) {
   const combatGrid = generateCombatGrid(phase, currentCombatant);
-  return [
-    { type: "squaregrid", tiles: combatGrid },
-    ...buttons,
-  ];
+  return [{ type: "squaregrid", tiles: combatGrid }, ...buttons];
 }
 
 /**
@@ -132,9 +139,7 @@ export function createDialogChoicesWithGrid(phase, buttons, currentCombatant = n
  * @returns {string} Formatted attack message
  */
 export function formatAttackMessage(attacker, target, damage, hit) {
-  const attackerEmoji = getRaceEmoji(
-    attacker.character?.race || attacker.race
-  );
+  const attackerEmoji = getRaceEmoji(attacker.character?.race || attacker.race);
   const targetEmoji = getRaceEmoji(target.character?.race || target.race);
 
   if (hit) {
@@ -171,16 +176,34 @@ export function formatPlayerTurnMessage(player, allies, targets) {
 }
 
 /**
- * Create standard combat action buttons
- * @returns {Array} Array of button choice objects
+ * Create standard combat action buttons in 2-column grid layout
+ * Row 1: Advance, Retreat
+ * Row 2: Melee Attack, Ranged Attack
+ * Row 3: Defend Stance, Defend Ally
+ * Row 4: Flee Alone, Flee Group
+ * @returns {Array} Array of button choice objects with button_grid
  */
 export function createCombatActionButtons() {
+  // Create buttons array matching the format used in equipment management
+  const buttons = [
+    { label: "⬆️ Advance", value: "advance" },
+    { label: "⬇️ Retreat", value: "retreat" },
+    { label: "⚔️ Melee Attack", value: "melee_attack" },
+    { label: "🏹 Ranged Attack", value: "ranged_attack" },
+    { label: "🛡️ Defend Stance", value: "defend" },
+    { label: "🛡️ Defend Ally", value: "protect" },
+    { label: "🏃 Flee Alone", value: "flee_alone" },
+    { label: "🏃 Flee Group", value: "flee_group" },
+  ];
+
   return [
-    { type: "button", label: "⚔️ Attack", value: "attack" },
-    { type: "button", label: "🛡️ Defend", value: "defend" },
-    { type: "button", label: "🛡️ Protect Ally", value: "protect" },
-    { type: "button", label: "🏃 Retreat (All)", value: "retreat" },
-    { type: "button", label: "🏃 Run Away", value: "flee" },
+    {
+      type: "button_grid",
+      columns: 2,
+      textSize: "12px",
+      gap: "6px",
+      buttons: buttons,
+    },
   ];
 }
 
@@ -196,4 +219,3 @@ export function createEngagementActionButtons() {
     { type: "button", label: "🏃 Run Away", value: "flee" },
   ];
 }
-
