@@ -1257,13 +1257,9 @@ async function handleEquipmentLootDialog() {
   );
 
   let lootMessage = "⚔️ **LOOT EQUIPMENT**\n\n";
-  lootMessage += "Equipment found on defeated monsters:\n\n";
-
-  // Create loot options
-  const lootOptions = [];
-  const groupedByMonster = {};
 
   // Group equipment by monster
+  const groupedByMonster = {};
   lootableEquipment.forEach((loot) => {
     if (!groupedByMonster[loot.monsterIndex]) {
       groupedByMonster[loot.monsterIndex] = {
@@ -1274,76 +1270,200 @@ async function handleEquipmentLootDialog() {
     groupedByMonster[loot.monsterIndex].items.push(loot);
   });
 
+  // Create button grid for loot items
+  const lootButtons = [];
+  const lootMap = []; // Maps index to loot data
+
   // Create UI for each monster's equipment
   Object.entries(groupedByMonster).forEach(([monsterIndex, data]) => {
     const monster = data.monster;
     const emoji = getRaceEmoji(monster.race);
 
-    lootMessage += `${emoji} ${monster.race} (Level ${monster.level}):\n`;
+    // Add monster header (disabled button)
+    lootButtons.push({
+      label: `${emoji} ${monster.race} (Level ${monster.level})`,
+      value: `header_${monsterIndex}`,
+      disabled: true,
+    });
 
     data.items.forEach((loot, itemIndex) => {
       const displayText =
-        loot.item.length > 50 ? loot.item.substring(0, 47) + "..." : loot.item;
-      lootMessage += `  • ${displayText}\n`;
+        loot.item.length > 40 ? loot.item.substring(0, 37) + "..." : loot.item;
 
-      // Add checkbox for each item
-      lootOptions.push({
-        type: "checkbox",
-        value: `loot_${monsterIndex}_${itemIndex}`,
-        label: `${emoji} ${monster.race} - ${displayText}`,
-        checked: false,
+      const index = lootMap.length;
+      lootMap.push(loot);
+
+      lootButtons.push({
+        label: displayText,
+        value: `loot_${index}`,
       });
     });
-    lootMessage += "\n";
   });
 
-  lootOptions.push({
-    type: "button",
-    label: "✅ Loot Selected",
-    value: "loot",
-  });
-  lootOptions.push({
-    type: "button",
-    label: "❌ Skip Loot",
-    value: "skip",
-  });
+  // Create components array with auto-loot button first
+  const lootComponents = [
+    {
+      type: "button",
+      label: "✅ Auto Loot All",
+      value: "auto_loot_all",
+    },
+    {
+      type: "button_grid",
+      columns: 2,
+      textSize: "12px",
+      gap: "2px",
+      buttons: lootButtons,
+    },
+    {
+      type: "button",
+      label: "❌ Skip Loot",
+      value: "skip",
+    },
+  ];
 
-  const lootResult = await getShowChoiceDialog(lootMessage, lootOptions);
-
-  if (lootResult === "skip") {
-    return;
-  }
-
-  if (lootResult === "loot" || lootResult.value === "loot") {
-    let lootedCount = 0;
-    const lootedItems = [];
-
-    Object.entries(groupedByMonster).forEach(([monsterIndex, data]) => {
-      data.items.forEach((loot, itemIndex) => {
-        const checkboxValue = `loot_${monsterIndex}_${itemIndex}`;
-        if (lootResult[checkboxValue]) {
-          // Add item to group inventory
-          addToGroupInventory(loot.item);
-          lootedCount++;
-          const displayText =
-            loot.item.length > 40
-              ? loot.item.substring(0, 37) + "..."
-              : loot.item;
-          lootedItems.push(displayText);
-        }
-      });
+  let looting = true;
+  while (looting) {
+    // Rebuild loot buttons if items were looted
+    const remainingLootable = [];
+    defeatedMonsters.forEach((monster, index) => {
+      if (monster.equipment) {
+        Object.entries(monster.equipment).forEach(([slot, item]) => {
+          if (item && typeof item === "string" && !item.startsWith("(")) {
+            remainingLootable.push({
+              monster: monster,
+              monsterIndex: index,
+              slot: slot,
+              item: item,
+            });
+          }
+        });
+      }
     });
 
-    if (lootedCount > 0) {
-      const lootSummary = `✅ Looted ${lootedCount} equipment item${
-        lootedCount > 1 ? "s" : ""
-      }:\n${lootedItems.join("\n")}`;
-      await getShowChoiceDialog(lootSummary, [
+    if (remainingLootable.length === 0) {
+      await getShowChoiceDialog("All items have been looted!", [
         { type: "button", label: "OK", value: "ok" },
       ]);
-      logEvent(
-        `⚔️ Looted ${lootedCount} equipment item${lootedCount > 1 ? "s" : ""}`
-      );
+      break;
+    }
+
+    // Rebuild components if needed
+    const currentGroupedByMonster = {};
+    remainingLootable.forEach((loot) => {
+      if (!currentGroupedByMonster[loot.monsterIndex]) {
+        currentGroupedByMonster[loot.monsterIndex] = {
+          monster: loot.monster,
+          items: [],
+        };
+      }
+      currentGroupedByMonster[loot.monsterIndex].items.push(loot);
+    });
+
+    const currentLootButtons = [];
+    const currentLootMap = [];
+
+    Object.entries(currentGroupedByMonster).forEach(([monsterIndex, data]) => {
+      const monster = data.monster;
+      const emoji = getRaceEmoji(monster.race);
+
+      currentLootButtons.push({
+        label: `${emoji} ${monster.race} (Level ${monster.level})`,
+        value: `header_${monsterIndex}`,
+        disabled: true,
+      });
+
+      data.items.forEach((loot) => {
+        const displayText =
+          loot.item.length > 40 ? loot.item.substring(0, 37) + "..." : loot.item;
+
+        const index = currentLootMap.length;
+        currentLootMap.push(loot);
+
+        currentLootButtons.push({
+          label: displayText,
+          value: `loot_${index}`,
+        });
+      });
+    });
+
+    const currentLootComponents = [
+      {
+        type: "button",
+        label: "✅ Auto Loot All",
+        value: "auto_loot_all",
+      },
+      {
+        type: "button_grid",
+        columns: 2,
+        textSize: "12px",
+        gap: "2px",
+        buttons: currentLootButtons,
+      },
+      {
+        type: "button",
+        label: "❌ Skip Loot",
+        value: "skip",
+      },
+    ];
+
+    const lootResult = await getShowChoiceDialog(lootMessage, currentLootComponents);
+
+    if (lootResult === "skip") {
+      looting = false;
+      continue;
+    }
+
+    if (lootResult === "auto_loot_all") {
+      // Loot all remaining items
+      let lootedCount = 0;
+
+      remainingLootable.forEach((loot) => {
+        addToGroupInventory(loot.item);
+        // Remove item from monster equipment
+        if (loot.monster.equipment && loot.monster.equipment[loot.slot] === loot.item) {
+          loot.monster.equipment[loot.slot] = null;
+        }
+        lootedCount++;
+      });
+
+      if (lootedCount > 0) {
+        const lootSummary = `✅ Auto-looted ${lootedCount} equipment item${
+          lootedCount > 1 ? "s" : ""
+        }`;
+        await getShowChoiceDialog(lootSummary, [
+          { type: "button", label: "OK", value: "ok" },
+        ]);
+        logEvent(
+          `⚔️ Auto-looted ${lootedCount} equipment item${lootedCount > 1 ? "s" : ""}`
+        );
+      }
+      looting = false;
+      continue;
+    }
+
+    if (lootResult.startsWith("loot_")) {
+      const itemIndex = parseInt(lootResult.split("_")[1]);
+      const loot = currentLootMap[itemIndex];
+
+      if (loot) {
+        addToGroupInventory(loot.item);
+        // Remove item from monster equipment
+        if (loot.monster.equipment && loot.monster.equipment[loot.slot] === loot.item) {
+          loot.monster.equipment[loot.slot] = null;
+        }
+        const displayText =
+          loot.item.length > 40
+            ? loot.item.substring(0, 37) + "..."
+            : loot.item;
+
+        const lootSummary = `✅ Looted ${displayText}`;
+        await getShowChoiceDialog(lootSummary, [
+          { type: "button", label: "OK", value: "ok" },
+        ]);
+        logEvent(`⚔️ Looted ${displayText}`);
+        // Continue loop to refresh display
+        continue;
+      }
     }
   }
 }

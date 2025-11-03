@@ -133,11 +133,15 @@ export async function handleChoice(choice, tile) {
         },
       ];
 
-      // Add monster head selling option if available
+      // Add monster head selling options if available
       if (gameState.monsterHeads.length > 0) {
         tradeButtons.push({
           label: "🏺 Sell Monster Heads",
           value: "heads",
+        });
+        tradeButtons.push({
+          label: "🏺 Sell All Monster Heads",
+          value: "sell_all_heads",
         });
       } else {
         tradeButtons.push({
@@ -145,19 +149,44 @@ export async function handleChoice(choice, tile) {
           value: "heads",
           disabled: true,
         });
+        tradeButtons.push({
+          label: "🏺 Sell All Monster Heads",
+          value: "sell_all_heads",
+          disabled: true,
+        });
       }
 
       // Check if there are items to sell
       const allSellableItems = getAllSellableItems();
+      const groupInventoryItems = getGroupInventory().filter(
+        (item) => calculateItemSellValue(item) > 0
+      );
       if (allSellableItems.length > 0) {
         tradeButtons.push({
           label: `📦 Sell Items (${allSellableItems.length} available)`,
           value: "sell_items",
         });
+        if (groupInventoryItems.length > 0) {
+          tradeButtons.push({
+            label: `📦 Auto Sell All Items (${groupInventoryItems.length} unequipped)`,
+            value: "sell_all_items",
+          });
+        } else {
+          tradeButtons.push({
+            label: "📦 Auto Sell All Items",
+            value: "sell_all_items",
+            disabled: true,
+          });
+        }
       } else {
         tradeButtons.push({
           label: "📦 Sell Items",
           value: "sell_items",
+          disabled: true,
+        });
+        tradeButtons.push({
+          label: "📦 Auto Sell All Items",
+          value: "sell_all_items",
           disabled: true,
         });
       }
@@ -285,10 +314,18 @@ export async function handleChoice(choice, tile) {
         // Handle item selling
         await handleItemSelling(locationType, sellBonus);
         tradeDesc = "Item selling completed";
+      } else if (t === "sell_all_items") {
+        // Auto sell all unequipped items
+        await sellAllGroupInventoryItems(locationType, sellBonus);
+        tradeDesc = "Auto-sold all inventory items";
       } else if (t === "heads") {
         // Handle monster head selling
         await handleMonsterHeadSelling(locationType, interactBonus);
         tradeDesc = "Monster head trading completed";
+      } else if (t === "sell_all_heads") {
+        // Auto sell all monster heads
+        await sellAllMonsterHeads(locationType, interactBonus);
+        tradeDesc = "Auto-sold all monster heads";
       }
       if (tradeDesc) {
         logEvent(tradeDesc);
@@ -369,6 +406,77 @@ export async function handleChoice(choice, tile) {
     // Handle monster cave exploration - trigger enhanced combat
     await getHandleEnhancedCombatDialog(gameState.px, gameState.py, true);
   }
+}
+
+// Auto sell all monster heads
+async function sellAllMonsterHeads(locationType, interactBonus) {
+  if (gameState.monsterHeads.length === 0) {
+    await getShowChoiceDialog("You have no monster heads to sell!", [
+      { type: "button", label: "OK", value: "ok" },
+    ]);
+    return;
+  }
+
+  let totalGold = 0;
+  const headCount = gameState.monsterHeads.length;
+  const headsToSell = [...gameState.monsterHeads]; // Copy array to avoid modification during iteration
+
+  // Calculate total value and remove all heads
+  headsToSell.forEach((head) => {
+    const price = calculateHeadValue(head, locationType, interactBonus);
+    totalGold += price;
+  });
+
+  // Remove all heads from inventory
+  gameState.monsterHeads = [];
+  gameState.gold += totalGold;
+  updateStatus();
+
+  const summary = `✅ Sold all ${headCount} monster head${
+    headCount > 1 ? "s" : ""
+  } for ${totalGold}g`;
+  await getShowChoiceDialog(summary, [
+    { type: "button", label: "OK", value: "ok" },
+  ]);
+  logEvent(summary);
+}
+
+// Auto sell all unequipped items from group inventory
+async function sellAllGroupInventoryItems(locationType, sellBonus) {
+  const groupInventory = getGroupInventory();
+  const sellableItems = groupInventory.filter(
+    (item) => calculateItemSellValue(item) > 0
+  );
+
+  if (sellableItems.length === 0) {
+    await getShowChoiceDialog("You have no unequipped items to sell!", [
+      { type: "button", label: "OK", value: "ok" },
+    ]);
+    return;
+  }
+
+  let totalGold = 0;
+  let soldCount = 0;
+
+  // Sell all items
+  sellableItems.forEach((item) => {
+    const baseValue = calculateItemSellValue(item);
+    const sellValue = Math.floor(baseValue * (1 + sellBonus));
+    totalGold += sellValue;
+    removeFromGroupInventory(item);
+    soldCount++;
+  });
+
+  gameState.gold += totalGold;
+  updateStatus();
+
+  const summary = `✅ Sold ${soldCount} unequipped item${
+    soldCount > 1 ? "s" : ""
+  } for ${totalGold}g`;
+  await getShowChoiceDialog(summary, [
+    { type: "button", label: "OK", value: "ok" },
+  ]);
+  logEvent(summary);
 }
 
 // Handle monster head selling dialog
@@ -474,7 +582,25 @@ function formatCharacterIdentity(character) {
 function getOrganizedSellableItems() {
   const organized = [];
 
-  // Get equipped items from all characters
+  // Get items from group inventory (unequipped) - show first
+  const groupInventory = getGroupInventory();
+  const inventoryItems = [];
+  groupInventory.forEach((item) => {
+    const sellValue = calculateItemSellValue(item);
+    if (sellValue > 0) {
+      inventoryItems.push({ itemString: item });
+    }
+  });
+
+  if (inventoryItems.length > 0) {
+    organized.push({
+      type: "inventory",
+      name: "Group Inventory",
+      items: inventoryItems,
+    });
+  }
+
+  // Get equipped items from all characters - show after inventory
   const allCharacters = [];
   if (gameState.playerCharacter) {
     allCharacters.push({
@@ -512,24 +638,6 @@ function getOrganizedSellableItems() {
       }
     }
   });
-
-  // Get items from group inventory (unequipped)
-  const groupInventory = getGroupInventory();
-  const inventoryItems = [];
-  groupInventory.forEach((item) => {
-    const sellValue = calculateItemSellValue(item);
-    if (sellValue > 0) {
-      inventoryItems.push({ itemString: item });
-    }
-  });
-
-  if (inventoryItems.length > 0) {
-    organized.push({
-      type: "inventory",
-      name: "Group Inventory",
-      items: inventoryItems,
-    });
-  }
 
   return organized;
 }
@@ -573,8 +681,6 @@ async function handleItemSelling(locationType, sellBonus) {
     }
 
     let sellMessage = `📦 **SELL ITEMS**\n\n`;
-    sellMessage += `Location: ${locationType}\n`;
-    sellMessage += `Sell Bonus: +${(sellBonus * 100).toFixed(0)}%\n\n`;
 
     const sellButtons = [];
     const itemMap = []; // Maps index to { itemString, character, slotKey, type }
@@ -586,7 +692,6 @@ async function handleItemSelling(locationType, sellBonus) {
         value: `header_${section.type}`,
         disabled: true,
       });
-      sellMessage += `\n${section.name}:\n`;
 
       // Add items for this section
       section.items.forEach(({ itemString, slotKey }) => {
@@ -611,8 +716,6 @@ async function handleItemSelling(locationType, sellBonus) {
           slotKey: slotKey || null,
           type: section.type,
         });
-
-        sellMessage += `  • ${displayName} - ${sellValue}g\n`;
 
         sellButtons.push({
           label: `  ${displayName} - ${sellValue}g`,
