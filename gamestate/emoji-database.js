@@ -46,18 +46,18 @@ export const classEmoji = {
 
 // Race emoji mapping for display
 export const raceEmoji = {
-  Human: "👤",
+  Human: "👨🏻‍🌾",
   Elf: "🧝",
   Dwarf: "🧙",
   Orc: "👹",
   Goblin: "👺",
-  Kobold: "👺",
+  Kobold: "🦎",
   Demon: "👿",
   Angel: "👼",
   Undead: "💀",
   Draconic: "🐉",
-  Fishman: "🐠",
-  Birdman: "🦅",
+  Fishman: "🧜‍♂️",
+  Birdman: "🧚🏻‍♂️",
   // Beast races
   Wolf: "🐺",
   Bear: "🐻",
