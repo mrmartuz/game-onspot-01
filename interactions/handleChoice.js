@@ -193,6 +193,13 @@ export async function handleChoice(choice, tile) {
 
       const tradeComponents = [
         {
+          type: "image",
+          src: "images/market-01.jpg",
+          alt: "Market",
+          maxWidth: "100%",
+          marginBottom: "15px",
+        },
+        {
           type: "button_grid",
           columns: 2,
           textSize: "12px",

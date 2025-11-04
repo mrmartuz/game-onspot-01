@@ -446,6 +446,67 @@ export async function showChoiceDialog(message, components) {
 
             gameDialog.appendChild(navigatorContainer);
             break;
+          case "image":
+            const imageDiv = document.createElement("div");
+            const img = document.createElement("img");
+            
+            // Set image source (required)
+            const imageSrc = component.src || component.path || "";
+            img.src = imageSrc;
+            img.alt = component.alt || "";
+            
+            // Add error handling for debugging
+            img.onerror = () => {
+              console.warn(`Failed to load image: ${imageSrc}`);
+            };
+            img.onload = () => {
+              console.log(`Successfully loaded image: ${imageSrc}`);
+            };
+            
+            // Apply styling if provided
+            if (component.width) {
+              img.style.width = typeof component.width === "number" 
+                ? `${component.width}px` 
+                : component.width;
+            }
+            if (component.height) {
+              img.style.height = typeof component.height === "number" 
+                ? `${component.height}px` 
+                : component.height;
+            }
+            
+            // Handle maxWidth if provided
+            if (component.maxWidth) {
+              img.style.maxWidth = typeof component.maxWidth === "number" 
+                ? `${component.maxWidth}px` 
+                : component.maxWidth;
+            } else if (!component.width) {
+              // Default to max-width 100% for responsive images if width not specified
+              img.style.maxWidth = "100%";
+            }
+            if (!component.height) {
+              img.style.height = "auto";
+            }
+            
+            // Apply custom styles if provided
+            if (component.style) {
+              Object.assign(img.style, component.style);
+            }
+            
+            // Add margin and alignment
+            imageDiv.style.marginBottom = component.marginBottom || "10px";
+            imageDiv.style.textAlign = component.align || "center";
+            imageDiv.style.display = "flex";
+            imageDiv.style.width = "100%";
+            imageDiv.style.justifyContent = component.align === "left" 
+              ? "flex-start" 
+              : component.align === "right" 
+              ? "flex-end" 
+              : "center";
+            
+            imageDiv.appendChild(img);
+            gameDialog.appendChild(imageDiv);
+            break;
           default:
             console.warn(
               "getShowChoiceDialog: Unknown component type: " + component.type

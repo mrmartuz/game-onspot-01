@@ -1,6 +1,6 @@
 import { gameState } from "../gamestate/game_variables.js";
 import { getShowChoiceDialog } from "../interactions.js";
-import { getGroupBonus, getMaxStorage } from "../utils.js";
+import { getGroupBonus, getMaxStorage, hash } from "../utils.js";
 import { updateStatus } from "../rendering.js";
 import { logEvent } from "../time_system.js";
 import {
@@ -18,6 +18,53 @@ import {
   isLocationVisited,
 } from "./combat-system/location-rooms.js";
 import { getLocationBehaviorType } from "./combat-system/databases/location-rules.js";
+
+// Helper function to get image component for location
+function getLocationImageComponent(location, x, y) {
+  const locationImages = {
+    city: "images/city-01.jpg",
+    village: "images/village-01.jpg",
+    farm: "images/farm-01.jpg",
+    waterfalls: "images/waterfalls-01.jpg",
+    camp: "images/camp-01.png",
+    hamlet: "images/hamlet-01.png",
+    outpost: "images/outpost-01.png",
+    ruin: ["images/ruin-01.png", "images/ruin-02.png", "images/ruin-03.png"],
+    volcano: ["images/volcano-01.png", "images/volcano-02.png"],
+    "monster caves": [
+      "images/monster-caves-01.png",
+      "images/monster-caves-02.png",
+      "images/monster-caves-03.png",
+    ],
+    cave: ["images/cave-01.png", "images/cave-02.png"],
+  };
+
+  let imagePath = locationImages[location];
+  if (!imagePath) {
+    return null;
+  }
+
+  // If imagePath is an array, deterministically select one based on hash
+  if (Array.isArray(imagePath)) {
+    if (x !== undefined && y !== undefined) {
+      // Use hash with a seed value of 0 for image selection
+      const hashValue = hash(x, y, 0);
+      const imageIndex = Math.floor(hashValue * imagePath.length);
+      imagePath = imagePath[imageIndex];
+    } else {
+      // Fallback to first image if coordinates not provided
+      imagePath = imagePath[0];
+    }
+  }
+
+  return {
+    type: "image",
+    src: imagePath,
+    alt: location,
+    maxWidth: "100%",
+    marginBottom: "15px",
+  };
+}
 
 // Helper function to check if there's enough storage space for water
 function hasSpaceForWater(amount = 10) {
@@ -102,6 +149,16 @@ async function showMinimalMenuAfterRecruitment(tile) {
     });
   }
 
+  // Add location image if available (at the top, after all buttons are added)
+  const locationImage = getLocationImageComponent(
+    tile.location,
+    gameState.px,
+    gameState.py
+  );
+  if (locationImage) {
+    options.unshift(locationImage);
+  }
+
   const msg = `At ${tile.location !== "none" ? tile.location : ""} ${
     tile.entity !== "none" ? tile.entity : ""
   }`.trim();
@@ -126,22 +183,25 @@ async function showMinimalMenuAfterRecruitment(tile) {
 function getFightButtonLabel(tile) {
   const x = gameState.px;
   const y = gameState.py;
-  
+
   // Check for entity encounters
   if (tile.entity === "monster" || tile.entity === "beast") {
     return "⚔️ Fight the monsters";
   }
-  
+
   // Check for location encounters
-  if (tile.location && ["cave", "monster caves", "volcano"].includes(tile.location)) {
+  if (
+    tile.location &&
+    ["cave", "monster caves", "volcano"].includes(tile.location)
+  ) {
     const locationStatus = getLocationStatus(x, y);
-    
+
     if (locationStatus) {
       // Location has been visited, show room progression
       const nextRoom = getNextUnclearedRoom(x, y);
       const totalRooms = locationStatus.totalRooms;
       const clearedCount = locationStatus.clearedCount;
-      
+
       if (nextRoom === -1) {
         // All rooms cleared
         if (isLocationFullyCleared(x, y)) {
@@ -152,7 +212,7 @@ function getFightButtonLabel(tile) {
         const roomNumber = nextRoom + 1;
         const behaviorType = getLocationBehaviorType(tile.location);
         const isBossRoom = roomNumber === totalRooms;
-        
+
         if (isBossRoom) {
           return `⚔️ Fight Boss (Room ${roomNumber}/${totalRooms})`;
         } else {
@@ -161,10 +221,13 @@ function getFightButtonLabel(tile) {
       }
     } else {
       // First time entering location
-      return "⚔️ Enter the " + (tile.location === "volcano" ? "volcano" : tile.location);
+      return (
+        "⚔️ Enter the " +
+        (tile.location === "volcano" ? "volcano" : tile.location)
+      );
     }
   }
-  
+
   return null;
 }
 
@@ -332,6 +395,16 @@ export async function checkTileInteraction(tile) {
         // If no character available, show regular discovery message
         let components = [];
 
+        // Add location image if available
+        const locationImage = getLocationImageComponent(
+          tile.location,
+          gameState.px,
+          gameState.py
+        );
+        if (locationImage) {
+          components.push(locationImage);
+        }
+
         // Add water collection option for waterfalls
         if (tile.location === "waterfalls") {
           const waterButtonLabel = hasSpaceForWater(10)
@@ -450,6 +523,16 @@ export async function checkTileInteraction(tile) {
       // If no character available, show regular discovery message
       let components = [];
 
+      // Add location image if available
+      const locationImage = getLocationImageComponent(
+        tile.location,
+        gameState.px,
+        gameState.py
+      );
+      if (locationImage) {
+        components.push(locationImage);
+      }
+
       // Add water collection option for waterfalls
       if (tile.location === "waterfalls") {
         const waterButtonLabel = hasSpaceForWater(10)
@@ -494,8 +577,9 @@ export async function checkTileInteraction(tile) {
   ) {
     options.unshift({
       type: "button",
-      label: `😴 Rest (-${Math.ceil(gameState.group.length * 0.5)}🍞 - ${Math.ceil(gameState.group.length * 0.5)
-      }💧)`,
+      label: `😴 Rest (-${Math.ceil(
+        gameState.group.length * 0.5
+      )}🍞 - ${Math.ceil(gameState.group.length * 0.5)}💧)`,
       value: "2",
     });
   }
@@ -566,6 +650,17 @@ export async function checkTileInteraction(tile) {
   if (msg === "At") {
     return; // Don't show dialog for empty tiles
   }
+
+  // Add location image if available (for city, village, farm)
+  const locationImage = getLocationImageComponent(
+    tile.location,
+    gameState.px,
+    gameState.py
+  );
+  if (locationImage) {
+    options.unshift(locationImage);
+  }
+
   let choice = await getShowChoiceDialog(msg, options);
   await getHandleChoiceDialog(choice, tile);
 }
