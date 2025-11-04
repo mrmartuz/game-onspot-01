@@ -784,6 +784,7 @@ async function handlePlayerAttack(player, targets) {
 
 /**
  * Helper function to advance an entity toward a target
+ * Limits movement to what's needed to reach target (doesn't overshoot)
  * @param {Object} entity - Entity to advance
  * @param {Object} target - Target to advance toward
  * @param {Object} combatState - Combat state
@@ -795,33 +796,93 @@ function advanceTowardTarget(entity, target, combatState) {
 
   if (!entityPos || !targetPos) return false;
 
-  // Calculate movement range
+  // Calculate Manhattan distance to target
+  const rowDiff = targetPos.row - entityPos.row;
+  const colDiff = targetPos.col - entityPos.col;
+  const distance = Math.abs(rowDiff) + Math.abs(colDiff);
+
+  // If target is already adjacent (distance <= 1), no movement needed
+  if (distance <= 1) {
+    return false; // Already adjacent
+  }
+
+  // Calculate movement range from DEX
   const dex = entity.character?.stats?.DEX || entity.stats?.DEX || 10;
   const armor =
     entity.character?.equipment?.armor || entity.equipment?.armor || null;
   const movementRange = calculateMovementRange(dex, armor);
 
-  // Calculate direction toward target
-  const rowDiff = targetPos.row - entityPos.row;
-  const colDiff = targetPos.col - entityPos.col;
+  // Calculate optimal movement: min(distance - 1, movementRange) to get adjacent
+  // This ensures we don't overshoot - if target is 2 tiles away and movement is 5,
+  // we only move 1 tile (to get adjacent)
+  const optimalMovement = Math.min(distance - 1, movementRange);
 
-  // Normalize direction
-  const rowDir = rowDiff > 0 ? 1 : rowDiff < 0 ? -1 : 0;
-  const colDir = colDiff > 0 ? 1 : colDiff < 0 ? -1 : 0;
-
-  // Move up to movement range toward target
-  const newRow = Math.max(
-    0,
-    Math.min(9, entityPos.row + rowDir * movementRange)
-  );
-  const newCol = Math.max(
-    0,
-    Math.min(9, entityPos.col + colDir * movementRange)
+  // Find all candidate positions within optimal movement distance
+  // We'll check them in order of preference (closest to target first)
+  const candidatePositions = findCandidatePositions(
+    entityPos.row,
+    entityPos.col,
+    optimalMovement,
+    targetPos.row,
+    targetPos.col
   );
 
-  // Try to move
-  return moveEntity(entity, newRow, newCol, combatState);
+  if (candidatePositions.length === 0) {
+    return false; // No valid positions
+  }
+
+  // Try positions in order of preference (closest to target first)
+  // This minimizes state modifications from canMoveTo checks
+  for (const [row, col] of candidatePositions) {
+    // Try to move to this position - moveEntity will check validity and handle pushing
+    if (moveEntity(entity, row, col, combatState)) {
+      return true; // Successfully moved
+    }
+    // If move failed, try next position
+  }
+
+  return false; // Couldn't move to any position
 }
+
+/**
+ * Find all candidate positions within a given Manhattan distance, sorted by distance to target
+ * This only checks bounds and distance, doesn't modify state
+ * @param {number} startRow - Starting row
+ * @param {number} startCol - Starting column
+ * @param {number} maxDistance - Maximum Manhattan distance
+ * @param {number} targetRow - Target row
+ * @param {number} targetCol - Target column
+ * @returns {Array<[number, number]>} Array of [row, col] tuples sorted by distance to target
+ */
+function findCandidatePositions(startRow, startCol, maxDistance, targetRow, targetCol) {
+  const candidates = [];
+  const GRID_SIZE = 10;
+
+  // Check all positions within the grid that are within maxDistance
+  for (let row = 0; row < GRID_SIZE; row++) {
+    for (let col = 0; col < GRID_SIZE; col++) {
+      const manhattanDist = Math.abs(row - startRow) + Math.abs(col - startCol);
+      
+      // Check if position is within movement range and not the starting position
+      if (manhattanDist <= maxDistance && manhattanDist > 0) {
+        // Basic bounds check (already done by the loop, but keep for clarity)
+        if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
+          candidates.push([row, col]);
+        }
+      }
+    }
+  }
+
+  // Sort by distance to target (closest first)
+  candidates.sort((a, b) => {
+    const distA = Math.abs(targetRow - a[0]) + Math.abs(targetCol - a[1]);
+    const distB = Math.abs(targetRow - b[0]) + Math.abs(targetCol - b[1]);
+    return distA - distB;
+  });
+
+  return candidates;
+}
+
 
 /**
  * Handle advance movement - player selects target first, then advances
