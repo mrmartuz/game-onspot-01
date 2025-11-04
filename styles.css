@@ -335,7 +335,9 @@ body {
 
     #game-dialog {
         width: 90%;
-        max-height: calc(100vh - 60px);
+        /* Account for 30px top margin + 30px bottom margin + navigation bar space */
+        max-height: calc(100vh - 100px);
+        height: calc(100vh - 100px);
         padding: 15px;
     }
 
