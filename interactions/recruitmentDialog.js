@@ -244,25 +244,7 @@ export async function showSpecialLocationRecruitmentDialog(locationType, x, y) {
   );
 
   if (!character) {
-    // For peaks, suppress exploration dialog when no recruit is found
-    if (locationType === "peaks") {
-      return "no_recruitment_available";
-    }
-    const message = `${locationType.toUpperCase()} EXPLORATION`;
-    const components = [
-      {
-        type: "message",
-        label: `You explore the ${locationType} but find no one to recruit.`,
-        value: "no_recruit",
-      },
-      {
-        type: "button",
-        label: "❌ Back",
-        value: "back",
-      },
-    ];
-
-    await getShowChoiceDialog(message, components);
+    // Silently return when no recruit is found (check happens in background)
     return "no_recruitment_available";
   }
 
@@ -309,21 +291,7 @@ export async function showEntityRecruitmentDialog(entityType, x, y) {
   );
 
   if (characters.length === 0) {
-    const message = `${entityType.toUpperCase()} ENCOUNTER`;
-    const components = [
-      {
-        type: "message",
-        label: `You encounter a ${entityType} but find no one willing to join.`,
-        value: "no_recruit",
-      },
-      {
-        type: "button",
-        label: "❌ Back",
-        value: "back",
-      },
-    ];
-
-    await getShowChoiceDialog(message, components);
+    // Silently return when no recruit is found (check happens in background)
     return "no_recruitment_available";
   }
 
