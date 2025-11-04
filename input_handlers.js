@@ -23,6 +23,52 @@ const directions = [
   { id: "btn-nw", dx: -1, dy: -1 },
 ];
 
+// Track pressed keys for WASD movement
+const pressedKeys = new Set();
+let lastMovementTime = 0;
+const MOVEMENT_COOLDOWN = 100; // Minimum time between movements in ms
+const DIAGONAL_BUFFER_TIME = 150; // Time window to press second key for diagonal movement in ms
+let movementInterval = null; // Store interval ID for cleanup
+let diagonalBufferTimeout = null; // Timeout for diagonal movement buffer
+
+// Calculate movement direction from pressed WASD keys
+function getMovementFromKeys() {
+  let dx = 0;
+  let dy = 0;
+
+  // W = North (up), S = South (down)
+  if (pressedKeys.has("w")) {
+    dy -= 1;
+  }
+  if (pressedKeys.has("s")) {
+    dy += 1;
+  }
+
+  // A = West (left), D = East (right)
+  if (pressedKeys.has("a")) {
+    dx -= 1;
+  }
+  if (pressedKeys.has("d")) {
+    dx += 1;
+  }
+
+  return { dx, dy };
+}
+
+// Handle keyboard movement
+function handleKeyboardMovement() {
+  const now = performance.now();
+  if (now - lastMovementTime < MOVEMENT_COOLDOWN) {
+    return;
+  }
+
+  const { dx, dy } = getMovementFromKeys();
+  if (dx !== 0 || dy !== 0) {
+    move(dx, dy);
+    lastMovementTime = now;
+  }
+}
+
 export function setupInputs() {
   // Clear existing listeners to prevent duplicates
   directions.forEach((dir) => {
@@ -116,6 +162,99 @@ export function setupInputs() {
       console.error(`Button not found: ${id}`);
     }
   });
+
+  // Setup WASD keyboard movement
+  const handleKeyDown = (e) => {
+    const key = e.key.toLowerCase();
+
+    // Handle WASD keys for movement
+    if (["w", "a", "s", "d"].includes(key)) {
+      const wasEmpty = pressedKeys.size === 0;
+      pressedKeys.add(key);
+      e.preventDefault(); // Prevent default browser behavior
+
+      // Clear any pending single-direction movement timeout
+      if (diagonalBufferTimeout) {
+        clearTimeout(diagonalBufferTimeout);
+        diagonalBufferTimeout = null;
+      }
+
+      const { dx, dy } = getMovementFromKeys();
+      const isDiagonal = dx !== 0 && dy !== 0;
+
+      // If diagonal movement or multiple keys, move immediately
+      if (isDiagonal || pressedKeys.size > 1) {
+        if (!gameState.cooldown) {
+          handleKeyboardMovement();
+        }
+      } else if (wasEmpty && !gameState.cooldown) {
+        // If this is the first key pressed, wait a bit for potential diagonal
+        diagonalBufferTimeout = setTimeout(() => {
+          if (pressedKeys.size === 1 && !gameState.cooldown) {
+            // Still only one key after buffer time, move in single direction
+            handleKeyboardMovement();
+          }
+          diagonalBufferTimeout = null;
+        }, DIAGONAL_BUFFER_TIME);
+      }
+    }
+
+    // Handle E key for menu interaction (harvest/build buttons) (only in regional map)
+    if (key === "e") {
+      if (gameState.mapType === "regional") {
+        e.preventDefault();
+        getShowMenuDialog();
+      }
+    }
+  };
+
+  const handleKeyUp = (e) => {
+    const key = e.key.toLowerCase();
+    if (["w", "a", "s", "d"].includes(key)) {
+      pressedKeys.delete(key);
+
+      // Clear diagonal buffer timeout when key is released
+      if (diagonalBufferTimeout) {
+        clearTimeout(diagonalBufferTimeout);
+        diagonalBufferTimeout = null;
+      }
+
+      // If keys are still pressed after release, check if we should move
+      if (pressedKeys.size > 0 && !gameState.cooldown) {
+        const { dx, dy } = getMovementFromKeys();
+        if (dx !== 0 || dy !== 0) {
+          // If only one direction remains, wait for potential diagonal again
+          const isDiagonal = dx !== 0 && dy !== 0;
+          if (!isDiagonal && pressedKeys.size === 1) {
+            diagonalBufferTimeout = setTimeout(() => {
+              if (pressedKeys.size === 1 && !gameState.cooldown) {
+                handleKeyboardMovement();
+              }
+              diagonalBufferTimeout = null;
+            }, DIAGONAL_BUFFER_TIME);
+          }
+        }
+      }
+    }
+  };
+
+  // Remove existing keyboard listeners to prevent duplicates
+  window.removeEventListener("keydown", handleKeyDown);
+  window.removeEventListener("keyup", handleKeyUp);
+
+  // Add keyboard listeners
+  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("keyup", handleKeyUp);
+
+  // Continuous movement check for held keys (handles diagonal movement)
+  if (movementInterval) {
+    clearInterval(movementInterval);
+  }
+  movementInterval = setInterval(() => {
+    if (!gameState.cooldown && pressedKeys.size > 0) {
+      handleKeyboardMovement();
+    }
+  }, MOVEMENT_COOLDOWN);
 
   ("Input handlers setup complete"); // Debug
 }
