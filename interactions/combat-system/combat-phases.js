@@ -854,7 +854,13 @@ function advanceTowardTarget(entity, target, combatState) {
  * @param {number} targetCol - Target column
  * @returns {Array<[number, number]>} Array of [row, col] tuples sorted by distance to target
  */
-function findCandidatePositions(startRow, startCol, maxDistance, targetRow, targetCol) {
+function findCandidatePositions(
+  startRow,
+  startCol,
+  maxDistance,
+  targetRow,
+  targetCol
+) {
   const candidates = [];
   const GRID_SIZE = 10;
 
@@ -862,7 +868,7 @@ function findCandidatePositions(startRow, startCol, maxDistance, targetRow, targ
   for (let row = 0; row < GRID_SIZE; row++) {
     for (let col = 0; col < GRID_SIZE; col++) {
       const manhattanDist = Math.abs(row - startRow) + Math.abs(col - startCol);
-      
+
       // Check if position is within movement range and not the starting position
       if (manhattanDist <= maxDistance && manhattanDist > 0) {
         // Basic bounds check (already done by the loop, but keep for clarity)
@@ -882,7 +888,6 @@ function findCandidatePositions(startRow, startCol, maxDistance, targetRow, targ
 
   return candidates;
 }
-
 
 /**
  * Handle advance movement - player selects target first, then advances
@@ -1873,22 +1878,41 @@ function syncHealthToGameState() {
 
 // Apply post-combat healing to surviving characters
 function applyPostCombatHealing() {
+  // Check if there are alive group members (excluding player)
+  const aliveGroupMembers = gameState.group.filter((member) => {
+    return member.health.current > -Math.floor(member.health.max / 2);
+  });
+  const hasAliveMembers = aliveGroupMembers.length > 0;
+
   // Heal player character if not dead
   if (
     gameState.playerCharacter &&
     gameState.playerCharacter.health.current >
       -Math.floor(gameState.playerCharacter.health.max / 2)
   ) {
-    const healAmount = Math.floor(gameState.playerCharacter.health.max / 10);
-    const oldHealth = gameState.playerCharacter.health.current;
-    gameState.playerCharacter.health.current = Math.min(
-      gameState.playerCharacter.health.max,
-      gameState.playerCharacter.health.current + healAmount
-    );
-    gameState.health = gameState.playerCharacter.health.current; // Update legacy health
-    const actualHealing = gameState.playerCharacter.health.current - oldHealth;
-    if (actualHealing > 0) {
-      "[POST-COMBAT HEAL] Player healed for", actualHealing, "HP";
+    // If player is unconscious (health <= 0) but not dead
+    if (gameState.playerCharacter.health.current <= 0) {
+      // Only revive if other members are alive
+      if (hasAliveMembers) {
+        gameState.playerCharacter.health.current = 1;
+        gameState.health = 1; // Update legacy health
+        ("[POST-COMBAT HEAL] Player revived to 1 HP by surviving group members");
+      }
+      // If no alive members, player stays unconscious (no healing applied)
+    } else {
+      // Player has positive health - apply normal healing: 10% of max HP
+      const healAmount = Math.floor(gameState.playerCharacter.health.max / 10);
+      const oldHealth = gameState.playerCharacter.health.current;
+      gameState.playerCharacter.health.current = Math.min(
+        gameState.playerCharacter.health.max,
+        gameState.playerCharacter.health.current + healAmount
+      );
+      gameState.health = gameState.playerCharacter.health.current; // Update legacy health
+      const actualHealing =
+        gameState.playerCharacter.health.current - oldHealth;
+      if (actualHealing > 0) {
+        "[POST-COMBAT HEAL] Player healed for", actualHealing, "HP";
+      }
     }
   }
 
