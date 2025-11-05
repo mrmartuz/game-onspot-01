@@ -157,22 +157,7 @@ export function formatAttackMessage(attacker, target, damage, hit) {
  * @returns {string} Formatted player turn message
  */
 export function formatPlayerTurnMessage(player, allies, targets) {
-  let message = `⚔️ YOUR TURN\n\nHealth: ${player.currentHealth}/${player.maxHealth}\n\n`;
-
-  // Add allies status
-  if (allies && allies.length > 0) {
-    message += `Allies:\n`;
-    message += formatAllyList(allies);
-    message += `\n\n`;
-  }
-
-  // Add available targets
-  if (targets && targets.length > 0) {
-    message += `Available targets:\n`;
-    message += formatMonsterList(targets, "combat");
-  }
-
-  return message;
+  return `⚔️ YOUR TURN`;
 }
 
 /**
