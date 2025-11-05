@@ -55,6 +55,10 @@ import {
   hasLocationRewards,
 } from "./location-rewards.js";
 import { getLocationStatus, isLocationFullyCleared } from "./location-rooms.js";
+import {
+  applyCombatBackdrop,
+  clearCombatBackdrop,
+} from "./combat-render-effects.js";
 
 // Helper function wrapper for updatePositionsForEngagement
 function updatePositionsForEngagement(playerChoice, enemyChoice) {
@@ -1343,6 +1347,12 @@ async function executeAttack(attacker, target) {
       )} ${primarySkill} experience`;
     }
 
+    // Determine if target is an ally
+    const isAlly = allyIndex >= 0;
+
+    // Apply backdrop effect for hit
+    applyCombatBackdrop("hit", isAlly ? "ally" : "enemy");
+
     const attackMessage = formatAttackMessage(
       attacker,
       target,
@@ -1356,6 +1366,9 @@ async function executeAttack(attacker, target) {
     );
 
     await getShowChoiceDialog(attackMessage, choices);
+
+    // Clear backdrop effect after dialog closes
+    clearCombatBackdrop();
 
     // Clear hit effect after dialog closes
     if (combatState.hitEffects && combatState.hitEffects[targetId]) {
@@ -1377,6 +1390,14 @@ async function executeAttack(attacker, target) {
     combatState.hitEffects[targetId] = "miss";
     setCombatStateProperty("hitEffects", combatState.hitEffects);
 
+    // Determine if target is an ally
+    const isAlly = allyIndex >= 0;
+
+    // Apply backdrop effect for miss (only for allies - dodges)
+    if (isAlly) {
+      applyCombatBackdrop("miss", "ally");
+    }
+
     const attackMessage = formatAttackMessage(attacker, target, 0, false);
     const choices = createDialogChoicesWithGrid(
       "combat",
@@ -1385,6 +1406,9 @@ async function executeAttack(attacker, target) {
     );
 
     await getShowChoiceDialog(attackMessage, choices);
+
+    // Clear backdrop effect after dialog closes
+    clearCombatBackdrop();
 
     // Clear miss effect after dialog closes
     if (combatState.hitEffects && combatState.hitEffects[targetId]) {
