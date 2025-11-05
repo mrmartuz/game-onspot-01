@@ -3,6 +3,7 @@
 
 import { getRaceEmoji } from "../../gamestate/emoji-database.js";
 import { generateCombatGrid } from "./combat-grid.js";
+import { isRangedWeapon } from "./equipment-combat-helpers.js";
 
 /**
  * Format a monster entry for display in lists
@@ -166,15 +167,36 @@ export function formatPlayerTurnMessage(player, allies, targets) {
  * Row 2: Melee Attack, Ranged Attack
  * Row 3: Defend Stance, Defend Ally
  * Row 4: Flee Alone, Flee Group
+ * @param {Object} player - Player entity (optional)
  * @returns {Array} Array of button choice objects with button_grid
  */
-export function createCombatActionButtons() {
+export function createCombatActionButtons(player = null) {
+  // Check if player has ranged weapon
+  let hasRangedWeapon = false;
+  if (player) {
+    const weapon =
+      player.character?.equipment?.weapon || player.equipment?.weapon;
+    hasRangedWeapon = isRangedWeapon(weapon);
+
+    // Debug logging
+    console.log("[createCombatActionButtons] Player:", player.name);
+    console.log("[createCombatActionButtons] Weapon:", weapon);
+    console.log(
+      "[createCombatActionButtons] Has ranged weapon:",
+      hasRangedWeapon
+    );
+  }
+
   // Create buttons array matching the format used in equipment management
   const buttons = [
+    { label: "⚔️ Melee Attack", value: "melee_attack" },
+    {
+      label: "🏹 Ranged Attack",
+      value: "ranged_attack",
+      disabled: !hasRangedWeapon,
+    },
     { label: "⬆️ Advance", value: "advance" },
     { label: "⬇️ Retreat", value: "retreat" },
-    { label: "⚔️ Melee Attack", value: "melee_attack" },
-    { label: "🏹 Ranged Attack", value: "ranged_attack" },
     { label: "🛡️ Defend Stance", value: "defend" },
     { label: "🛡️ Defend Ally", value: "protect" },
     { label: "🏃 Flee Alone", value: "flee_alone" },

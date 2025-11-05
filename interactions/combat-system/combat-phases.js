@@ -724,7 +724,7 @@ async function handlePlayerTurn(player) {
   // Create dialog choices with grid and combat action buttons
   const choices = createDialogChoicesWithGrid(
     "combat",
-    createCombatActionButtons(),
+    createCombatActionButtons(player),
     player
   );
 
