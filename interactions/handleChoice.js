@@ -75,10 +75,21 @@ export async function handleChoice(choice, tile) {
     const timePassedText = `Time passed: (${beforeTime.getHours()}:00 -> ${afterTime.getHours()}:00)`;
     let bonusText = bonusHealing > 0 ? ` (+${bonusHealing} bonus)` : "";
 
-    await getShowChoiceDialog(
-      `Rested. 😴 Healed ${totalHealing} health${bonusText}\n${timePassedText}`,
-      [{ type: "button", label: "OK", value: "ok" }]
-    );
+    await getShowChoiceDialog("", [
+      {
+        type: "image",
+        src: "images/rest-camp-01.png",
+        alt: "Rest",
+        maxWidth: "100%",
+        marginBottom: "15px",
+      },
+      {
+        type: "message",
+        label: `Rested. 😴 Healed ${totalHealing} health${bonusText}\n${timePassedText}`,
+        value: "",
+      },
+      { type: "button", label: "OK", value: "ok" },
+    ]);
     logEvent(
       `😴 Rested and healed ${totalHealing} health${bonusText} (2 hours)`
     );
@@ -194,7 +205,7 @@ export async function handleChoice(choice, tile) {
       const tradeComponents = [
         {
           type: "image",
-          src: "images/market-01.jpg",
+          src: "images/market-03.png",
           alt: "Market",
           maxWidth: "100%",
           marginBottom: "15px",
@@ -215,7 +226,7 @@ export async function handleChoice(choice, tile) {
       };
       components.push(...tradeComponents);
       components.push(closeButton);
-      let t = await getShowChoiceDialog("Trade options:", components);
+      let t = await getShowChoiceDialog("", components);
 
       if (t === "close") {
         trading = false;

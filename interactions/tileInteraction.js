@@ -22,14 +22,34 @@ import { getLocationBehaviorType } from "./combat-system/databases/location-rule
 // Helper function to get image component for location
 function getLocationImageComponent(location, x, y) {
   const locationImages = {
-    city: "images/city-01.jpg",
-    village: "images/village-01.jpg",
-    farm: "images/farm-01.jpg",
-    waterfalls: "images/waterfalls-01.jpg",
-    camp: "images/camp-01.png",
-    hamlet: "images/hamlet-01.png",
-    outpost: "images/outpost-01.png",
-    ruin: ["images/ruin-01.png", "images/ruin-02.png", "images/ruin-03.png"],
+    army: ["images/army-01.png", "images/army-02.png"],
+    trader: ["images/trader-01.png", "images/trader-02.png"],
+    caravan: ["images/caravan-01.png"],
+    npc: ["images/npc-01.png"],
+    group: ["images/group-01.png", "images/group-02.png"],
+    city: ["images/city-01.png", "images/city-02.png"],
+    village: [
+      "images/village-01.png",
+      "images/village-02.png",
+      "images/village-03.png",
+    ],
+    farm: ["images/farm-01.png", "images/farm-02.png"],
+    waterfalls: ["images/waterfalls-01.png", "images/waterfalls-02.png"],
+    camp: [
+      "images/camp-01.png",
+      "images/camp-02.png",
+      "images/camp-03.png",
+      "images/camp-04.png",
+    ],
+    hamlet: ["images/hamlet-01.png", "images/hamlet-02.png"],
+    outpost: ["images/outpost-01.png", "images/outpost-02.png"],
+    ruin: [
+      "images/ruin-01.png",
+      "images/ruin-02.png",
+      "images/ruin-03.png",
+      "images/ruin-04.png",
+      "images/ruin-05.png",
+    ],
     volcano: ["images/volcano-01.png", "images/volcano-02.png"],
     "monster caves": [
       "images/monster-caves-01.png",
@@ -61,6 +81,43 @@ function getLocationImageComponent(location, x, y) {
     type: "image",
     src: imagePath,
     alt: location,
+    maxWidth: "100%",
+    marginBottom: "15px",
+  };
+}
+
+// Helper function to get image component for entity
+function getEntityImageComponent(entity, x, y) {
+  const entityImages = {
+    npc: ["images/npc-01.png", "images/npc-02.png"],
+    group: ["images/group-01.png", "images/group-02.png"],
+    caravan: ["images/caravan-01.png", "images/caravan-02.png"],
+    trader: ["images/trader-01.png", "images/trader-02.png"],
+    army: ["images/army-01.png", "images/army-02.png"],
+  };
+
+  let imagePath = entityImages[entity];
+  if (!imagePath) {
+    return null;
+  }
+
+  // If imagePath is an array, deterministically select one based on hash
+  if (Array.isArray(imagePath)) {
+    if (x !== undefined && y !== undefined) {
+      // Use hash with a seed value of 0 for image selection
+      const hashValue = hash(x, y, 0);
+      const imageIndex = Math.floor(hashValue * imagePath.length);
+      imagePath = imagePath[imageIndex];
+    } else {
+      // Fallback to first image if coordinates not provided
+      imagePath = imagePath[0];
+    }
+  }
+
+  return {
+    type: "image",
+    src: imagePath,
+    alt: entity,
     maxWidth: "100%",
     marginBottom: "15px",
   };
@@ -159,12 +216,7 @@ async function showMinimalMenuAfterRecruitment(tile) {
     options.unshift(locationImage);
   }
 
-  const msg = `At ${tile.location !== "none" ? tile.location : ""} ${
-    tile.entity !== "none" ? tile.entity : ""
-  }`.trim();
-  const finalMsg = msg === "At" ? "On this tile" : msg;
-
-  const choice = await getShowChoiceDialog(finalMsg, options);
+  const choice = await getShowChoiceDialog("", options);
 
   // Handle the choices
   if (choice === "water") {
@@ -254,12 +306,17 @@ async function showMenuAfterEntityInteraction(tile) {
     });
   }
 
-  const msg = `At ${tile.location !== "none" ? tile.location : ""} ${
-    tile.entity !== "none" ? tile.entity : ""
-  }`.trim();
-  const finalMsg = msg === "At" ? "On this tile" : msg;
+  // Add entity image if available (at the top, after all buttons are added)
+  const entityImage = getEntityImageComponent(
+    tile.entity,
+    gameState.px,
+    gameState.py
+  );
+  if (entityImage) {
+    options.unshift(entityImage);
+  }
 
-  const choice = await getShowChoiceDialog(finalMsg, options);
+  const choice = await getShowChoiceDialog("", options);
 
   // Handle the choice
   if (choice === "9") {
@@ -295,7 +352,7 @@ export async function checkTileInteraction(tile) {
 
       // After rescue attempt, show combat option
       const fightLabel = getFightButtonLabel(tile);
-      const combatChoice = await getShowChoiceDialog(`At ${tile.entity}`, [
+      const combatChoice = await getShowChoiceDialog("", [
         { type: "button", label: fightLabel || "⚔️ Fight", value: "fight" },
         { type: "button", label: "🚶 Leave", value: "leave" },
       ]);
@@ -640,14 +697,14 @@ export async function checkTileInteraction(tile) {
       value: "9",
     });
   }
-  let msg = "";
   if (tile.location === "peaks" && tile.entity === "none") {
     return;
   }
-  msg = `At ${tile.location !== "none" ? tile.location : ""} ${
-    tile.entity !== "none" ? tile.entity : ""
-  }`.trim();
-  if (msg === "At") {
+
+  // Check if we have a location or entity to show dialog for
+  const hasLocation = tile.location !== "none";
+  const hasEntity = tile.entity !== "none";
+  if (!hasLocation && !hasEntity) {
     return; // Don't show dialog for empty tiles
   }
 
@@ -661,6 +718,16 @@ export async function checkTileInteraction(tile) {
     options.unshift(locationImage);
   }
 
-  let choice = await getShowChoiceDialog(msg, options);
+  // Add entity image if available (for npc, group, caravan, trader, army)
+  const entityImage = getEntityImageComponent(
+    tile.entity,
+    gameState.px,
+    gameState.py
+  );
+  if (entityImage) {
+    options.unshift(entityImage);
+  }
+
+  let choice = await getShowChoiceDialog("", options);
   await getHandleChoiceDialog(choice, tile);
 }
