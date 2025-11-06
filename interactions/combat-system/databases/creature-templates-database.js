@@ -826,8 +826,8 @@ export const creatureTemplates = {
       survival: 3,
     },
     equipment: {
-      weapon: "excellent mithril [warhammer]",
-      armor: "excellent mithril [plate-armor]",
+      weapon: "excellent sil-teel [warhammer]",
+      armor: "excellent sil-teel [plate-armor]",
     },
     discoveryMessages: [
       "A towering troll chief clad in ornate armor stands atop a pile of bones.",
@@ -869,8 +869,8 @@ export const creatureTemplates = {
       lore_knowledge: 2,
     },
     equipment: {
-      weapon: "excellent mithril [club]",
-      armor: "excellent mithril [plate-armor]",
+      weapon: "excellent sil-teel [club]",
+      armor: "excellent sil-teel [plate-armor]",
     },
     discoveryMessages: [
       "An ancient troll elder with weathered skin and wise eyes emerges from the shadows.",
@@ -912,8 +912,8 @@ export const creatureTemplates = {
       lore_knowledge: 2,
     },
     equipment: {
-      weapon: "good mithril [claws]",
-      armor: "good mithril [dragon-scales]",
+      weapon: "good sil-teel [claws]",
+      armor: "good sil-teel [dragon-scales]",
     },
     discoveryMessages: [
       "A young dragon with gleaming scales emerges from its lair, still growing into its power.",
@@ -953,8 +953,8 @@ export const creatureTemplates = {
       intimidation: 1,
     },
     equipment: {
-      weapon: "fair mithril [tiny-claws]",
-      armor: "fair mithril [soft-scales]",
+      weapon: "fair sil-teel [tiny-claws]",
+      armor: "fair sil-teel [soft-scales]",
     },
     discoveryMessages: [
       "A tiny baby dragon peeks out from behind its parent's tail, scales still soft and gleaming.",
@@ -997,8 +997,8 @@ export const creatureTemplates = {
       lore_knowledge: 3,
     },
     equipment: {
-      weapon: "excellent mithril [claws]",
-      armor: "excellent mithril [dragon-scales]",
+      weapon: "excellent sil-teel [claws]",
+      armor: "excellent sil-teel [dragon-scales]",
     },
     discoveryMessages: [
       "A mature adult dragon with powerful scales emerges from its mountain lair.",
@@ -1041,8 +1041,8 @@ export const creatureTemplates = {
       lore_knowledge: 4,
     },
     equipment: {
-      weapon: "excellent mithril [claws]",
-      armor: "excellent mithril [dragon-scales]",
+      weapon: "excellent sil-teel [claws]",
+      armor: "excellent sil-teel [dragon-scales]",
     },
     discoveryMessages: [
       "An elder dragon with ancient scales and immense power emerges from its lair.",
@@ -1085,8 +1085,8 @@ export const creatureTemplates = {
       lore_knowledge: 6,
     },
     equipment: {
-      weapon: "legendary mithril [claws]",
-      armor: "legendary mithril [dragon-scales]",
+      weapon: "legendary sil-teel [claws]",
+      armor: "legendary sil-teel [dragon-scales]",
     },
     discoveryMessages: [
       "An ancient dragon of immense power and wisdom emerges from its legendary lair.",

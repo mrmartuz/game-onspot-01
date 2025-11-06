@@ -23,6 +23,9 @@ import {
 import {
   getArmorInitiativeModifier,
 } from "./databases/armor-initiative-modifiers.js";
+import {
+  getArmorDamageReduction as getArmorDamageReductionFromDB,
+} from "./databases/armor-damage-reduction.js";
 
 /**
  * Get primary weapon skill from equipment string
@@ -50,7 +53,7 @@ export function getWeaponDamageBonus(equipmentString) {
   // Base damage from weapon type (e.g., sword=2, axe=3)
   const baseDamage = getWeaponBaseDamageFromItem(parsed.type);
   
-  // Material bonus (e.g., mithril=+2, steel=+1, wood=-2)
+  // Material bonus (e.g., sil-teel=+2, steel=+1, wood=-2)
   const materialBonus = getMaterialWeaponDamageBonus(parsed.material);
   
   // Status/rarity bonus (e.g., excellent=+3, good=+2, poor=-1)
@@ -97,7 +100,7 @@ export function getArmorDefenseBonus(equipmentString) {
   
   if (!isArmor) return 0;
   
-  // Material bonus (e.g., mithril=+3, steel=+2, leather=-1)
+  // Material bonus (e.g., sil-teel=+3, steel=+2, leather=-1)
   const materialBonus = getMaterialArmorDefenseBonus(parsed.material);
   
   // Status/rarity bonus (e.g., excellent=+4, good=+3, poor=+1)
@@ -212,6 +215,17 @@ export function getCharacterEquipmentBonuses(character) {
   }
   
   return bonuses;
+}
+
+/**
+ * Get armor damage reduction percentage (1-80%)
+ * @param {string} equipmentString - Armor equipment string
+ * @returns {number} Damage reduction percentage (1-80)
+ */
+export function getArmorDamageReduction(equipmentString) {
+  if (!equipmentString) return 0;
+  
+  return getArmorDamageReductionFromDB(equipmentString);
 }
 
 /**

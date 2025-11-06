@@ -1146,7 +1146,7 @@ export const equipmentDatabase = {
       shieldwork: 2,
       survival: 1,
     },
-    materials: ["iron", "steel", "mithril"],
+    materials: ["iron", "steel", "sil-teel"],
     description: "Interlocked metal rings providing good protection",
   },
   plate: {
@@ -1159,7 +1159,7 @@ export const equipmentDatabase = {
       shieldwork: 3,
       intimidation: 1,
     },
-    materials: ["steel", "mithril"],
+    materials: ["steel", "sil-teel"],
     description: "Heavy metal plates offering maximum protection",
   },
   leather: {
@@ -1200,7 +1200,7 @@ export const equipmentDatabase = {
       swords: 3,
       tactics: 1,
     },
-    materials: ["iron", "steel", "silver", "mithril"],
+    materials: ["iron", "steel", "silver", "sil-teel"],
     description: "A versatile one-handed sword",
   },
   battleaxe: {
@@ -1213,7 +1213,7 @@ export const equipmentDatabase = {
       great_axes: 2,
       intimidation: 2,
     },
-    materials: ["iron", "steel", "mithril"],
+    materials: ["iron", "steel", "sil-teel"],
     description: "A heavy axe designed for combat",
   },
   longbow: {
@@ -1295,7 +1295,7 @@ export const equipmentDatabase = {
       persuasion: 1,
       performance: 1,
     },
-    materials: ["silver", "gold", "mithril"],
+    materials: ["silver", "gold", "sil-teel"],
     description: "A decorative ring that may have magical properties",
   },
   amulet: {
@@ -1308,7 +1308,7 @@ export const equipmentDatabase = {
       divine_magic: 2,
       healing: 1,
     },
-    materials: ["silver", "gold", "mithril"],
+    materials: ["silver", "gold", "sil-teel"],
     description: "A protective amulet with divine properties",
   },
 

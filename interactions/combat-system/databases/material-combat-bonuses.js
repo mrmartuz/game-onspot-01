@@ -4,7 +4,9 @@
 export const materialCombatBonuses = {
   // Weapon material damage bonuses
   weaponDamage: {
-    mithril: 2,
+    obsura: 4, // Top tier (cost 35, durability 90)
+    aurene: 3, // Top tier (cost 30, durability 80)
+    "sil-teel": 2, // High tier (silver and steel alloy - hard as steel, reflective as polished silver)
     steel: 1,
     iron: 0,
     bronze: -1,
@@ -22,7 +24,9 @@ export const materialCombatBonuses = {
   },
   // Armor material defense bonuses
   armorDefense: {
-    mithril: 3,
+    obsura: 5, // Top tier
+    aurene: 4, // Top tier
+    "sil-teel": 3, // High tier
     steel: 2,
     iron: 1,
     bronze: 0,
@@ -37,15 +41,15 @@ export const materialCombatBonuses = {
 
 // Helper functions
 export function getWeaponDamageBonus(materialName) {
-  return materialCombatBonuses.weaponDamage[materialName] || 
-         materialCombatBonuses.weaponDamage.default;
+  return (
+    materialCombatBonuses.weaponDamage[materialName] ||
+    materialCombatBonuses.weaponDamage.default
+  );
 }
 
 export function getArmorDefenseBonus(materialName) {
-  return materialCombatBonuses.armorDefense[materialName] || 
-         materialCombatBonuses.armorDefense.default;
+  return (
+    materialCombatBonuses.armorDefense[materialName] ||
+    materialCombatBonuses.armorDefense.default
+  );
 }
-
-
-
-

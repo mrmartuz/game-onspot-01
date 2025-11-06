@@ -3,6 +3,7 @@
 
 import { parseEquipmentString } from "../equipment.js";
 import { getCombatState } from "./combat-state.js";
+import { normalizeArmorType } from "./databases/armor-utils.js";
 
 const GRID_SIZE = 10;
 
@@ -49,8 +50,10 @@ function calculateArmorMovementPenalty(armor) {
   if (!parsed) return 0;
   
   // Heavy armor reduces movement by 1
+  const normalizedType = normalizeArmorType(parsed.type);
   const heavyArmor = ["plate-armor", "chainmail-armor"];
-  if (heavyArmor.some(a => parsed.type.includes(a))) {
+  
+  if (normalizedType && heavyArmor.includes(normalizedType)) {
     return -1;
   }
   return 0;

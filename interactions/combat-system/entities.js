@@ -10,6 +10,7 @@ import {
   getEquipmentInitiativeModifier,
   isRangedWeapon,
   getAmmoType,
+  getArmorDamageReduction,
 } from "./equipment-combat-helpers.js";
 import {
   getSkillDamageBonus,
@@ -153,8 +154,15 @@ export class Monster extends CombatEntity {
   }
 
   calculateActualDamage(amount) {
-    // Apply resistances and vulnerabilities
+    // Apply armor damage reduction FIRST (before resistances)
     let finalDamage = amount;
+    
+    if (this.equipment?.armor) {
+      const armorReduction = getArmorDamageReduction(this.equipment.armor);
+      if (armorReduction > 0) {
+        finalDamage *= (1 - armorReduction / 100);
+      }
+    }
 
     // Apply resistances (reduce damage)
     Object.keys(this.resistances).forEach((resistance) => {
@@ -379,8 +387,15 @@ export class Ally extends CombatEntity {
   }
 
   calculateActualDamage(amount) {
-    // Apply resistances and vulnerabilities from character
+    // Apply armor damage reduction FIRST (before resistances)
     let finalDamage = amount;
+    
+    if (this.character?.equipment?.armor) {
+      const armorReduction = getArmorDamageReduction(this.character.equipment.armor);
+      if (armorReduction > 0) {
+        finalDamage *= (1 - armorReduction / 100);
+      }
+    }
 
     // Apply resistances (reduce damage)
     Object.keys(this.character.resistances || {}).forEach((resistance) => {
