@@ -32,7 +32,7 @@ import {
   getLocationSpawnRules,
   selectDragonCaveComposition,
 } from "./databases/location-rules.js";
-import { getAllMonsterTypes, getMonsterTypesByTier } from "./databases/monster-tiers.js";
+import { getAllMonsterTypes, getMonsterTypesByTier, determineMonsterTier } from "./databases/monster-tiers.js";
 import { creatureTemplates } from "./creature-templates.js";
 import { gameState } from "../../gamestate/game_variables.js";
 
@@ -127,9 +127,26 @@ async function generateLocationMonsters(
   
   if (behaviorType === "beast-cave") {
     // Beast cave - mixed beast group
-    const beastRaces = getBeastRaces();
-    const beastType = beastRaces.find(r => r === mainRace) || beastRaces[0];
-    return await generateMixedBeastGroup(beastType, monsterCount, x, y);
+    // Determine tier based on room or group size
+    const tier = roomData ? roomData.tier : determineMonsterTier(gameState.group ? gameState.group.length : 1);
+    
+    // Get beast types available in this tier
+    const tierTypes = getMonsterTypesByTier(tier);
+    const allBeastRaces = getBeastRaces();
+    
+    // Filter beast races to only those available in current tier
+    const availableBeastRaces = allBeastRaces.filter(race => {
+      return tierTypes.some(type => {
+        const t = creatureTemplates[type];
+        return t && t.race === race;
+      });
+    });
+    
+    // Use main race if available in tier, otherwise use first available
+    const beastRacesToUse = availableBeastRaces.length > 0 ? availableBeastRaces : allBeastRaces;
+    const beastType = beastRacesToUse.find(r => r === mainRace) || beastRacesToUse[0];
+    
+    return await generateMixedBeastGroup(beastType, monsterCount, x, y, tier);
   }
   
   // Regular location spawns use weighted group types
@@ -175,20 +192,46 @@ async function generateEntityMonsters(
   groupType
 ) {
   if (entityType === "beast") {
+    // Determine tier based on group size
+    const groupMemberCount = gameState.group ? gameState.group.length : 1;
+    const tier = determineMonsterTier(groupMemberCount);
+    
+    // Get beast types available in this tier
+    const tierTypes = getMonsterTypesByTier(tier);
+    const allBeastRaces = getBeastRaces();
+    
+    // Filter beast races to only those available in current tier
+    // This ensures early game gets wolves (early tier), not bears/mountain lions (mid/late tier)
+    const availableBeastRaces = allBeastRaces.filter(race => {
+      return tierTypes.some(type => {
+        const t = creatureTemplates[type];
+        return t && t.race === race;
+      });
+    });
+    
+    // If no beasts available in tier, fallback to early tier beasts
+    const beastRacesToUse = availableBeastRaces.length > 0 
+      ? availableBeastRaces 
+      : allBeastRaces.filter(race => {
+          const earlyTypes = getMonsterTypesByTier("early");
+          return earlyTypes.some(type => {
+            const t = creatureTemplates[type];
+            return t && t.race === race;
+          });
+        });
+    
     // Beast entity encounters
     if (groupType.includes("leader") || groupType.endsWith("_leader")) {
       // Beast with leader
-      const beastRaces = getBeastRaces();
       const hashValue = getHashValue(x, y, 11000);
-      const beastType = beastRaces[Math.floor(hashValue * beastRaces.length)];
-      const allTypes = getAllMonsterTypes();
-      const beastTypes = allTypes.filter(type => {
+      const beastType = beastRacesToUse[Math.floor(hashValue * beastRacesToUse.length)];
+      const tierTypesForRace = tierTypes.filter(type => {
         const t = creatureTemplates[type];
         return t && t.race === beastType;
       });
       
-      // Find a leader type
-      const leaderTypes = beastTypes.filter(type => {
+      // Find a leader type in the tier
+      const leaderTypes = tierTypesForRace.filter(type => {
         const t = creatureTemplates[type];
         return t && (t.class === "Alpha" || t.class === "Elder");
       });
@@ -199,11 +242,20 @@ async function generateEntityMonsters(
       }
     }
     
-    // Regular beast group
-    const beastRaces = getBeastRaces();
+    // Regular beast group - prioritize wolves in early tier
     const hashValue = getHashValue(x, y, 11000);
-    const beastType = beastRaces[Math.floor(hashValue * beastRaces.length)];
-    return await generateMixedBeastGroup(beastType, monsterCount, x, y);
+    let beastType;
+    
+    if (tier === "early" && beastRacesToUse.includes("Wolf")) {
+      // In early tier, heavily favor wolves (80% chance)
+      const wolfChance = hashValue < 0.8;
+      beastType = wolfChance ? "Wolf" : beastRacesToUse[Math.floor(hashValue * beastRacesToUse.length)];
+    } else {
+      // Other tiers: random selection from available
+      beastType = beastRacesToUse[Math.floor(hashValue * beastRacesToUse.length)];
+    }
+    
+    return await generateMixedBeastGroup(beastType, monsterCount, x, y, tier);
   }
   
   // Monster entity encounters
@@ -265,14 +317,29 @@ async function generateMonstersByGroupType(
   
   if (groupType === GROUP_TYPES.MIXED_DIFFERENT) {
     // Mixed different (intelligent + beast)
+    // Determine tier for beast selection
+    const groupMemberCount = gameState.group ? gameState.group.length : 1;
+    const tier = determineMonsterTier(groupMemberCount);
+    const tierTypes = getMonsterTypesByTier(tier);
+    
     const intelligentRace = isIntelligentRace(mainRace) ? mainRace : getIntelligentRaces()[0];
-    const beastRaces = getBeastRaces();
-    const beastRace = beastRaces[Math.floor(Math.random() * beastRaces.length)];
+    const allBeastRaces = getBeastRaces();
+    
+    // Filter beast races by tier
+    const availableBeastRaces = allBeastRaces.filter(race => {
+      return tierTypes.some(type => {
+        const t = creatureTemplates[type];
+        return t && t.race === race;
+      });
+    });
+    
+    const beastRacesToUse = availableBeastRaces.length > 0 ? availableBeastRaces : allBeastRaces;
+    const beastRace = beastRacesToUse[Math.floor(Math.random() * beastRacesToUse.length)];
     return await generateMixedDifferentGroup(intelligentRace, beastRace, monsterCount, x, y);
   }
   
   if (groupType === GROUP_TYPES.MIXED_BEAST || groupType === GROUP_TYPES.REGULAR_BEAST) {
-    // Mixed/regular beast
+    // Mixed/regular beast - tier filtering handled by generateMixedBeastGroup
     const beastType = isBeastRace(mainRace) ? mainRace : getBeastRaces()[0];
     return await generateMixedBeastGroup(beastType, monsterCount, x, y);
   }

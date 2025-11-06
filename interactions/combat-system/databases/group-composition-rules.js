@@ -16,15 +16,15 @@ export const raceCategories = {
   Orc: RACE_CATEGORIES.INTELLIGENT,
   Troll: RACE_CATEGORIES.INTELLIGENT,
   Kobold: RACE_CATEGORIES.INTELLIGENT,
-  
+
   // Beast races (cannot mix cross-species)
   Wolf: RACE_CATEGORIES.BEAST,
   Bear: RACE_CATEGORIES.BEAST,
   MountainLion: RACE_CATEGORIES.BEAST,
-  
+
   // Demon races (only mix with demons)
   Demon: RACE_CATEGORIES.DEMON,
-  
+
   // Dragon races (special category)
   Dragon: RACE_CATEGORIES.DRAGON,
 };
@@ -46,11 +46,11 @@ export const leaderClassMappings = {
   Orc: ["chief", "warrior", "raider"], // orc_chief, orc_warrior, orc_raider
   Troll: ["chief", "warrior", "elder"], // troll_chief, troll_warrior, troll_elder
   Kobold: ["shaman", "chief"], // kobold_shaman, kobold_chief
-  Wolf: ["Alpha", "Elder"], // wolf_alpha, wolf_dire (elder class)
+  Wolf: ["Alpha", "Elder"], // wolf_alpha, wolf_elder (elder class)
   Bear: ["Elder"], // bear_grizzly (elder class)
-  MountainLion: ["hunter", "Adult"], // mountain_lion_hunter, mountain_lion_adult
-  Demon: ["lord", "general", "reaper"], // demon_lord, general, reaper
-  Dragon: ["Adult", "Ancient", "Ancient"], // dragon_adult, dragon_ancient
+  MountainLion: ["Alpha", "Adult"], // mountain_lion_alpha, mountain_lion_adult
+  Demon: ["lord", "general", "reaper"], // demon_lord, demon_general, demon_reaper
+  Dragon: ["Adult", "Elder", "Ancient"], // dragon_adult, dragon_elder, dragon_ancient
 };
 
 // Group type definitions
@@ -67,18 +67,18 @@ export const GROUP_TYPES = {
 export const entityGroupTypeWeights = {
   // When encountering "beast" entity
   beast: {
-    [GROUP_TYPES.REGULAR_BEAST]: 0.70, // 70% beast only
-    [GROUP_TYPES.MIXED_BEAST]: 0.00, // 0% mixed beast (beasts don't mix cross-species)
-    [GROUP_TYPES.REGULAR_BEAST + "_leader"]: 0.20, // 20% beast with leader
-    [GROUP_TYPES.MIXED_DIFFERENT]: 0.10, // 10% other (could be intelligent + beast encounter)
+    [GROUP_TYPES.REGULAR_BEAST]: 0.7, // 70% beast only
+    [GROUP_TYPES.MIXED_BEAST]: 0.0, // 0% mixed beast (beasts don't mix cross-species)
+    [GROUP_TYPES.REGULAR_BEAST + "_leader"]: 0.2, // 20% beast with leader
+    [GROUP_TYPES.MIXED_DIFFERENT]: 0.1, // 10% other (could be intelligent + beast encounter)
   },
-  
+
   // When encountering "monster" entity
   monster: {
-    [GROUP_TYPES.LEADER]: 0.10, // 10% leader groups
-    [GROUP_TYPES.MIXED_INTELLIGENT]: 0.30, // 30% mixed intelligent
-    [GROUP_TYPES.REGULAR_INTELLIGENT]: 0.40, // 40% regular intelligent (single race)
-    [GROUP_TYPES.MIXED_DIFFERENT]: 0.20, // 20% intelligent + creature (e.g., orcs + wolf)
+    [GROUP_TYPES.LEADER]: 0.1, // 10% leader groups
+    [GROUP_TYPES.MIXED_INTELLIGENT]: 0.3, // 30% mixed intelligent
+    [GROUP_TYPES.REGULAR_INTELLIGENT]: 0.4, // 40% regular intelligent (single race)
+    [GROUP_TYPES.MIXED_DIFFERENT]: 0.2, // 20% intelligent + creature (e.g., orcs + wolf)
   },
 };
 
@@ -88,23 +88,23 @@ export const locationGroupTypeWeights = {
   // For regular caves and monster-caves (not special types)
   default: {
     [GROUP_TYPES.LEADER]: 0.05, // 5% leader groups (rarer in locations)
-    [GROUP_TYPES.MIXED_INTELLIGENT]: 0.30, // 30% mixed intelligent
+    [GROUP_TYPES.MIXED_INTELLIGENT]: 0.3, // 30% mixed intelligent
     [GROUP_TYPES.REGULAR_INTELLIGENT]: 0.45, // 45% regular intelligent
-    [GROUP_TYPES.MIXED_DIFFERENT]: 0.20, // 20% intelligent + creature
+    [GROUP_TYPES.MIXED_DIFFERENT]: 0.2, // 20% intelligent + creature
   },
-  
+
   // For beast caves
   beast: {
-    [GROUP_TYPES.REGULAR_BEAST]: 0.70,
-    [GROUP_TYPES.REGULAR_BEAST + "_leader"]: 0.20,
-    [GROUP_TYPES.MIXED_DIFFERENT]: 0.10,
+    [GROUP_TYPES.REGULAR_BEAST]: 0.7,
+    [GROUP_TYPES.REGULAR_BEAST + "_leader"]: 0.2,
+    [GROUP_TYPES.MIXED_DIFFERENT]: 0.1,
   },
-  
+
   // For dragon caves (volcano locations)
   dragon: {
     // Special logic handled separately - can be dragon + servitude or dragon + hatchlings
-    [GROUP_TYPES.LEADER]: 0.40, // Dragons often appear as leaders
-    [GROUP_TYPES.MIXED_INTELLIGENT]: 0.60, // Dragon + servitude (goblins/kobolds)
+    [GROUP_TYPES.LEADER]: 0.4, // Dragons often appear as leaders
+    [GROUP_TYPES.MIXED_INTELLIGENT]: 0.6, // Dragon + servitude (goblins/kobolds)
   },
 };
 
@@ -155,12 +155,12 @@ export function isDragonRace(race) {
 export function canRacesMix(race1, race2) {
   // Same race always can mix
   if (race1 === race2) return true;
-  
+
   // Demons only mix with demons
   if (isDemonRace(race1) || isDemonRace(race2)) {
     return isDemonRace(race1) && isDemonRace(race2);
   }
-  
+
   // Dragons special case - can mix with goblins/kobolds (servitude)
   if (isDragonRace(race1)) {
     return race2 === "Goblin" || race2 === "Kobold";
@@ -168,25 +168,27 @@ export function canRacesMix(race1, race2) {
   if (isDragonRace(race2)) {
     return race1 === "Goblin" || race1 === "Kobold";
   }
-  
+
   // Beasts cannot mix cross-species
   if (isBeastRace(race1) || isBeastRace(race2)) {
     // Can only mix if both are beasts AND same species
     return isBeastRace(race1) && isBeastRace(race2) && race1 === race2;
   }
-  
+
   // Intelligent races check compatibility matrix
   if (isIntelligentRace(race1) && isIntelligentRace(race2)) {
     const compatible = raceCompatibilityMatrix[race1];
     return compatible && compatible.includes(race2);
   }
-  
+
   // Intelligent + beast is allowed (mixed different type)
-  if ((isIntelligentRace(race1) && isBeastRace(race2)) ||
-      (isIntelligentRace(race2) && isBeastRace(race1))) {
+  if (
+    (isIntelligentRace(race1) && isBeastRace(race2)) ||
+    (isIntelligentRace(race2) && isBeastRace(race1))
+  ) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -206,11 +208,22 @@ export function getLeaderTypes(race) {
  */
 export function isLeaderClass(className) {
   const leaderClasses = [
-    "chief", "shaman", "Alpha", "Elder", "lord", "general", "reaper",
-    "warrior", "raider", "hunter", "Adult", "Ancient"
+    "chief",
+    "shaman",
+    "Alpha",
+    "Elder",
+    "lord",
+    "general",
+    "reaper",
+    "warrior",
+    "raider",
+    "hunter",
+    "Adult",
+    "Ancient",
   ];
-  return leaderClasses.some(leaderClass => 
-    className && className.toLowerCase().includes(leaderClass.toLowerCase())
+  return leaderClasses.some(
+    (leaderClass) =>
+      className && className.toLowerCase().includes(leaderClass.toLowerCase())
   );
 }
 
@@ -227,7 +240,7 @@ export function getGroupTypeWeights(encounterType) {
   if (encounterType === "monster") {
     return entityGroupTypeWeights.monster;
   }
-  
+
   // Location encounters
   if (encounterType === "dragon-cave" || encounterType === "volcano") {
     return locationGroupTypeWeights.dragon;
@@ -235,7 +248,7 @@ export function getGroupTypeWeights(encounterType) {
   if (encounterType === "beast-cave") {
     return locationGroupTypeWeights.beast;
   }
-  
+
   // Default location weights
   return locationGroupTypeWeights.default;
 }
@@ -250,14 +263,14 @@ export function selectGroupType(weights, randomValue) {
   const entries = Object.entries(weights);
   let cumulative = 0;
   const random = randomValue || Math.random();
-  
+
   for (const [groupType, weight] of entries) {
     cumulative += weight;
     if (random <= cumulative) {
       return groupType;
     }
   }
-  
+
   // Fallback to first type
   return entries[0]?.[0] || GROUP_TYPES.REGULAR_INTELLIGENT;
 }
@@ -269,27 +282,27 @@ export function selectGroupType(weights, randomValue) {
  */
 export function getCompatibleRaces(baseRace) {
   if (!baseRace) return [];
-  
+
   // Demons only compatible with demons
   if (isDemonRace(baseRace)) {
     return ["Demon"];
   }
-  
+
   // Dragons compatible with servitude races
   if (isDragonRace(baseRace)) {
     return ["Dragon", "Goblin", "Kobold"];
   }
-  
+
   // Beasts compatible with same species only
   if (isBeastRace(baseRace)) {
     return [baseRace]; // Only same species
   }
-  
+
   // Intelligent races use compatibility matrix
   if (isIntelligentRace(baseRace)) {
     return raceCompatibilityMatrix[baseRace] || [baseRace];
   }
-  
+
   return [baseRace];
 }
 
@@ -322,6 +335,3 @@ export function getDemonRaces() {
     .filter(([_, category]) => category === RACE_CATEGORIES.DEMON)
     .map(([race, _]) => race);
 }
-
-
-
