@@ -6,6 +6,11 @@ import {
   getKilledTile,
   addCachedTile,
 } from "../gamestate/gameStateSetGet.js";
+import {
+  getLocationEmoji,
+  getFloraEmoji,
+  getEntityEmoji,
+} from "../gamestate/emoji-database.js";
 
 export function getBiome(x, y) {
   let dist = Math.sqrt(x * x + y * y);
@@ -37,23 +42,6 @@ export function getTile(x, y) {
   let biome = getBiome(x, y);
   let change = gameState.changed.find((t) => t.x === x && t.y === y);
 
-  let entity = "none";
-  if (!getKilledTile(key)) {
-    let h3 = hash(x, y, 3);
-    if (h3 < 0.05) {
-      const entities = [
-        "monster",
-        "beast",
-        "animal",
-        "npc",
-        "group",
-        "army",
-        "trader",
-        "caravan",
-      ];
-      entity = entities[Math.floor(hash(x, y, 4) * entities.length)];
-    }
-  }
   // Compute raw height and flora
   let rawHeight = hash(x, y, 5) * 11;
   let rawFlora = hash(x, y, 6) * 11;
@@ -95,6 +83,7 @@ export function getTile(x, y) {
   // Determine terrain based on smoothed height
   let terrain = height < 3 ? "sand" : height < 6 ? "dirt" : "rock";
 
+  // Generate location first
   let location = change ? change.type : "none";
   if (location === "none") {
     let h1 = hash(x, y, 1);
@@ -160,6 +149,25 @@ export function getTile(x, y) {
       location = locations[Math.floor(hash(x, y, 2) * locations.length)];
     }
   }
+
+  // Generate entity only if no location exists and tile is not killed
+  let entity = "none";
+  if (!getKilledTile(key) && location === "none") {
+    let h3 = hash(x, y, 3);
+    if (h3 < 0.05) {
+      const entities = [
+        "monster",
+        "beast",
+        "animal",
+        "npc",
+        "group",
+        "army",
+        "trader",
+        "caravan",
+      ];
+      entity = entities[Math.floor(hash(x, y, 4) * entities.length)];
+    }
+  }
   // Determine flora type based on biome if flora is present
   let flora_type = "none";
   if (flora > 5) {
@@ -221,27 +229,27 @@ export function getTile(x, y) {
   } else if (biome === "taiga") {
     if (terrain === "sand") {
       if (r < 0.25) {
-        color = "#191611";
+        color = "#2C4A52";
       } else if (r < 0.5) {
-        color = "#1B1E15";
+        color = "#345B63";
       } else {
-        color = "#1C2618";
+        color = "#3D6A73";
       }
     } else if (terrain === "dirt") {
       if (r < 0.25) {
-        color = "#191611";
+        color = "#1F4D3F";
       } else if (r < 0.5) {
-        color = "#1B1E15";
+        color = "#2A5C4E";
       } else {
-        color = "#1C2618";
+        color = "#356B5D";
       }
     } else {
       if (r < 0.33) {
-        color = "#191611";
+        color = "#1A3A42";
       } else if (r < 0.66) {
-        color = "#1B1E15";
+        color = "#234B53";
       } else {
-        color = "#1C2618";
+        color = "#2C5A62";
       }
     }
   } else if (biome === "desert") {
@@ -308,54 +316,10 @@ export function updateTile(x, y) {
   addVisitedTile(key);
 }
 
-export function getEmojiForLocation(type) {
-  const map = {
-    waterfalls: "🏞️",
-    volcano: "🌋",
-    canyon: "⛰️",
-    geyser: "🗻",
-    peaks: "🏔️",
-    "monster caves": "🕷️",
-    cave: "🦇",
-    ruin: "🏚️",
-    camp: "⛺",
-    farm: "🏡",
-    outpost: "🏕️",
-    hamlet: "🏠",
-    village: "🏘️",
-    city: "🏰",
-  };
-  return map[type] || "🪨";
-}
-
-export function getEmojiForFlora(type) {
-  const map = {
-    oak: "🌳",
-    pine: "🌲",
-    palm: "🌴",
-    cactus: "🌵",
-    "sun-flower": "🌻",
-    iris: "🪻",
-    tulip: "🌷",
-    mushroom: "🍄",
-    "dead-tree": "🌵",
-  };
-  return map[type] || "🍀";
-}
-
-export function getEmojiForEntity(type) {
-  const map = {
-    monster: "🧌",
-    beast: "🦏",
-    animal: "🐎",
-    npc: "🧍🏻",
-    group: "👫",
-    army: "💂",
-    trader: "🧑‍🎓",
-    caravan: "🧑‍✈️",
-  };
-  return map[type] || "🥷🏻";
-}
+// Re-export the centralized emoji functions for backward compatibility
+export { getLocationEmoji as getEmojiForLocation };
+export { getFloraEmoji as getEmojiForFlora };
+export { getEntityEmoji as getEmojiForEntity };
 
 export function colorToRGB(color) {
   const ctx = document.createElement("canvas").getContext("2d");

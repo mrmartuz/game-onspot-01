@@ -10,10 +10,10 @@ body {
 #game-canvas {
     position: absolute;
     top: 50px;
-    left: 0;
-    width: 100%;
-    height: calc(100vh - 80px);
+    left: 50%;
+    transform: translateX(-50%);
     background-color: black;
+    display: block;
 }
 
 #btn-n,
@@ -83,11 +83,11 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 50px;
+    height: 49px;
     background-color: gray;
     color: white;
     text-align: center;
-    line-height: 50px;
+    line-height: 49px;
     z-index: 10;
     font-size: 16px;
     display: flex;
@@ -95,6 +95,8 @@ body {
     justify-content: center;
     align-items: center;
     gap: 30px;
+    transition: background-color 5s ease, border-color 5s ease;
+    border-bottom: 1px solid transparent;
 }
 
 #gold-button,
@@ -163,7 +165,7 @@ body {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 50px;
+    height: 49px;
     background-color: gray;
     color: white;
     z-index: 10;
@@ -171,6 +173,8 @@ body {
     display: flex;
     justify-content: space-around;
     align-items: center;
+    transition: background-color 5s ease, border-color 5s ease;
+    border-top: 1px solid transparent;
 }
 
 #group-bonus-button {
@@ -196,12 +200,12 @@ body {
 
 /* New styles for dialog */
 #game-dialog {
-    position: fixed;
+    position: fixed !important;
     width: 50%;
-    max-height: calc(100vh - 100px);
-    /* Account for status bar (50px) and some padding */
-    top: 60px;
-    /* Start below the status bar */
+    max-height: calc(100vh - 60px);
+    /* Account for 30px top margin and some padding */
+    top: 30px !important;
+    /* Start 30px from the top - override browser default */
     left: 50%;
     transform: translateX(-50%);
     /* Center horizontally only */
@@ -212,12 +216,26 @@ body {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
     z-index: 20;
     text-align: left;
+    scrollbar-width: none;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     overflow-y: auto;
     /* Enable vertical scrolling */
     padding: 20px;
     box-sizing: border-box;
     /* Ensure padding doesn't increase size */
+}
+
+/* Override browser's internal dialog positioning */
+#game-dialog:-internal-dialog-in-top-layer {
+    position: fixed !important;
+    top: 30px !important;
+    inset-block-start: 8% !important;
+    inset-block-end: auto !important;
+    inset-inline-start: 50% !important;
+    inset-inline-end: auto !important;
+    transform: translateX(-50%) !important;
+    margin: 0 !important;
+    max-height: calc(100vh - 60px) !important;
 }
 
 #game-dialog .dialog-content {
@@ -306,7 +324,7 @@ body {
 }
 
 @media (max-width: 600px) {
-
+    /* Mobile-specific adjustments */
     #gold-button,
     #inventory-button,
     #group-button,
@@ -316,7 +334,66 @@ body {
     }
 
     #game-dialog {
-        width: 80%;
+        width: 90%;
+        /* Account for 30px top margin + 30px bottom margin + navigation bar space */
+        max-height: calc(100vh - 100px);
+        height: calc(100vh - 100px);
+        padding: 15px;
+    }
+
+    /* Make movement buttons larger and more touch-friendly */
+    #btn-n,
+    #btn-ne,
+    #btn-e,
+    #btn-se,
+    #btn-s,
+    #btn-sw,
+    #btn-w,
+    #btn-nw {
+        width: 60px;
+        height: 60px;
+        font-size: 28px;
+    }
+
+    /* Adjust button positions for larger buttons */
+    #btn-n {
+        top: 55px;
+        left: calc(50% - 30px);
+    }
+
+    #btn-ne {
+        top: 55px;
+        right: 5px;
+    }
+
+    #btn-e {
+        top: calc(50% + 5px);
+        right: 5px;
+    }
+
+    #btn-se {
+        bottom: 55px;
+        right: 5px;
+    }
+
+    #btn-s {
+        bottom: 55px;
+        left: calc(50% - 30px);
+    }
+
+    #btn-sw {
+        bottom: 55px;
+        left: 5px;
+    }
+
+    #btn-w {
+        top: calc(50% + 5px);
+        left: 5px;
+    }
+
+    #btn-nw {
+        top: 55px;
+        left: 5px;
     }
 }
 

@@ -117,7 +117,10 @@ export async function handleAnimal(x, y) {
         if (gameState.group.length > 1) {
           gameState.group.splice(memberToRemove, 1);
         } else {
-          await getShowDeathDialog("hunting");
+          const reloadCheck = await getShowDeathDialog("hunting");
+          if (reloadCheck === "reload") {
+            location.reload();
+          }
         }
         let health = Math.floor(Math.random() * 20 + 5);
         gameState.health -= health;

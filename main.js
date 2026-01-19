@@ -1,7 +1,7 @@
 import { resize, draw, updateStatus, canvas, ctx } from "./rendering.js";
 import { revealAround } from "./movement.js";
 import { gameState } from "./gamestate/game_variables.js";
-import { updateGroupBonus, ensureGroupBonuses, checkDeath } from "./utils.js";
+import { updateGroupBonus, checkDeath, getGroupBonus } from "./utils.js";
 import { getTile } from "./rendering/tile.js";
 import { getLoadGameDialog } from "./interactions.js";
 import {
@@ -9,15 +9,21 @@ import {
   getCheckTileInteractionDialog,
   getShowDeathDialog,
 } from "./interactions.js";
-import { timeConsumption } from "./time_system.js";
+import {
+  timeConsumption,
+  updateTimeColorCache,
+  getCurrentGameDate,
+  getTimeBasedViewDistance,
+} from "./time_system.js";
 import { setupInputs } from "./input_handlers.js";
 import {
   getStartMenuDialog,
   getCharacterCreationDialog,
-  getTitleDialog,
+  showTitleDialog,
   getGroupCreationDialog,
   getWorldGenerationDialog,
 } from "./interactions.js";
+import { showCompanionChoiceDialog } from "./interactions/companionChoiceDialog.js";
 import {
   addVisitedTile,
   addCachedTile,
@@ -32,20 +38,22 @@ resize();
 let startMenu;
 while (startMenu !== "explore" && startMenu !== "exit") {
   startMenu = await getStartMenuDialog();
-  console.log("Selected option:", startMenu);
+  "Selected option:", startMenu;
   if (startMenu === "title") {
-    //TODO: show to player title and close it after pressing
-    //TODO: insert info about the game and mechanics
-    // await getTitleDialog();
+    const titleResult = await showTitleDialog();
+    if (titleResult === "back") {
+      // Continue the loop to show start menu again
+      continue;
+    }
   } else if (startMenu === "load") {
-    console.log(startMenu);
+    startMenu;
     await getLoadGameDialog();
     break;
   } else if (startMenu === "exit") {
     window.close();
   }
 }
-console.log(startMenu);
+startMenu;
 if (startMenu !== "load") {
   // World Generation
   let worldGenerationDialog;
@@ -63,10 +71,33 @@ if (startMenu !== "load") {
   let characterCreation;
   while (characterCreation !== "create") {
     characterCreation = await getCharacterCreationDialog();
-    if (characterCreation === "back") {
+    if (characterCreation === "reload") {
       location.reload();
     } else if (characterCreation === "create") {
       continue;
+    } else if (characterCreation && characterCreation.action === "accept") {
+      // Character was accepted, store it and continue
+      "Character accepted:", characterCreation.character;
+      gameState.playerCharacter = characterCreation.character; // Store the player character
+      characterCreation = "create"; // Set to exit the loop
+    }
+  }
+
+  // Companion Choice Dialog
+  let companionChoice;
+  while (companionChoice !== "continue") {
+    companionChoice = await showCompanionChoiceDialog(
+      gameState.playerCharacter
+    );
+    if (companionChoice === "back") {
+      location.reload();
+    } else if (
+      companionChoice &&
+      (companionChoice.action === "alone" ||
+        companionChoice.action === "companion_selected")
+    ) {
+      "Companion choice result:", companionChoice;
+      companionChoice = "continue"; // Set to exit the loop
     }
   }
 
@@ -87,6 +118,7 @@ if (startMenu !== "load") {
 // }
 
 updateGroupBonus();
+updateTimeColorCache();
 addVisitedTile("0,0");
 revealAround();
 setupInputs();
@@ -104,18 +136,58 @@ async function postMove() {
   await getCheckTileInteractionDialog(tile);
   let death = await checkDeath();
   if (death) {
-    await getShowDeathDialog(death);
+    const reloadCheck = await getShowDeathDialog(death);
+    if (reloadCheck === "reload") {
+      location.reload();
+    }
   }
 }
 
 let lastFrameTime = 0;
 const targetFrameTime = 1000 / 30;
+// Initialize lastViewDistance based on current time
+const initialGameDate = getCurrentGameDate();
+const initialHour = initialGameDate.getHours();
+const initialMinute = initialGameDate.getMinutes();
+const initialSecond = initialGameDate.getSeconds();
+const initialViewBonus = getGroupBonus("view");
+let lastViewDistance = getTimeBasedViewDistance(
+  gameState.viewDist,
+  initialViewBonus,
+  initialHour,
+  initialMinute,
+  initialSecond
+);
+
 function loop(timestamp) {
   if (timestamp - lastFrameTime < targetFrameTime) {
     requestAnimationFrame(loop);
     return;
   }
   lastFrameTime = timestamp;
+
+  // Check and update view distance if it has changed due to time progression
+  const currentGameDate = getCurrentGameDate();
+  const hour = currentGameDate.getHours();
+  const minute = currentGameDate.getMinutes();
+  const second = currentGameDate.getSeconds();
+  const viewBonus = getGroupBonus("view");
+  const currentViewDist = getTimeBasedViewDistance(
+    gameState.viewDist,
+    viewBonus,
+    hour,
+    minute,
+    second
+  );
+
+  // If view distance has increased, reveal newly visible tiles
+  if (currentViewDist > lastViewDistance) {
+    revealAround();
+    lastViewDistance = currentViewDist;
+  } else if (currentViewDist < lastViewDistance) {
+    // View distance decreased, update tracking
+    lastViewDistance = currentViewDist;
+  }
 
   let offsetDeltaX = 0;
   let offsetDeltaY = 0;
@@ -142,6 +214,19 @@ function loop(timestamp) {
         addVisitedTile(key);
       }
       revealAround();
+      // Update tracked view distance after movement
+      const newGameDate = getCurrentGameDate();
+      const newHour = newGameDate.getHours();
+      const newMinute = newGameDate.getMinutes();
+      const newSecond = newGameDate.getSeconds();
+      const newViewDist = getTimeBasedViewDistance(
+        gameState.viewDist,
+        viewBonus,
+        newHour,
+        newMinute,
+        newSecond
+      );
+      lastViewDistance = newViewDist;
       postMove().then(() => {
         gameState.cooldown = false;
       });
@@ -152,4 +237,5 @@ function loop(timestamp) {
   }
   requestAnimationFrame(loop);
 }
+
 loop();

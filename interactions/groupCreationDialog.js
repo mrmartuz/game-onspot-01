@@ -1,96 +1,203 @@
 import { gameState } from "../gamestate/game_variables.js";
 import { getShowChoiceDialog } from "../interactions.js";
 
+// Generate random group name
+function generateRandomGroupName() {
+  const groupNamePrefixes = [
+    "The",
+    "The Order of",
+    "The Guild of",
+    "The Company of",
+    "The Band of",
+    "The Circle of",
+    "The Brotherhood of",
+    "The Sisterhood of",
+    "The Fellowship of",
+    "The Alliance of",
+    "The Coalition of",
+    "The Union of",
+    "The Society of",
+  ];
+
+  const groupNameSuffixes = [
+    "Adventurers",
+    "Heroes",
+    "Explorers",
+    "Warriors",
+    "Mages",
+    "Rogues",
+    "Knights",
+    "Guardians",
+    "Defenders",
+    "Seekers",
+    "Hunters",
+    "Scouts",
+    "Mercenaries",
+    "Wanderers",
+    "Travelers",
+    "Pilgrims",
+    "Crusaders",
+    "Champions",
+    "Legends",
+    "Mystics",
+    "Sages",
+    "Scholars",
+    "Artisans",
+    "Traders",
+    "Merchants",
+    "Diplomats",
+    "Spies",
+    "Assassins",
+    "Thieves",
+    "Bards",
+    "Healers",
+    "Priests",
+    "Paladins",
+    "Rangers",
+    "Druids",
+    "Monks",
+    "Barbarians",
+    "Fighters",
+    "Wizards",
+    "Sorcerers",
+    "Clerics",
+    "Druids",
+    "Rogues",
+    "Rangers",
+    "Paladins",
+    "Monks",
+    "Barbarians",
+  ];
+
+  const descriptiveWords = [
+    "Golden",
+    "Silver",
+    "Iron",
+    "Steel",
+    "Crystal",
+    "Emerald",
+    "Ruby",
+    "Sapphire",
+    "Diamond",
+    "Shadow",
+    "Light",
+    "Dark",
+    "Bright",
+    "Storm",
+    "Fire",
+    "Ice",
+    "Wind",
+    "Earth",
+    "Water",
+    "Thunder",
+    "Lightning",
+    "Frost",
+    "Flame",
+    "Star",
+    "Moon",
+    "Sun",
+    "Dawn",
+    "Dusk",
+    "Night",
+    "Day",
+    "Crimson",
+    "Azure",
+    "Violet",
+    "Emerald",
+    "Amber",
+    "Pearl",
+    "Onyx",
+    "Jade",
+    "Topaz",
+    "Garnet",
+    "Opal",
+  ];
+
+  const randomPrefix =
+    groupNamePrefixes[Math.floor(Math.random() * groupNamePrefixes.length)];
+  const randomSuffix =
+    groupNameSuffixes[Math.floor(Math.random() * groupNameSuffixes.length)];
+  const randomDescriptor =
+    descriptiveWords[Math.floor(Math.random() * descriptiveWords.length)];
+
+  // Sometimes add a descriptor, sometimes not
+  if (Math.random() < 0.6) {
+    return `${randomPrefix} ${randomDescriptor} ${randomSuffix}`;
+  } else {
+    return `${randomPrefix} ${randomSuffix}`;
+  }
+}
+
 export async function showGroupCreationDialog() {
   let groupName = gameState.groupName || "";
+
+  // Generate a random name if no group name exists
+  if (!groupName) {
+    groupName = generateRandomGroupName();
+    gameState.groupName = groupName;
+  }
+
   const message = "GROUP CREATION";
   let components = [];
-  if (groupName) {
+
+  components.push({
+    type: "message",
+    label: `Your group is called ${groupName}`,
+    value: groupName,
+  });
+  components.push({
+    type: "button",
+    label: "🎲 Generate Another Random Name",
+    value: "random-name",
+  });
+
+  // Show current group members
+  if (gameState.group.length > 1) {
+    const memberNames = gameState.group
+      .slice(1)
+      .map((member) => {
+        if (member.firstName && member.lastName) {
+          return `${member.firstName} ${member.lastName} (${member.class})`;
+        } else if (member.role) {
+          return member.role;
+        }
+        return "Unknown";
+      })
+      .join(", ");
+
     components.push({
       type: "message",
-      label: `Your group is called ${groupName}`,
-      value: groupName,
+      label: `Your group ${groupName} is formed by you and ${memberNames}`,
     });
   } else {
     components.push({
       type: "message",
-      label: "How is it called your group?",
-      value: "",
-    });
-    components.push({
-      type: "input",
-      label: "group-name",
-      value: "group-name",
+      label: `Your group ${groupName} consists of just you.`,
     });
   }
-  if (gameState.group.length === 1) {
-    components.push(
-      {
-        type: "message",
-        label: "Add a member to your group",
-        value: "",
-      },
-      { type: "button", label: "Native Guide🧭", value: "native-guide🧭" },
-      { type: "button", label: "Cook🍞", value: "cook🍞" },
-      { type: "button", label: "Guard⚔️", value: "guard⚔️" },
-      { type: "button", label: "Geologist🪵", value: "geologist🪵" },
-      { type: "button", label: "Biologist🌱", value: "biologist🌱" },
-      { type: "button", label: "Translator🤝", value: "translator🤝" },
-      { type: "button", label: "Carrier 📦", value: "carrier📦" },
-      { type: "button", label: "Medic ❤️", value: "medic❤️" },
-      { type: "button", label: "Navigator 👁️", value: "navigator👁️" },
-      { type: "button", label: "Explorer🔍", value: "explorer🔍" }
-    );
-  } else {
-    components.push({
-      type: "message",
-      label: `Your group ${groupName} is formed by you and ${gameState.group
-        .slice(1)
-        .map((member) => member.role)
-        .join(", ")}`,
-    });
-  }
+
   components.push({ type: "button", label: "Create", value: "create" });
   components.push({
     type: "button",
     label: "❌ Back to start menu ❌",
     value: "back",
   });
+
   const choice = await getShowChoiceDialog(message, components);
-  console.log(choice);
-  if (
-    choice !== "create" &&
-    choice !== "group-name" &&
-    choice !== "native-guide🧭" &&
-    choice !== "cook🍞" &&
-    choice !== "guard⚔️" &&
-    choice !== "geologist🪵" &&
-    choice !== "biologist🌱" &&
-    choice !== "translator🤝" &&
-    choice !== "carrier📦" &&
-    choice !== "medic❤️" &&
-    choice !== "navigator👁️" &&
-    choice !== "explorer🔍" &&
-    choice !== "back"
-  ) {
-    gameState.groupName =
-      choice.charAt(0).toUpperCase() + choice.slice(1).toLowerCase();
+  choice;
+
+  if (choice === "random-name") {
+    let randomName;
+    let attempts = 0;
+    // Try to generate a different name (max 5 attempts to avoid infinite loop)
+    do {
+      randomName = generateRandomGroupName();
+      attempts++;
+    } while (randomName === gameState.groupName && attempts < 5);
+
+    gameState.groupName = randomName;
+    // Return to the same dialog to show the new name and allow generating another
     return "group-name";
-  } else if (
-    choice === "native-guide🧭" ||
-    choice === "cook🍞" ||
-    choice === "guard⚔️" ||
-    choice === "geologist🪵" ||
-    choice === "biologist🌱" ||
-    choice === "translator🤝" ||
-    choice === "carrier📦" ||
-    choice === "medic❤️" ||
-    choice === "navigator👁️" ||
-    (choice === "explorer🔍" && choice !== "back")
-  ) {
-    gameState.group[1] = { role: choice };
-    console.log(gameState.group);
-    return "group";
   } else if (choice === "create") {
     return choice;
   } else if (choice === "back") {

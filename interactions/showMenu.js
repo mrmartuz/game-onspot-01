@@ -7,6 +7,8 @@ import { getGroupBonus } from "../utils.js";
 import { getShowChoiceDialog } from "../interactions.js";
 import { logEvent } from "../time_system.js";
 import { updateStatus } from "../rendering.js";
+import { showCharacterManagementDialog } from "./characterManagementDialog.js";
+import { getRaceEmoji } from "../gamestate/emoji-database.js";
 
 export async function showMenu() {
   // Check if player is on a tile with location or entity
@@ -46,11 +48,16 @@ export async function showMenu() {
     ...(isFlora
       ? [{ type: "button", label: "🌱 Harvest flowers", value: "4" }]
       : []),
+    { type: "button", label: "👥 Character Management", value: "char_mgmt" },
     { type: "button", label: "🏗️ Build camp ⛺ (5 🪵)", value: "2" },
     { type: "button", label: "🏗️ Build outpost 🏕️ (10 🧱, 10 🪵)", value: "3" },
     { type: "button", label: "❌ Close", value: "close" },
   ]);
   if (choice === "close") return;
+  if (choice === "char_mgmt") {
+    await showCharacterManagementDialog();
+    return;
+  }
   if (choice === "2" || choice === "3") {
     let costMats = choice === "2" ? 0 : 10;
     let costWood = choice === "2" ? 5 : 10;
@@ -109,30 +116,93 @@ export async function showMenu() {
     // TODO create a proper plant system
     // TODO keep track of actions and needs time to respawn (delete from array) resources used
     // Apply plant bonus for better harvest yields
-    let plantBonus = getGroupBonus("plant");
-    let baseFood = Math.floor(Math.random() * 1.2) + 0.1;
-    let bonusFood = Math.floor(baseFood * plantBonus);
-    let totalFood = baseFood + bonusFood + plantBonus;
-    let max_storage = getMaxStorage();
-    if (totalFood > 0) {
-      if (gameState.food + totalFood <= max_storage) {
-        gameState.food += totalFood;
-        updateStatus();
-        let bonusText = bonusFood > 0 ? ` (+${bonusFood} bonus)` : "";
-        await getShowChoiceDialog(
-          `Harvested flowers! 🌱 Gained ${totalFood} food${bonusText}`,
-          [{ type: "button", label: "OK", value: "ok" }]
+    // Harvest flowers using herbalism and survival skills
+    const allCharacters = [];
+
+    // Include player character if it exists
+    if (gameState.playerCharacter) {
+      allCharacters.push(gameState.playerCharacter);
+    }
+
+    // Include all group members (NPCs)
+    allCharacters.push(...gameState.group);
+
+    if (allCharacters.length === 0) {
+      await getShowChoiceDialog("No characters to harvest flowers! ⚠️", [
+        { type: "button", label: "OK", value: "ok" },
+      ]);
+      return;
+    }
+
+    let successfulHarvests = 0;
+    let harvestDetails = [];
+
+    // Each character makes a skill roll
+    for (const character of allCharacters) {
+      const herbalism = character.skills?.herbalism || 0;
+      const survival = character.skills?.survival || 0;
+      const totalSkill = herbalism + survival;
+
+      // Roll d20 + skill total, success on 10+
+      const roll = Math.floor(Math.random() * 20) + 1;
+      const totalRoll = roll + totalSkill;
+
+      if (totalRoll >= 10) {
+        successfulHarvests++;
+        const characterName = `${character.firstName || "Unknown"} ${
+          character.lastName || ""
+        }`.trim();
+        const raceEmoji = getRaceEmoji(character.race);
+        harvestDetails.push(
+          `✅ ${raceEmoji} ${characterName}: Rolled ${roll} + ${totalSkill} = ${totalRoll} (Success!)`
         );
-        logEvent(`🌱 Harvested flowers for ${totalFood} food${bonusText}`);
+      } else {
+        const characterName = `${character.firstName || "Unknown"} ${
+          character.lastName || ""
+        }`.trim();
+        const raceEmoji = getRaceEmoji(character.race);
+        harvestDetails.push(
+          `❌ ${raceEmoji} ${characterName}: Rolled ${roll} + ${totalSkill} = ${totalRoll} (Failed)`
+        );
+      }
+    }
+
+    if (successfulHarvests > 0) {
+      const max_storage = getMaxStorage();
+      if (gameState.food + successfulHarvests <= max_storage) {
+        gameState.food += successfulHarvests;
+        updateStatus();
+
+        const harvestMessage =
+          `🌱 **FLOWER HARVEST RESULTS**\n\n` +
+          `Total food harvested: ${successfulHarvests} unit${
+            successfulHarvests > 1 ? "s" : ""
+          }\n\n` +
+          `**Individual Results:**\n${harvestDetails.join("\n")}`;
+
+        await getShowChoiceDialog(harvestMessage, [
+          { type: "button", label: "OK", value: "ok" },
+        ]);
+        logEvent(
+          `🌱 Harvested flowers: ${successfulHarvests} food (${successfulHarvests}/${allCharacters.length} characters succeeded)`
+        );
       } else {
         await getShowChoiceDialog("Not enough storage for harvested food! ⚠️", [
           { type: "button", label: "OK", value: "ok" },
         ]);
       }
     } else {
-      await getShowChoiceDialog("Nothing to harvest! ⚠️", [
+      const harvestMessage =
+        `🌱 **FLOWER HARVEST RESULTS**\n\n` +
+        `No food harvested - all characters failed their skill rolls!\n\n` +
+        `**Individual Results:**\n${harvestDetails.join("\n")}`;
+
+      await getShowChoiceDialog(harvestMessage, [
         { type: "button", label: "OK", value: "ok" },
       ]);
+      logEvent(
+        `🌱 Harvested flowers: 0 food (0/${allCharacters.length} characters succeeded)`
+      );
     }
   }
 }

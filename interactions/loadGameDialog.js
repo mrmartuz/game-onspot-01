@@ -11,14 +11,14 @@ export async function loadGameDialog() {
       value: "",
     },
     { type: "button", label: "⏬ Load", value: "load" },
-    { type: "button", label: "❌ Back", value: "back" },
+    { type: "button", label: "❌ Back", value: "reload" },
   ];
   const choice = await getShowChoiceDialog(message, components);
   if (choice === "load") {
     await importSaveGame();
     return choice;
-  } else if (choice === "back") {
-    return choice;
+  } else if (choice === "reload") {
+    location.reload();
   }
 }
 
@@ -46,20 +46,16 @@ function importSaveGame() {
         try {
           const loadedData = JSON.parse(e.target.result);
 
-          console.log(loadedData);
-          console.log(
-            "cachedTiles should be empty: ",
-            loadedData.cachedTiles.size === 0 ? "true" : "false"
-          );
+          loadedData;
+          "cachedTiles should be empty: ",
+            loadedData.cachedTiles.size === 0 ? "true" : "false";
           if (loadedData.visited.size === 0) {
             console.warn("visited is empty, this is not normal");
           } else {
-            console.log("visited is not empty, this is normal");
+            ("visited is not empty, this is normal");
           }
-          console.log(
-            "killed should be empty: ",
-            loadedData.killed.size === 0 ? "true" : "false"
-          );
+          "killed should be empty: ",
+            loadedData.killed.size === 0 ? "true" : "false";
 
           // Reconstruct Map and Set objects
           const restoredData = Object.keys(loadedData).reduce((obj, key) => {
@@ -108,7 +104,7 @@ function importSaveGame() {
           gameState.moveDx = 0;
           gameState.moveDy = 0;
 
-          console.log("Loaded gameState:", gameState);
+          "Loaded gameState:", gameState;
           //   getShowChoiceDialog("Game loaded successfully!", [
           //     { type: "button", label: "OK", value: "ok" },
           //   ]);
